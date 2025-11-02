@@ -1,0 +1,15 @@
+numpy
+pandas
+opencv-python
+networkx
+h5py==3.6.0
+tqdm
+vocab
+revtok
+Pillow
+torchvision
+torch==2.1.0
+tensorboardX
+ai2thor==2.1.0
+flask==2.0.3
+Werkzeug==2.0.3

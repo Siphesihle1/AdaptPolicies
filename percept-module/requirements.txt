@@ -1,0 +1,44 @@
+nvidia-ml-py
+pandas
+absl-py
+astor 
+google-pasta 
+opt_einsum 
+termcolor 
+wrapt
+mock 
+pbr 
+h5py 
+grpcio 
+markdown 
+werkzeug 
+cython
+pyyaml 
+graphviz 
+pydot
+pyparsing
+# ./packages/tensorflow-1.15.2-cp37-cp37m-linux_x86_64.whl
+tensorflow==2.13.0
+tensorflow-estimator
+tensorboard
+keras 
+keras-applications
+keras-preprocessing
+tflearn @ git+https://github.com/tflearn/tflearn.git
+wheel
+CLIP @ git+https://github.com/openai/CLIP.git
+ftfy 
+regex 
+tqdm
+Pillow
+protobuf==3.20.*
+matplotlib
+scipy
+easydict
+timm==0.4.5 
+transformers==4.49.0
+scikit-image
+jupytext
+exceptiongroup==1.2.2
+ipython==7.34.0
+typing-extensions

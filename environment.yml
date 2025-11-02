@@ -1,0 +1,42 @@
+name: research_proj
+channels:
+  - default
+  - conda-forge
+  - nvidia
+dependencies:
+  - python=3.10
+  # - cuda-toolkit=12.3
+  - cuda-toolkit=11.8.0
+  # - cudnn=8.9.7
+  # - libcublas=11.11.3
+  #alfred
+  - xorg-libsm
+  - libxt-conda-x86_64
+  - xorg-libxrender
+  - unzip
+  - ffmpeg
+  - libffi
+  - flex
+  - bison
+  - bzip2
+  - libsqlite
+  - llvm
+  - ncurses
+  - xz
+  - tk
+  - liblzma-devel
+  - freeimage
+  # vild
+  - hdf5
+  - hdf5tools
+  - zlib
+  - libjpeg-turbo
+  - libpng
+  - zip
+  - jpeg
+  - pip
+  - rust
+  - pip:
+    - setuptools
+    - -r ./alfred/requirements.txt
+    - -r ./percept-module/requirements.txt

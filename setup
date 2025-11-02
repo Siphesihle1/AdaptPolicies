@@ -1,0 +1,33 @@
+#!/bin/bash
+
+ALFRED_DIR=$(pwd)/alfred
+PERCEPT_MODULE_DIR=$(pwd)/percept-module
+PREFIX=$(pwd)/build
+PYTHON_ENV_NAME=alfred_env
+CUDA_VERSION=10.2
+PACKAGES=$(pwd)/packages
+
+AUTO_REMOVE_BUILD_DIR=$1
+
+if [[ $AUTO_REMOVE_BUILD_DIR -eq 1 && -d $PREFIX ]]; then
+  rm -rf $PREFIX && mkdir $PREFIX
+fi
+
+# ========== Sets up the whole environment ==========
+
+echo "-----------------------------------------------------------------------------------"
+echo "--------------------------------------SETUP----------------------------------------"
+echo "-----------------------------------------------------------------------------------"
+echo "///////////////////////////////////////////////////////////////////////////////////"
+echo ""
+
+# 1. Setup the percept module
+bash $PERCEPT_MODULE_DIR/scripts/percept_module_setup.sh \
+  $ALFRED_DIR \
+  $PERCEPT_MODULE_DIR \
+  $PREFIX \
+  $PYTHON_ENV_NAME \
+  $CUDA_VERSION \
+  $PACKAGES
+
+

@@ -1,0 +1,35 @@
+services:
+  percept_module:
+    container_name: percept_module
+    user: mthes021
+    network_mode: host
+    build:
+      context: ./percept-module
+      dockerfile: Dockerfile
+      args:
+        - USER_NAME=mthes021
+    image: percept_module:latest
+    stdin_open: true
+    tty: true
+    ipc: host
+    privileged: true
+    environment:
+      - DISPLAY
+      - QT_X11_NO_MITSHM=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - ./alfred:/home/mthes021/alfred
+      - ./alfred/data:/data
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /usr/lib/wsl/lib:/usr/local/lib
+    devices:
+      - /dev/tty2:/dev/tty2:rw
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [compute, utility, display, graphics]
+              count: all
