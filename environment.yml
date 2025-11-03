@@ -4,7 +4,7 @@ channels:
   - conda-forge
   - nvidia
 dependencies:
-  - python=3.8
+  - python=3.10
   - cuda-toolkit=12.1
   # - cuda-toolkit=11.8.0
   - cudnn=8.9.7
