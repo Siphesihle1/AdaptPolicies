@@ -5,6 +5,7 @@ import torchvision.transforms as T
 import torch.nn.functional as F
 from .utils import rescale_bboxes
 from typing import List
+from pprint import pprint
 
 torch.set_grad_enabled(False)
 
@@ -79,9 +80,6 @@ class MDTERModel:
             if pos < 255:
                 span = tokenized.token_to_chars(0, pos)
                 predicted_spans[item] += " " + caption[span.start:span.end]
-
-        print('predicted spans', predicted_spans)
-        print('positive_tokens', positive_tokens)
 
         labels = [predicted_spans[k] for k in sorted(list(predicted_spans.keys()))]
 

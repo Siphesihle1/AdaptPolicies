@@ -4,11 +4,11 @@ channels:
   - conda-forge
   - nvidia
 dependencies:
-  - python=3.10
-  # - cuda-toolkit=12.3
-  - cuda-toolkit=11.8.0
-  # - cudnn=8.9.7
-  # - libcublas=11.11.3
+  - python=3.8
+  - cuda-toolkit=12.1
+  # - cuda-toolkit=11.8.0
+  - cudnn=8.9.7
+  - libcublas=12.4.5
   #alfred
   - xorg-libsm
   - libxt-conda-x86_64

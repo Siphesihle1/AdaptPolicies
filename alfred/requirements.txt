@@ -2,13 +2,13 @@ numpy
 pandas
 opencv-python
 networkx
-h5py==3.6.0
+h5py
 tqdm
 vocab
 revtok
 Pillow
 torchvision
-torch==2.1.0
+torch==2.2.0
 tensorboardX
 ai2thor==2.1.0
 flask==2.0.3
