@@ -18,7 +18,7 @@ graphviz
 pydot
 pyparsing
 # ./packages/tensorflow-1.15.2-cp37-cp37m-linux_x86_64.whl
-tensorflow==2.15.0
+tensorflow[and-cuda]==2.13.1
 tensorflow-estimator
 tensorboard
 keras 
@@ -36,7 +36,7 @@ matplotlib
 scipy
 easydict
 timm==0.4.5 
-transformers==4.49.0
+transformers==4.5.1
 scikit-image
 jupytext
 exceptiongroup==1.2.2

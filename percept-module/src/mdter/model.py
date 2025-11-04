@@ -12,20 +12,20 @@ torch.set_grad_enabled(False)
 
 class MDTERModel:
     def __init__(self):
-        # model = torch.hub.load(
-        #   'ashkamath/mdetr:main',
-        #   'mdetr_efficientnetB3_phrasecut',
-        #   pretrained=True,
-        #   return_postprocessor=False,
-        # )
-        self.model = _make_detr("timm_tf_efficientnet_b3_ns", mask=True, contrastive_align_loss=False)
-        checkpoint = torch.hub.load_state_dict_from_url(
-            url="https://zenodo.org/record/4721981/files/pretrained_EB3_checkpoint.pth",
-            map_location="cpu",
-            check_hash=True,
+        self.model = torch.hub.load(
+          'ashkamath/mdetr:main',
+          'mdetr_efficientnetB3_phrasecut',
+          pretrained=True,
+          return_postprocessor=False,
         )
-        self.model.load_state_dict(checkpoint["model"], strict=False)
-
+        # self.model = _make_detr("timm_tf_efficientnet_b3_ns", mask=True, contrastive_align_loss=False)
+        # checkpoint = torch.hub.load_state_dict_from_url(
+        #     url="https://zenodo.org/record/4721981/files/pretrained_EB3_checkpoint.pth",
+        #     map_location="cpu",
+        #     check_hash=True,
+        # )
+        # self.model.load_state_dict(checkpoint["model"], strict=False)
+        #
         # # enforce strict state-dict loading by re-applying the current state dict with strict=True
         # try:
         #   sd = model.state_dict()
