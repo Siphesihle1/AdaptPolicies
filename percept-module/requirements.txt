@@ -37,8 +37,10 @@ scipy
 easydict
 timm==0.4.5 
 transformers==4.5.1
+tokenizers==0.10.3
 scikit-image
 jupytext
 exceptiongroup==1.2.2
 ipython==7.34.0
+jupyter-server==2.13.0
 typing-extensions

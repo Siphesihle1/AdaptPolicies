@@ -36,7 +36,8 @@ dependencies:
   - jpeg
   - pip
   - rust
+  - setuptools<71
   - pip:
-    - setuptools
+    - packaging==21.3
     - -r ./alfred/requirements.txt
     - -r ./percept-module/requirements.txt
