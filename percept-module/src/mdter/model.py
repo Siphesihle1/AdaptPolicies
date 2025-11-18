@@ -1,19 +1,28 @@
 from collections import defaultdict
 from pprint import pprint
-from typing import List
+from typing import List, Literal, Optional, Union
 
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as T
+from torch import Tensor
 
 from .mdter_model.hubconf import _make_detr
-from .utils import rescale_bboxes
+from .utils import get_category_from_caption, rescale_bboxes
+
+from vild.utils import article
 
 torch.set_grad_enabled(False)
 
 
 class MDTERModel:
-    def __init__(self, model_name: str):
+    def __init__(
+        self,
+        model_name: Union[
+            Literal["mdetr_efficientnetB5"], Literal["mdetr_efficientnetB3_phrasecut"]
+        ],
+    ):
+        self.model_name = model_name
         self.model = torch.hub.load(
             "ashkamath/mdetr:main",
             model_name,
@@ -113,4 +122,39 @@ class MDTERModel:
             "boxes": bboxes_scaled,
             "labels": labels,
             "scores": probas[keep],
+            "masks": None,
+        }
+
+    def detect_object_categories(self, image, category_names: List[str]):
+        cat_boxes = Tensor()
+        cat_scores = Tensor()
+        cat_masks = Tensor()
+        cat_labels = []
+
+        for catetory in category_names:
+            caption = f"{article(catetory)} {catetory}"
+            results = (
+                self.infer_bounding_boxes(image, caption)
+                if self.model_name == "mdetr_efficientnetB5"
+                else self.infer_segmentation(image, caption)
+            )
+
+            if len(cat_boxes) == 0:
+                cat_boxes = results["boxes"]
+                cat_scores = results["scores"]
+                cat_masks = results["masks"]
+            else:
+                cat_boxes = torch.cat((cat_boxes, results["boxes"]), dim=0)
+                cat_scores = torch.cat((cat_scores, results["scores"]), dim=0)
+
+                if results["masks"] != None:
+                    cat_masks = torch.cat((cat_masks, results["masks"]), dim=0)
+
+            cat_labels += list(map(get_category_from_caption, results["labels"]))
+
+        return {
+            "boxes": cat_boxes,
+            "labels": cat_labels,
+            "scores": cat_scores,
+            "masks": cat_masks,
         }

@@ -48,16 +48,17 @@ def plot_results(
             continue
         np_image = apply_mask(np_image, mask, c)
 
-        padded_mask = np.zeros((mask.shape[0] + 2, mask.shape[1] + 2), dtype=np.uint8)
-        padded_mask[1:-1, 1:-1] = mask
-        contours = find_contours(padded_mask, 0.5)
-        for verts in contours:
-            # Subtract the padding and flip (y, x) to (x, y)
-            verts = np.fliplr(verts) - 1
-            p = Polygon(verts, facecolor="none", edgecolor=c)
-            ax.add_patch(p)
+        # padded_mask = np.zeros((mask.shape[0] + 2, mask.shape[1] + 2), dtype=np.uint8)
+        # padded_mask[1:-1, 1:-1] = mask
+        # contours = find_contours(padded_mask, 0.5)
+        # for verts in contours:
+        #     # Subtract the padding and flip (y, x) to (x, y)
+        #     verts = np.fliplr(verts) - 1
+        #     p = Polygon(verts, facecolor="none", edgecolor=c)
+        #     ax.add_patch(p)
+    return np_image
 
-    plt.imshow(np_image)
-    plt.axis("off")
-    plt.show()
+    # plt.imshow(np_image)
+    # plt.axis("off")
+    # plt.show()
     plt.close()
