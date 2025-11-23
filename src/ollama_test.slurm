@@ -40,13 +40,11 @@ time curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://localhost:114
 
 $OLLAMA_EXEC pull $MODEL
 
-echo "Testing the deepseek model"
+echo -e "\nTesting the deepseek model..."
 
 TEST_PROMPT="Write a python function to print the names of all the files in a directory"
 
-export TIMEFORMAT='--Time without tinking: %E--'
-time $OLLAMA_EXEC run $MODEL --think=false $TEST_PROMPT 
+$OLLAMA_EXEC run $MODEL --think=false $TEST_PROMPT 
 
-export TIMEFORMAT='--Time with tinking: %E--'
-time $OLLAMA_EXEC run $MODEL --think $TEST_PROMPT 
+$OLLAMA_EXEC run $MODEL --think $TEST_PROMPT 
 
