@@ -43,8 +43,8 @@ echo "Testing the deepseek model"
 TEST_PROMPT="Write a python function to print the names of all the files in a directory"
 
 export TIMEFORMAT='Time without tinking: %E'
-time $OLLAMA_EXEC run $MODEL --think=false $TEST_PROMPT 
+time ollama run $MODEL --think=false $TEST_PROMPT 
 
 export TIMEFORMAT='Time with tinking: %E'
-time $OLLAMA_EXEC run $MODEL --think $TEST_PROMPT 
+time ollama run $MODEL --think $TEST_PROMPT 
 
