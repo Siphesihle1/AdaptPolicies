@@ -53,7 +53,7 @@ if [ ! -f "./Downloads/ollama-linux-amd64.tgz" ]; then
 fi
 
 $OLLAMA_EXEC --version
-$OLLAMA_EXEC serve
+# $OLLAMA_EXEC serve
 $OLLAMA_EXEC pull $MODEL
 
 echo "Testing the deepseek model"
