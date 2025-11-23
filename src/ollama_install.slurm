@@ -49,7 +49,7 @@ if [ ! -f "./Downloads/ollama-linux-amd64.tgz" ]; then
   tar -xzvf ollama-linux-amd64.tgz -C $OLLAMA_PREFIX
   chmod +x $OLLAMA_EXEC
 
-  echo 'export PATH="$PATH:~/.local/ollama/bin"' >> ~/.bashrc
+  echo 'export PATH="$PATH:$HOME/.local/ollama/bin"' >> ~/.bashrc
 fi
 
 $OLLAMA_EXEC --version
