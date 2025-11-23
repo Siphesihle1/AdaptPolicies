@@ -27,24 +27,26 @@ echo SLURM: number of cores is $SLURM_NTASKS
 echo SLURM: job name is $SLURM_JOB_NAME
 echo ------------------------------------------------------
 
+OLLAMA_PREFIX=~/.local/ollama
+OLLAMA_EXEC=$OLLAMA_PREFIX/bin/ollama
 MODEL="deepseek-r1:14b"
 
 cd $SLURM_SUBMIT_DIR
 
 # Run the background, in a way that survives to the next step
-nohup ollama serve > ollama.log 2>&1 &
+nohup $OLLAMA_EXEC serve > ollama.log 2>&1 &
 # Block using the ready endpoint
 time curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://localhost:11434
 
-ollama pull $MODEL
+$OLLAMA_EXEC pull $MODEL
 
 echo "Testing the deepseek model"
 
 TEST_PROMPT="Write a python function to print the names of all the files in a directory"
 
-export TIMEFORMAT='Time without tinking: %E'
-time ollama run $MODEL --think=false $TEST_PROMPT 
+export TIMEFORMAT='--Time without tinking: %E--'
+time $OLLAMA_EXEC run $MODEL --think=false $TEST_PROMPT 
 
-export TIMEFORMAT='Time with tinking: %E'
-time ollama run $MODEL --think $TEST_PROMPT 
+export TIMEFORMAT='--Time with tinking: %E--'
+time $OLLAMA_EXEC run $MODEL --think $TEST_PROMPT 
 
