@@ -46,7 +46,7 @@ fi
 if [ ! -f "./Downloads/ollama-linux-amd64.tgz" ]; then
   echo "Downloading ollama executable..."
   curl -fsSL https://ollama.com/download/ollama-linux-amd64.tgz -o ollama-linux-amd64.tgz
-  tar -C $OLLAMA_PREFIX ollama-linux-amd64.tgz
+  tar -xzvf ollama-linux-amd64.tgz -C $OLLAMA_PREFIX
   chmod +x $OLLAMA_EXEC
 
   echo 'export PATH="$PATH:~/.local/ollama/bin"' >> ~/.bashrc
