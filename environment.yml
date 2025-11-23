@@ -5,10 +5,6 @@ channels:
   - nvidia
 dependencies:
   - python=3.8
-  # - cuda-toolkit=12.1
-  - cuda-toolkit=11.8.0
-  # - cudnn=8.9.7
-  # - libcublas=12.4.5
   #alfred
   - xorg-libsm
   - libxt-conda-x86_64
@@ -26,18 +22,9 @@ dependencies:
   - tk
   - liblzma-devel
   - freeimage
-  # vild
-  - hdf5
-  - hdf5tools
-  - zlib
-  - libjpeg-turbo
-  - libpng
-  - zip
-  - jpeg
   - pip
   - rust
   - setuptools<71
   - pip:
     - packaging==21.3
     - -r ./alfred/requirements.txt
-    - -r ./percept-module/requirements.txt

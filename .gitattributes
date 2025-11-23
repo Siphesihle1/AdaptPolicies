@@ -31,5 +31,6 @@
 *.jpg filter=lfs diff=lfs merge=lfs -text
 /percept-module/src/mdter/mdter_model/LICENSE filter=lfs diff=lfs merge=lfs -text
 /setup filter=lfs diff=lfs merge=lfs -text
+*.slurm filter=lfs diff=lfs merge=lfs -text
 * !text !filter !merge !diff
 variables.data-00000-of-00001 filter=lfs diff=lfs merge=lfs -text
