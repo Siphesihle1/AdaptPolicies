@@ -12,9 +12,9 @@
 # specify the job name
 #SBATCH -J ollama-install
 # specify the filename to be used for writing output
-#SBATCH -o /home-mscluster/smthethwa/ollama-install-slurm.%N.%j.out
+#SBATCH -o /home-mscluster/smthethwa/slurm-logs/ollama-test-slurm.%N.%j.out
 # specify the filename for stderr
-#SBATCH -e /home-mscluster/smthethwa/ollama-install-slurm.%N.%j.err
+#SBATCH -e /home-mscluster/smthethwa/slurm-logs/ollama-test-slurm.%N.%j.err
 
 echo ------------------------------------------------------
 echo -n 'Job is running on node ' $SLURM_JOB_NODELIST
@@ -27,30 +27,24 @@ echo SLURM: number of cores is $SLURM_NTASKS
 echo SLURM: job name is $SLURM_JOB_NAME
 echo ------------------------------------------------------
 
-OLLAMA_PREFIX=~/.local/ollama
-OLLAMA_EXEC=$OLLAMA_PREFIX/bin/ollama
 MODEL="deepseek-r1:14b"
 
 cd $SLURM_SUBMIT_DIR
 
-if [ ! -d ./Downloads ]; then
-  mkdir Downloads
-fi
+# Run the background, in a way that survives to the next step
+nohup ollama serve > ollama.log 2>&1 &
+# Block using the ready endpoint
+time curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://localhost:11434
 
-cd Downloads
+ollama pull $MODEL
 
-if [ ! -d "$OLLAMA_PREFIX" ]; then
-  mkdir -p $OLLAMA_PREFIX
-fi
+echo "Testing the deepseek model"
 
-if [ ! -f "./Downloads/ollama-linux-amd64.tgz" ]; then
-  echo "Downloading ollama executable..."
-  curl -fsSL https://ollama.com/download/ollama-linux-amd64.tgz -o ollama-linux-amd64.tgz
-  tar -xzvf ollama-linux-amd64.tgz -C $OLLAMA_PREFIX
-  chmod +x $OLLAMA_EXEC
+TEST_PROMPT="Write a python function to print the names of all the files in a directory"
 
-  echo 'export PATH="$PATH:~/.local/ollama/bin"' >> ~/.bashrc
-fi
+export TIMEFORMAT='Time without tinking: %E'
+time $OLLAMA_EXEC run $MODEL --think=false $TEST_PROMPT 
 
-$OLLAMA_EXEC --version
+export TIMEFORMAT='Time with tinking: %E'
+time $OLLAMA_EXEC run $MODEL --think $TEST_PROMPT 
 
