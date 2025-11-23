@@ -60,6 +60,9 @@ echo "Testing the deepseek model"
 
 TEST_PROMPT="Write a python function to print the names of all the files in a directory"
 
-time -f "Time without tinking: %E" $OLLAMA_EXEC run $MODEL --think=false $TEST_PROMPT 
-time -f "Time with thinking: %E" $OLLAMA_EXEC run $MODEL --think $TEST_PROMPT 
+export TIMEFORMAT='Time without tinking: %E'
+time $OLLAMA_EXEC run $MODEL --think=false $TEST_PROMPT 
+
+export TIMEFORMAT='Time with tinking: %E'
+time $OLLAMA_EXEC run $MODEL --think $TEST_PROMPT 
 
