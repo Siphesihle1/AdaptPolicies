@@ -1,42 +1,33 @@
 #!/usr/bin/env python
 
+
 import subprocess
-import sys
-import pynvml
+import shlex
+import re
 import platform
 import tempfile
 import os
-import shlex
+import sys
 
 
-def nvidia_devices():
-    devices = []
-    pynvml.nvmlInit()
-    device_count = pynvml.nvmlDeviceGetCount()
+def pci_records():
+    records = []
+    command = shlex.split("lspci -vmm")
+    output = subprocess.check_output(command).decode()
 
-    for i in range(device_count):
-        handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-        pci_info = pynvml.nvmlDeviceGetPciInfo(handle)
-        devices.append(
-            pci_info.busId.decode()
-            if hasattr(pci_info.busId, "decode")
-            else pci_info.busId
-        )
+    for devices in output.strip().split("\n\n"):
+        record = {}
+        records.append(record)
+        for row in devices.split("\n"):
+            key, value = row.split("\t")
+            record[key.split(":")[0]] = value
 
-    return devices
-
-
-# Converts NVML busId (domain:bus:device.function) to Xorg PCI BusID (PCI:bus:device:function)
-def nvml_busid_to_xorg(busid):
-    # Example input: '0000:65:00.0'
-    _, bus, dev_func = busid.split(":")
-    device, function = dev_func.split(".")
-    # Remove leading zeros for bus, device, function
-    return f"PCI:{int(bus)}:{int(device)}:{int(function)}"
+    return records
 
 
 def generate_xorg_conf(devices):
     xorg_conf = []
+
     device_section = """
 Section "Device"
     Identifier     "Device{device_id}"
@@ -59,14 +50,13 @@ Section "Screen"
     Option         "AllowEmptyInitialConfiguration" "True"
     SubSection     "Display"
         Depth       24
+        Virtual 1024 768
     EndSubSection
 EndSection
 """
     screen_records = []
     for i, bus_id in enumerate(devices):
-        xorg_conf.append(
-            device_section.format(device_id=i, bus_id=nvml_busid_to_xorg(bus_id))
-        )
+        xorg_conf.append(device_section.format(device_id=i, bus_id=bus_id))
         xorg_conf.append(screen_section.format(device_id=i, screen_id=i))
         screen_records.append(
             'Screen {screen_id} "Screen{screen_id}" 0 0'.format(screen_id=i)
@@ -85,29 +75,37 @@ def startx(display):
     if platform.system() != "Linux":
         raise Exception("Can only run startx on linux")
 
-    devices = nvidia_devices()
+    devices = []
+    for r in pci_records():
+        if r.get("Vendor", "") == "NVIDIA Corporation" and r["Class"] in [
+            "VGA compatible controller",
+            "3D controller",
+        ]:
+            bus_id = "PCI:" + ":".join(
+                map(lambda x: str(int(x, 16)), re.split(r"[:\.]", r["Slot"]))
+            )
+            devices.append(bus_id)
 
     if not devices:
         raise Exception("no nvidia cards found")
 
     try:
-        rel_path = "alfred_xorg.conf"
-        path = f"/etc/X11/{rel_path}"
-        # with open(path, "w") as f:
-        #     f.write(generate_xorg_conf(devices))
+        fd, path = tempfile.mkstemp()
+        with open(path, "w") as f:
+            f.write(generate_xorg_conf(devices))
         command = shlex.split(
             "Xorg -noreset +extension GLX +extension RANDR +extension RENDER -config %s :%s"
-            % (rel_path, display)
+            % (path, display)
         )
         subprocess.call(command)
     finally:
-        # os.unlink(path)
-        pass
+        os.close(fd)
+        os.unlink(path)
 
 
 if __name__ == "__main__":
     display = 0
     if len(sys.argv) > 1:
         display = int(sys.argv[1])
-    print("Starting X on DISPLAY :%s" % display)
+    print("Starting X on DISPLAY=:%s" % display)
     startx(display)
