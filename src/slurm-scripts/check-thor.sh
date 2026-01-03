@@ -1,20 +1,7 @@
 #!/bin/bash
-# specify a partition
-#SBATCH -p stampede
-# specify number of nodes
-#SBATCH -N 1
-# specify number of cores
-##SBATCH -n 1
-# specify memory pool for all cores
-##SBATCH --mem 10
-# specify the wall clock time limit for the job
-##SBATCH -t 00:10:00
-# specify the job name
-#SBATCH -J check-thor
-# specify the filename to be used for writing output
-#SBATCH -o /home-mscluster/smthethwa/slurm-logs/check-thor/%j.out
-# specify the filename for stderr
-#SBATCH -e /home-mscluster/smthethwa/slurms-logs/check-thor/%j.err
+#SBATCH --partition=stampede
+#SBATCH --job-name=check-thor
+#SBATCH --output=/home-mscluster/smthethwa/slurm-logs/check-thor/%j.out
 
 echo 'test'
 #
