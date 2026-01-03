@@ -29,7 +29,7 @@ echo ------------------------------------------------------
 
 cd $SLURM_SUBMIT_DIR
 
-JOB_OUTPUT_DIR=~/outputs/check-thor/$SLURM_JOB_ID
+JOB_OUTPUT_DIR=$HOME/outputs/check-thor/$SLURM_JOB_ID
 
 # Create output directory for the job
 if [ ! -d "$JOB_OUTPUT_DIR" ]; then
@@ -40,7 +40,7 @@ fi
 source ~/.bashrc
 
 # Update conda env
-conda env update -f $SCRIPT_DIR/../environment.yml -n research_proj
+conda env update -f environment.yml -n research_proj
 conda run --live-stream -n research_proj patch-package
 
 # Run test script
