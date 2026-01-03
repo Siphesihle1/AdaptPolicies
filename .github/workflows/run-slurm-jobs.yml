@@ -34,7 +34,7 @@ jobs:
             git fetch origin
             git reset --hard $GITHUB_SHA
             
-            for slurm_script in "$SLURM_SCRIPTS_PREFIX/*.slurm"; do
+            for slurm_script in "$SLURM_SCRIPTS_PREFIX"/*.slurm; do
               echo "--- Found $slurm_script ---"
               if [ -f "$slurm_script" ]; then
                 jobname=$(basename -- $slurm-script ".slurm") 
