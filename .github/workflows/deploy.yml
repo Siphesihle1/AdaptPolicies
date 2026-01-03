@@ -1,4 +1,4 @@
-name: Deploy for code changes
+name: Deploy code changes
 
 on:
   push:
@@ -26,9 +26,6 @@ jobs:
       HOME: /home-mscluster/${{ secrets.USER }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4 
-
       - name: SSH into login node and copy environment variables
         env:
           CONDA_PREFIX: ${{ env.HOME }}/.local/conda/envs/research_proj/etc/conda
@@ -52,5 +49,7 @@ jobs:
             cp -v env_vars/activate_env_vars.sh $CONDA_PREFIX/activate.d/env_vars.sh
             cp -v env_vars/deactivate_env_vars.sh $CONDA_PREFIX/deactivate.d/env_vars.sh
 
-      - name: Run slurm jobs
-        uses: ./.github/workflows/run-slurm-jobs.yml
+  run-slurm-jobs:
+    name: Run slurm jobs
+    needs: deploy
+    uses: ./.github/workflows/run-slurm-jobs.yml
