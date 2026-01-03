@@ -5,12 +5,13 @@ on:
     branches:
       - main
     paths:
-      - "src/*.py"
-      - "src/environment.yml"
-      - "src/*.sh"
-      - "alfred/**"
-      - "env/**"
+      - "src/**/*.py"
+      - "src/**/*.sh"
       - "src/slurm-scripts/*.slurm"
+      - "**/requirements.txt"
+      - "**/environment.yml"
+      - "alfred/**/*.py"
+      - "env_vars/**"
 
 permissions:
   contents: read
