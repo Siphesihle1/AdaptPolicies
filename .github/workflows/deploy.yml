@@ -36,7 +36,7 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           envs: ENV_PREFIX,PROJECT_ROOT,GITHUB_SHA
           script: |
-            pwd
+            set -e
             cd $PROJECT_ROOT
             git checkout main
             git stash push -u -m "github-actions-$(date +%s)" || true

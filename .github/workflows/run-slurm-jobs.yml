@@ -42,7 +42,9 @@ jobs:
           host: ${{ secrets.HOSTNAME }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.PRIVATE_KEY }}
+          env: GITHUB_SHA,SLURM_SCRIPT_PATH,PROJECT_ROOT
           script: |
+            set -e
             cd $PROJECT_ROOT
             git checkout main
             git stash push -u -m "github-actions-$(date +%s)" || true
