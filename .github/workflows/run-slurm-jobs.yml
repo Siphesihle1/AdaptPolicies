@@ -27,12 +27,12 @@ jobs:
       max-parallel: 1
       matrix: 
         slurm-script: ${{ fromJson(needs.slurm-scripts-list.outputs.matrix) }}
-        envs: [matrix_env]
+        env: [matrix_env]
         include:
-          - HOSTNAME: ${{ secrets.HOSTNAME }}
-          - USER: ${{ secrets.USER }}
-          - PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          - HOME: /home-mscluster/${{ secrets.USER }}
+          - env: matrix_env
+            HOSTNAME: ${{ secrets.HOSTNAME }}
+            USER: ${{ secrets.USER }}
+            PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
 
     steps:
@@ -41,7 +41,8 @@ jobs:
         env: 
           GITHUB_SHA: ${{ github.sha }}
           SLURM_SCRIPT_PATH: ${{ matrix.slurm-script }}
-          PROJECT_ROOT: ${{ matrix.HOME }}/AdaptPolicies
+          PROJECT_ROOT: /home-mscluster/${{ matrix.USER }}/AdaptPolicies
+          HOME: /home-mscluster/${{ matrix.USER }}
         with: 
           host: ${{ matrix.HOSTNAME }}
           username: ${{ matrix.USER }}
