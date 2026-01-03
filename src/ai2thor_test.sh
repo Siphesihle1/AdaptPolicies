@@ -1,24 +1,22 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+
 # start tmux session
 tmux new -s startx 
 
-conda activate research_proj
-# start X server on DISPLAY 0
-# single X server should be sufficient for multiple instances of THOR
-python startx.py 0  # if this throws errors e.g "(EE) Server terminated with error (1)" or "(EE) already running ..." try a display > 0
+Xvfb :1 \
+  -screen 0 1920x1080x24 \
+  -listen tcp \
+  +extension GLX \
+  +render \
+  -ac
 
 # detach from tmux shell
-# Ctrl+b then d
 tmux detach
 
-# set DISPLAY variable to match X server
-conda activate research_proj
-
 # check THOR
-cd $ALFRED_ROOT
-python scripts/check_thor.py
+python $SCRIPT_DIR/ai2thor_test.py
 
-###############
-## (300, 300, 3)
-## Everything works!!!
+# kill tmux session
+tmux kill-session -t startx

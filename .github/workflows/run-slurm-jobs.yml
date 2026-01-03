@@ -1,0 +1,60 @@
+name: Workflow to run slurm jobs
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  slurm-scripts-list:
+    name: slurm-scripts-list
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: set-matrix
+        run: echo "matrix=$(ls ./src/slurm-scripts/*.slurm | jq -R -s -c 'split("\n")[:-1]')" >> "$GITHUB_OUTPUT"
+
+  run-slurm-job:
+    name: Submit a slurm job 
+    needs: slurm-scripts-list
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix: 
+        slurm-script: ${{ fromJson(needs.slurm-scripts-list.outputs.matrix) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: SSH into login node and submit the job
+        uses: appleboy/ssh-action@v1
+        env: 
+          GITHUB_SHA: ${{ github.sha }}
+          SLURM_SCRIPT_PATH: ${{ matrix.slurm-script }}
+          PROJECT_ROOT: ~/AdaptPolicies
+        with: 
+          host: ${{ secrets.HOSTNAME }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          script: |
+            cd $PROJECT_ROOT
+            git checkout main
+            git stash push -u -m "github-actions-$(date +%s)" || true
+            git fetch origin
+            git reset --hard $GITHUB_SHA
+
+            jobname=$(basename -- $SLURM_SCRIPT_PATH ".slurm") 
+            jobdir=~/slurm-logs/${jobname}
+
+            if [ ! -d "$jobdir" ]; then
+              mkdir $jobdir
+            fi
+
+            sbatch $SLURM_SCRIPT_PATH
+

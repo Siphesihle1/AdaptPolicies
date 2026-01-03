@@ -7,7 +7,7 @@ dependencies:
   - python=3.8
   #alfred
   - xorg-libsm
-  - libxt-conda-x86_64
+  - xorg-libxt
   - xorg-libxrender
   - unzip
   - ffmpeg
@@ -28,3 +28,4 @@ dependencies:
   - pip:
     - packaging==21.3
     - -r ./alfred/requirements.txt
+    - -r ./src/requirements.txt

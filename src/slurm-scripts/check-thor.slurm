@@ -1,6 +1,6 @@
 #!/bin/bash
 # specify a partition
-#SBATCH -p bigbatch
+#SBATCH -p stampede
 # specify number of nodes
 #SBATCH -N 1
 # specify number of cores
@@ -10,11 +10,11 @@
 # specify the wall clock time limit for the job
 ##SBATCH -t 00:10:00
 # specify the job name
-#SBATCH -J ollama-install
+#SBATCH -J check-thor
 # specify the filename to be used for writing output
-#SBATCH -o /home-mscluster/smthethwa/slurm-logs/ollama-test-slurm.%N.%j.out
+#SBATCH -o /home-mscluster/smthethwa/slurm-logs/check-thor/%j.out
 # specify the filename for stderr
-#SBATCH -e /home-mscluster/smthethwa/slurm-logs/ollama-test-slurm.%N.%j.err
+#SBATCH -e /home-mscluster/smthethwa/slurms-logs/check-thor/%j.err
 
 echo ------------------------------------------------------
 echo -n 'Job is running on node ' $SLURM_JOB_NODELIST
@@ -27,24 +27,21 @@ echo SLURM: number of cores is $SLURM_NTASKS
 echo SLURM: job name is $SLURM_JOB_NAME
 echo ------------------------------------------------------
 
-OLLAMA_PREFIX=~/.local/ollama
-OLLAMA_EXEC=$OLLAMA_PREFIX/bin/ollama
-MODEL="deepseek-r1:14b"
-
 cd $SLURM_SUBMIT_DIR
 
-# Run the background, in a way that survives to the next step
-nohup $OLLAMA_EXEC serve > ollama.log 2>&1 &
-# Block using the ready endpoint
-time curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://localhost:11434
+JOB_OUTPUT_DIR=~/outputs/check-thor/$SLURM_JOB_ID
 
-$OLLAMA_EXEC pull $MODEL
+# Create output directory for the job
+if [ ! -d "$JOB_OUTPUT_DIR" ]; then
+  mkdir -p $JOB_OUTPUT_DIR
+fi
 
-echo -e "\nTesting the deepseek model..."
+# Load conda to environment
+source ~/.bashrc
 
-TEST_PROMPT="Write a python function to print the names of all the files in a directory"
+# Update conda env
+conda env update -f $SCRIPT_DIR/../environment.yml -n research_proj
+conda run --live-stream -n research_proj patch-package
 
-$OLLAMA_EXEC run $MODEL --think=false $TEST_PROMPT 
-
-$OLLAMA_EXEC run $MODEL --think $TEST_PROMPT 
-
+# Run test script
+conda run --live-stream -n research_proj -- JOB_OUTPUT_DIR=$JOB_OUTPUT_DIR bash src/ai2thor_test.sh

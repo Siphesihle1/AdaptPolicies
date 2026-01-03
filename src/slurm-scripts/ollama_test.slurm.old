@@ -1,0 +1,50 @@
+#!/bin/bash
+# specify a partition
+#SBATCH -p bigbatch
+# specify number of nodes
+#SBATCH -N 1
+# specify number of cores
+##SBATCH -n 1
+# specify memory pool for all cores
+##SBATCH --mem 10
+# specify the wall clock time limit for the job
+##SBATCH -t 00:10:00
+# specify the job name
+#SBATCH -J ollama-install
+# specify the filename to be used for writing output
+#SBATCH -o /home-mscluster/smthethwa/slurm-logs/ollama-install-slurm.%N.%j.out
+# specify the filename for stderr
+#SBATCH -e /home-mscluster/smthethwa/slurm-logs/ollama-install-slurm.%N.%j.err
+
+echo ------------------------------------------------------
+echo -n 'Job is running on node ' $SLURM_JOB_NODELIST
+echo ------------------------------------------------------
+echo SLURM: sbatch is running on $SLURM_SUBMIT_HOST
+echo SLURM: job ID is $SLURM_JOB_ID
+echo SLURM: submit directory is $SLURM_SUBMIT_DIR
+echo SLURM: number of nodes allocated is $SLURM_JOB_NUM_NODES
+echo SLURM: number of cores is $SLURM_NTASKS
+echo SLURM: job name is $SLURM_JOB_NAME
+echo ------------------------------------------------------
+
+OLLAMA_PREFIX=~/.local/ollama
+OLLAMA_EXEC=$OLLAMA_PREFIX/bin/ollama
+MODEL="deepseek-r1:14b"
+
+cd $SLURM_SUBMIT_DIR
+
+# Run the background, in a way that survives to the next step
+nohup $OLLAMA_EXEC serve > ollama.log 2>&1 &
+# Block using the ready endpoint
+time curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://localhost:11434
+
+$OLLAMA_EXEC pull $MODEL
+
+echo -e "\nTesting the deepseek model..."
+
+TEST_PROMPT="Write a python function to print the names of all the files in a directory"
+
+$OLLAMA_EXEC run $MODEL --think=false $TEST_PROMPT 
+
+$OLLAMA_EXEC run $MODEL --think $TEST_PROMPT 
+
