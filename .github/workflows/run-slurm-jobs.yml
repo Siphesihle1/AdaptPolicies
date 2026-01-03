@@ -31,9 +31,6 @@ jobs:
         slurm-script: ${{ fromJson(needs.slurm-scripts-list.outputs.matrix) }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: SSH into login node and submit the job
         uses: appleboy/ssh-action@v1
         env: 
@@ -44,7 +41,7 @@ jobs:
           host: ${{ secrets.HOSTNAME }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.PRIVATE_KEY }}
-          env: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPT_PATH
+          envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPT_PATH
           script: |
             echo '--- Syncing local repo ---'
             cd $PROJECT_ROOT
