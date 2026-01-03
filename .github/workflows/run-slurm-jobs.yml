@@ -8,60 +8,44 @@ permissions:
   id-token: write
 
 jobs:
-  slurm-scripts-list:
-    name: slurm-scripts-list
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: set-matrix
-        run: echo "matrix=$(ls ./src/slurm-scripts/*.slurm | jq -R -s -c 'split("\n")[:-1]')" >> "$GITHUB_OUTPUT"
-
   run-slurm-job:
     name: Submit a slurm job 
-    needs: slurm-scripts-list
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      max-parallel: 1
-      matrix: 
-        slurm-script: ${{ fromJson(needs.slurm-scripts-list.outputs.matrix) }}
-        env: [matrix_env]
-        include:
-          - env: matrix_env
-            HOSTNAME: HOSTNAME
-            USER: USER
-            PRIVATE_KEY: PRIVATE_KEY
+    env:
+      HOME: /home-mscluster/${{ secrets.USER }}
 
     steps:
       - name: SSH into login node and submit the job
         uses: appleboy/ssh-action@v1
         env: 
           GITHUB_SHA: ${{ github.sha }}
-          SLURM_SCRIPT_PATH: ${{ matrix.slurm-script }}
-          PROJECT_ROOT: /home-mscluster/${{ secrets[matrix.USER] }}/AdaptPolicies
-          HOME: /home-mscluster/${{ secrets[matrix.USER] }}
+          PROJECT_ROOT: ${{ env.HOME }}/AdaptPolicies
+          SLURM_SCRIPTS_PREFIX: ${{ env.HOME }}/AdaptPolicies/src/slurm-scripts
+          SLURM_LOGS_PREFIX: ${{ env.HOME }}/slurm-logs
         with: 
-          host: ${{ secrets[matrix.HOSTNAME] }}
-          username: ${{ secrets[matrix.USER] }}
-          key: ${{ secrets[matrix.PRIVATE_KEY] }}
-          envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPT_PATH
+          host: ${{ secrets.HOSTNAME }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPTS_PREFIX,SLURM_LOGS_PREFIX
           script: |
             echo '--- Syncing local repo ---'
             cd $PROJECT_ROOT
             git stash push -u -m "github-actions-$(date +%s)"
             git fetch origin
             git reset --hard $GITHUB_SHA
-
-            jobname=$(basename -- $SLURM_SCRIPT_PATH ".slurm") 
-            jobdir=$HOME/slurm-logs/${jobname}
-
-            if [ ! -d "$jobdir" ]; then
-              echo '--- Creating job dir ---'
-              mkdir $jobdir
-            fi
             
-            echo '--- Submitting job $jobname ---'
-            sbatch $SLURM_SCRIPT_PATH
+            for slurm_script in "$SLURM_SCRIPTS_PREFIX/*.slurm"; do
+              if [ -f "$slurm_script" ]; then
+                jobname=$(basename -- $slurm-script ".slurm") 
+                jobdir=$SLURM_LOGS_PREFIX/${jobname}
+
+                if [ ! -d "$jobdir" ]; then
+                  echo '--- Creating job dir for $jobname ---'
+                  mkdir $jobdir
+                fi
+                
+                echo '--- Submitting job $jobname ---'
+                sbatch $slurm-script
+              fi
+            done
 
