@@ -50,7 +50,7 @@ jobs:
             cp -v env_vars/activate_env_vars.sh $CONDA_PREFIX/activate.d/env_vars.sh
             cp -v env_vars/deactivate_env_vars.sh $CONDA_PREFIX/deactivate.d/env_vars.sh
 
-            for slurm_script in "$SLURM_SCRIPTS_PREFIX"/*.slurm; do
+            for slurm_script in "$SLURM_SCRIPTS_PREFIX"/*.sh; do
               echo "--- Found $slurm_script ---"
               if [ -f "$slurm_script" ]; then
                 jobname=$(basename -- "$slurm_script" ".slurm") 
