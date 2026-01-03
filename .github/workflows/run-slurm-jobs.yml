@@ -53,7 +53,7 @@ jobs:
             for slurm_script in "$SLURM_SCRIPTS_PREFIX"/*.sh; do
               echo "--- Found $slurm_script ---"
               if [ -f "$slurm_script" ]; then
-                jobname=$(basename -- "$slurm_script" ".slurm") 
+                jobname=$(basename -- "$slurm_script" ".sh") 
                 jobdir=$SLURM_LOGS_PREFIX/$jobname
 
                 if [ ! -d "$jobdir" ]; then

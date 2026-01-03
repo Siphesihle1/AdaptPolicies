@@ -16,6 +16,8 @@
 # specify the filename for stderr
 #SBATCH -e /home-mscluster/smthethwa/slurms-logs/check-thor/%j.err
 
+echo 'test'
+
 echo ------------------------------------------------------
 echo -n 'Job is running on node ' $SLURM_JOB_NODELIST
 echo ------------------------------------------------------
