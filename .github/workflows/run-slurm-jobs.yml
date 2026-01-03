@@ -37,7 +37,7 @@ jobs:
         env: 
           GITHUB_SHA: ${{ github.sha }}
           SLURM_SCRIPT_PATH: ${{ matrix.slurm-script }}
-          PROJECT_ROOT: ~/AdaptPolicies
+          PROJECT_ROOT: $HOME/AdaptPolicies
         with: 
           host: ${{ secrets.HOSTNAME }}
           username: ${{ secrets.USER }}
@@ -50,7 +50,7 @@ jobs:
             git reset --hard $GITHUB_SHA
 
             jobname=$(basename -- $SLURM_SCRIPT_PATH ".slurm") 
-            jobdir=~/slurm-logs/${jobname}
+            jobdir=$HOME/slurm-logs/${jobname}
 
             if [ ! -d "$jobdir" ]; then
               mkdir $jobdir

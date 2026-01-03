@@ -25,8 +25,8 @@ jobs:
     steps:
       - name: SSH into login node and copy environment variables
         env:
-          CONDA_PREFIX: ~/.local/conda/envs/research_proj/etc/conda
-          PROJECT_ROOT: ~/AdaptPolicies
+          CONDA_PREFIX: $HOME/.local/conda/envs/research_proj/etc/conda
+          PROJECT_ROOT: $HOME/AdaptPolicies
           GITHUB_SHA: ${{ github.sha }}
         uses: appleboy/ssh-action@v1
         with:
