@@ -22,12 +22,14 @@ jobs:
   deploy:
     name: Submit a slurm job
     runs-on: ubuntu-latest
+    env:
+      HOME: /home-mscluster/${{ secrets.USER }}
 
     steps:
       - name: SSH into login node and copy environment variables
         env:
-          CONDA_PREFIX: $HOME/.local/conda/envs/research_proj/etc/conda
-          PROJECT_ROOT: $HOME/AdaptPolicies
+          CONDA_PREFIX: ${{ env.HOME }}/.local/conda/envs/research_proj/etc/conda
+          PROJECT_ROOT: ${{ env.HOME }}/AdaptPolicies
           GITHUB_SHA: ${{ github.sha }}
         uses: appleboy/ssh-action@v1
         with:
@@ -36,7 +38,6 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           envs: ENV_PREFIX,PROJECT_ROOT,GITHUB_SHA
           script: |
-            set -e
             cd $PROJECT_ROOT
             git checkout main
             git stash push -u -m "github-actions-$(date +%s)" || true
