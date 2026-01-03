@@ -39,13 +39,15 @@ jobs:
           envs: ENV_PREFIX,PROJECT_ROOT,GITHUB_SHA
           script: |
             cd $PROJECT_ROOT
-            git checkout main
-            git stash push -u -m "github-actions-$(date +%s)" || true
+
+            echo '--- Syncing local repo ---'
+            git stash push -u -m "github-actions-$(date +%s)"
             git fetch origin
             git reset --hard $GITHUB_SHA
-
-            cp env_vars/activate_env_vars.sh $CONDA_PREFIX/activate.d/env_vars.sh
-            cp env_vars/deactivate_env_vars.sh $CONDA_PREFIX/deactivate.d/env_vars.sh
+            
+            echo '--- Copying env_vars files to conda prefix ---'
+            cp -v env_vars/activate_env_vars.sh $CONDA_PREFIX/activate.d/env_vars.sh
+            cp -v env_vars/deactivate_env_vars.sh $CONDA_PREFIX/deactivate.d/env_vars.sh
 
       - name: Run slurm jobs
         uses: ./.github/workflows/run-slurm-jobs.yml
