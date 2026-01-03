@@ -2,6 +2,7 @@
 #SBATCH --partition=stampede
 #SBATCH --job-name=check-thor
 #SBATCH --output=/home-mscluster/smthethwa/slurm-logs/check-thor/%j.out
+#SBATCH --error=/home-mscluster/smthethwa/slurm-logs/check-thor/%j.err
 
 echo 'test'
 #

@@ -62,7 +62,8 @@ jobs:
                 fi
                 
                 echo "--- Submitting job $jobname ---"
-                sbatch $slurm_script
+                job_id=sbatch $slurm_script | awk '{print $NF}'
+                scontrol show job $job_id
               fi
             done
 
