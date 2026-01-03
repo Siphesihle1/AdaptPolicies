@@ -37,15 +37,15 @@ jobs:
             for slurm_script in "$SLURM_SCRIPTS_PREFIX"/*.slurm; do
               echo "--- Found $slurm_script ---"
               if [ -f "$slurm_script" ]; then
-                jobname=$(basename -- $slurm-script ".slurm") 
-                jobdir=$SLURM_LOGS_PREFIX/${jobname}
+                jobname=$(basename -- "$slurm_script" ".slurm") 
+                jobdir=$SLURM_LOGS_PREFIX/$jobname
 
                 if [ ! -d "$jobdir" ]; then
-                  echo '--- Creating job dir for $jobname ---'
+                  echo "--- Creating job dir for $jobname ---"
                   mkdir $jobdir
                 fi
                 
-                echo '--- Submitting job $jobname ---'
+                echo "--- Submitting job $jobname ---"
                 sbatch $slurm-script
               fi
             done
