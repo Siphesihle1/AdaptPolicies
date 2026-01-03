@@ -36,7 +36,7 @@ jobs:
           host: ${{ secrets.HOSTNAME }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.PRIVATE_KEY }}
-          envs: ENV_PREFIX,PROJECT_ROOT,GITHUB_SHA
+          envs: ENV_PREFIX,PROJECT_ROOT,GITHUB_SHA,CONDA_PREFIX
           script: |
             cd $PROJECT_ROOT
 
