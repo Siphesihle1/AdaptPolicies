@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - '.github/workflows/**'
       - "src/**/*.py"
       - "src/**/*.sh"
       - "src/slurm-scripts/*.slurm"
