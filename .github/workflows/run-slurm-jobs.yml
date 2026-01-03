@@ -35,6 +35,7 @@ jobs:
             git reset --hard $GITHUB_SHA
             
             for slurm_script in "$SLURM_SCRIPTS_PREFIX/*.slurm"; do
+              echo "--- Found $slurm_script ---"
               if [ -f "$slurm_script" ]; then
                 jobname=$(basename -- $slurm-script ".slurm") 
                 jobdir=$SLURM_LOGS_PREFIX/${jobname}
