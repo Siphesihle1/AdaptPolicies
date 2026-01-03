@@ -46,7 +46,7 @@ jobs:
                 fi
                 
                 echo "--- Submitting job $jobname ---"
-                sbatch $slurm-script
+                sbatch $slurm_script
               fi
             done
 
