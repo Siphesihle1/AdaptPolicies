@@ -30,10 +30,9 @@ jobs:
         env: [matrix_env]
         include:
           - env: matrix_env
-            HOSTNAME: ${{ secrets.HOSTNAME }}
-            USER: ${{ secrets.USER }}
-            PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-
+            HOSTNAME: HOSTNAME
+            USER: USER
+            PRIVATE_KEY: PRIVATE_KEY
 
     steps:
       - name: SSH into login node and submit the job
@@ -41,12 +40,12 @@ jobs:
         env: 
           GITHUB_SHA: ${{ github.sha }}
           SLURM_SCRIPT_PATH: ${{ matrix.slurm-script }}
-          PROJECT_ROOT: /home-mscluster/${{ matrix.USER }}/AdaptPolicies
-          HOME: /home-mscluster/${{ matrix.USER }}
+          PROJECT_ROOT: /home-mscluster/${{ secrets[matrix.USER] }}/AdaptPolicies
+          HOME: /home-mscluster/${{ secrets[matrix.USER] }}
         with: 
-          host: ${{ matrix.HOSTNAME }}
-          username: ${{ matrix.USER }}
-          key: ${{ matrix.PRIVATE_KEY }}
+          host: ${{ secrets[matrix.HOSTNAME] }}
+          username: ${{ secrets[matrix.USER] }}
+          key: ${{ secrets[matrix.PRIVATE_KEY] }}
           envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPT_PATH
           script: |
             echo '--- Syncing local repo ---'
