@@ -12,9 +12,12 @@ SPLITS_FILE = f"{ALFRED_DATA_DIR}/splits/oct21.json"
 
 
 class AlfredThorEnv(ThorEnv):
-    def __init__(self, headless: bool):
+    def __init__(self, headless: bool, x_display: Optional[str] = None):
         super().__init__(
-            player_screen_height=600, player_screen_width=600, headless=headless
+            player_screen_height=600,
+            player_screen_width=600,
+            headless=headless,
+            x_display=x_display or "0",
         )
 
         self.task_counter = 0
