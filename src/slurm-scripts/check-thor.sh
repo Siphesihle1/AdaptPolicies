@@ -39,4 +39,4 @@ conda run --live-stream -n research_proj patch-package
 conda run --live-stream -n research_proj JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash src/ai2thor_test.sh
 
 # Copy results back to home directory
-mv -r $LOCAL_OUTPUT_DIR/* $JOB_OUTPUT_DIR/
+mv $LOCAL_OUTPUT_DIR/* $JOB_OUTPUT_DIR/
