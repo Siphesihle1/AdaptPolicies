@@ -3,7 +3,7 @@ from PIL import Image
 from alfred_thor_env import AlfredThorEnv
 
 x_display = os.getenv("DISPLAY") or ":0"
-env = AlfredThorEnv(headless=True, x_display=x_display[1:])
+env = AlfredThorEnv(headless=False, x_display=x_display[1:])
 task = env.load_next_task_scene()
 env.stop()
 
