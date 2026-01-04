@@ -17,10 +17,15 @@ echo ------------------------------------------------------
 cd $SLURM_SUBMIT_DIR
 
 JOB_OUTPUT_DIR=$HOME/outputs/check-thor/$SLURM_JOB_ID
+LOCAL_OUTPUT_DIR=/scratch/smthethwa/outputs/check-thor/$SLURM_JOB_ID
 
 # Create output directory for the job
 if [ ! -d "$JOB_OUTPUT_DIR" ]; then
   mkdir -p $JOB_OUTPUT_DIR
+fi
+
+if [ ! -d "$LOCAL_OUTPUT_DIR" ]; then
+  mkdir -p $LOCAL_OUTPUT_DIR
 fi
 
 # Load conda to environment
@@ -31,4 +36,7 @@ conda env update -f environment.yml -n research_proj
 conda run --live-stream -n research_proj patch-package
 
 # Run test script
-conda run --live-stream -n research_proj JOB_OUTPUT_DIR=$JOB_OUTPUT_DIR bash src/ai2thor_test.sh
+conda run --live-stream -n research_proj JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash src/ai2thor_test.sh
+
+# Copy results back to home directory
+mv -r $LOCAL_OUTPUT_DIR/* $JOB_OUTPUT_DIR/
