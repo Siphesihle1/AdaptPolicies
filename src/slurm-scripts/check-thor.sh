@@ -31,4 +31,4 @@ conda env update -f environment.yml -n research_proj
 conda run --live-stream -n research_proj patch-package
 
 # Run test script
-conda run --live-stream -n research_proj -- JOB_OUTPUT_DIR=$JOB_OUTPUT_DIR bash src/ai2thor_test.sh
+conda run --live-stream -n research_proj JOB_OUTPUT_DIR=$JOB_OUTPUT_DIR bash src/ai2thor_test.sh
