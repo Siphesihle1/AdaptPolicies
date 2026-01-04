@@ -8,6 +8,7 @@ task = env.load_next_task_scene()
 env.stop()
 
 if env.initial_event is not None:
-    cv2img = env.initial_event.cv2img
-    pil_img = Image.fromarray(cv2img)
-    pil_img.save(f"{os.getenv('JOB_OUTPUT_DIR')}/initial_scene.png")
+    frame = env.initial_event.frame
+    if frame is not None:
+        pil_img = Image.fromarray(frame)
+        pil_img.save(f"{os.getenv('JOB_OUTPUT_DIR')}/initial_scene.png")
