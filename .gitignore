@@ -218,3 +218,4 @@ __marimo__/
 .vscode
 alfred/data
 outputs
+**/*.db

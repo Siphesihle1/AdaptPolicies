@@ -34,11 +34,15 @@ jobs:
           PROJECT_ROOT: ${{ env.HOME }}/AdaptPolicies
           SLURM_SCRIPTS_PREFIX: ${{ env.HOME }}/AdaptPolicies/src/slurm-scripts
           SLURM_LOGS_PREFIX: ${{ env.HOME }}/slurm-logs
+          OLLAMA_CLOUD_API_KEY: ${{ secrets.OLLAMA_CLOUD_API_KEY }}
+          PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }} 
+
         with: 
           host: ${{ secrets.HOSTNAME }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.PRIVATE_KEY }}
-          envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPTS_PREFIX,SLURM_LOGS_PREFIX,CONDA_PREFIX
+          envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPTS_PREFIX,SLURM_LOGS_PREFIX,CONDA_PREFIX,OLLAMA_CLOUD_API_KEY,PROJECT_NAME,WANDB_API_KEY
           script: |
             echo '--- Syncing local repo ---'
             cd $PROJECT_ROOT
@@ -49,6 +53,18 @@ jobs:
             echo '--- Copying env_vars files to conda prefix ---'
             cp -v env_vars/activate_env_vars.sh $CONDA_PREFIX/activate.d/env_vars.sh
             cp -v env_vars/deactivate_env_vars.sh $CONDA_PREFIX/deactivate.d/env_vars.sh
+            
+            cat >> $CONDA_PREFIX/activate.d/env_vars.sh <<EOF
+            export OLLAMA_CLOUD_API_KEY=$OLLAMA_CLOUD_API_KEY
+            export PROJECT_NAME=$PROJECT_NAME
+            export WANDB_API_KEY=$WANDB_API_KEY
+            EOF
+
+            cat >> $CONDA_PREFIX/deactivate.d/env_vars.sh <<EOF
+            unset OLLAMA_CLOUD_API_KEY
+            unset PROJECT_NAME
+            unset WANDB_API_KEY
+            EOF
 
             for slurm_script in "$SLURM_SCRIPTS_PREFIX"/*.sh; do
               echo "--- Found $slurm_script ---"
