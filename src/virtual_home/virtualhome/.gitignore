@@ -172,4 +172,6 @@ data/*
 .vscode/
 **/macos_exec.*/
 **/linux_exec.*/
+**/linux_exec.*
 **/windows_exec.*/
+**/windows_exec.*

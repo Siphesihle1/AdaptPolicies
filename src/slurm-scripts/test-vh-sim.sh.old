@@ -32,7 +32,7 @@ fi
 source ~/.bashrc
 
 # Update conda env
-conda env update -f environment.yml -n research_proj
+# conda env update -f environment.yml -n research_proj
 
 # Run setup script
 conda run --live-stream -n research_proj JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash src/test-scripts/virtual_home_test.sh

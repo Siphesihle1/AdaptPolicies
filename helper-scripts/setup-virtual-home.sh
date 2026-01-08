@@ -2,12 +2,12 @@
 
 shopt -s nullglob
 
-echo "--- Installing the virtualhome package ---"
+# echo "--- Installing the virtualhome package ---"
 
-cd $VIRTUALHOME_DIR
+# cd $VIRTUALHOME_DIR
 
 # Install dependencies
-pip install -e .
+# pip install -e .
 
 # Install the simulator
 echo "--- Detected the $OSTYPE operating system ---"

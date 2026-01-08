@@ -20,7 +20,7 @@ cd $SLURM_SUBMIT_DIR
 source ~/.bashrc
 
 # Update conda env
-conda env update -f environment.yml -n research_proj
+# conda env update -f environment.yml -n research_proj
 
 # Run setup script
 conda run --live-stream -n research_proj bash helper-scripts/setup-virtual-home.sh
