@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=stampede
+#SBATCH --partition=bigbatch
 #SBATCH --job-name=test-vh-sim
 #SBATCH --output=/home-mscluster/smthethwa/slurm-logs/test-vh-sim/%j.out
 #SBATCH --error=/home-mscluster/smthethwa/slurm-logs/test-vh-sim/%j.err
