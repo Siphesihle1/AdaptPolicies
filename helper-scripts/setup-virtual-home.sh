@@ -13,10 +13,13 @@ pip install -e .
 echo "--- Detected the $OSTYPE operating system ---"
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
     SIM_NAME="linux_exec"
+    SUFFIX="x86_64"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     SIM_NAME="macos_exec"
+    SUFFIX="app"
 elif [[ "$OSTYPE" == "windows" ]]; then
     SIM_NAME="windows_exec"
+    SUFFIX="exe"
 else
     echo "OS not recognized"
 fi
@@ -32,12 +35,12 @@ else
 fi
 
 echo "--- Unzipping simulator ---"
-SIM_DIR_PATTERN="${VIRTUALHOME_ROOT}/simulation/${SIM_NAME}.*${SIM_VERSION_NUMBER##v}*/"
-SIM_DIR=($SIM_DIR_PATTERN)
+SIM_EXE_PATTERN="${VIRTUALHOME_ROOT}/simulation/${SIM_NAME}.*${SIM_VERSION_NUMBER##v}*.${SUFFIX}"
+SIM_EXE=($SIM_EXE_PATTERN)
 
-if (( "${#SIM_DIR[@]}" > 0 )); then
+if (( "${#SIM_EXE[@]}" > 0 )); then
   echo "--- Simulation folder already exists, skipping creation ---"
 else
-  unzip ~/Downloads/${SIM_NAME}.${SIM_VERSION_NUMBER}.zip -d ${VIRTUALHOME_ROOT}/simulation
+  unzip -o ~/Downloads/${SIM_NAME}.${SIM_VERSION_NUMBER}.zip -d ${VIRTUALHOME_ROOT}/simulation
   echo "--- Executable moved to simulation folder ---"
 fi
