@@ -54,7 +54,7 @@ scene_wo_cat = get_scene_cameras(comm, [-4])
 success, message = comm.expand_scene(graph)
 scene_w_cat = get_scene_cameras(comm, [-4])
 
-cat_scene_img = display_grid_img(scene_wo_cat + scene_wo_cat, nrows=1)
+cat_scene_img = display_grid_img(scene_wo_cat + scene_w_cat, nrows=1)
 cat_scene_img.save(f"{os.getenv('JOB_OUTPUT_DIR')}/cat_scene.png")
 
 # Adding characters
