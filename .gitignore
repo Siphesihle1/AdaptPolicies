@@ -219,3 +219,9 @@ __marimo__/
 alfred/data
 outputs
 **/*.db
+**/*.txt
+!**/requirements.txt
+Dockerfile
+docker-compose.yml
+virtualhome.zip
+**/.DS_Store

@@ -27,5 +27,5 @@ dependencies:
   - setuptools<71
   - pip:
     - packaging==21.3
-    - -r ./alfred/requirements.txt
+    # - -r ./alfred/requirements.txt
     - -r ./src/requirements.txt
