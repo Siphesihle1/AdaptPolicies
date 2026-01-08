@@ -1,0 +1,44 @@
+#!/bin/bash
+#SBATCH --partition=stampede
+#SBATCH --job-name=test-vh-sim
+#SBATCH --output=/home-mscluster/smthethwa/slurm-logs/test-vh-sim/%j.out
+#SBATCH --error=/home-mscluster/smthethwa/slurm-logs/test-vh-sim/%j.err
+
+echo ------------------------------------------------------
+echo "Job is running on node  $SLURM_JOB_NODELIST"
+echo ------------------------------------------------------
+echo SLURM: sbatch is running on $SLURM_SUBMIT_HOST
+echo SLURM: job ID is $SLURM_JOB_ID
+echo SLURM: submit directory is $SLURM_SUBMIT_DIR
+echo SLURM: number of nodes allocated is $SLURM_JOB_NUM_NODES
+echo SLURM: job name is $SLURM_JOB_NAME
+echo ------------------------------------------------------
+
+cd $SLURM_SUBMIT_DIR
+
+JOB_OUTPUT_DIR=$HOME/outputs/test-vh-sim/$SLURM_JOB_ID
+LOCAL_OUTPUT_DIR=/scratch/smthethwa/outputs/test-vh-sim/$SLURM_JOB_ID
+
+# Create output directory for the job
+if [ ! -d "$JOB_OUTPUT_DIR" ]; then
+  mkdir -p $JOB_OUTPUT_DIR
+fi
+
+if [ ! -d "$LOCAL_OUTPUT_DIR" ]; then
+  mkdir -p $LOCAL_OUTPUT_DIR
+fi
+
+# Load conda to environment
+source ~/.bashrc
+
+# Update conda env
+conda env update -f environment.yml -n research_proj
+
+# Run setup script
+conda run --live-stream -n research_proj JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash src/test-scripts/virtual_home_test.sh
+
+# Copy results back to home directory
+mv $LOCAL_OUTPUT_DIR/* $JOB_OUTPUT_DIR/
+
+echo "-- Job Completed --"
+

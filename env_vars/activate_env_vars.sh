@@ -11,3 +11,4 @@ export LIBGL_ALWAYS_INDIRECT=0
 export AI2THOR_PREFIX=/tmp
 export OLLAMA_HOST=http://localhost:11434
 export VIRTUALHOME_SIM_VERSION=v2.0/v2.3.0
+export SIM_PORT=8082
