@@ -9,7 +9,7 @@ SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 
 # Block using the ready endpoint
 echo "--- Waiting for VirtualHome Simulator to be ready... ---"
-time curl --retry 60 --retry-connrefused -sf http://127.0.0.1:$SIM_PORT
+time curl --retry 360 --retry-connrefused --retry-delay 2 ysf http://127.0.0.1:$SIM_PORT
 
 # Run test script
 echo "--- Running VirtualHome Test Script ---"
