@@ -9,10 +9,9 @@ class ProgPromptEnvironment(VHEnvironment):
     def __init__(
         self, env_id: int, initial_room: str, task: VHTask, log_file: TextIOWrapper
     ):
-        super().__init__(env_id, initial_room, task, log_file)
-
         self.objs = ""
         self.actions_to_omit = [("grab", "wallphone")]
+        super().__init__(env_id, initial_room, task, log_file)
 
     @override
     def get_current_state(self):
