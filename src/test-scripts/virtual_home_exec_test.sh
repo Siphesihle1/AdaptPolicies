@@ -12,8 +12,7 @@ time curl --retry 360 --retry-connrefused --retry-delay 2 -sf http://127.0.0.1:$
 
 # Start ollama server
 echo '--- Starting ollama server ---'
-OLLAMA_SERVER_PID=$(bash $PROJECT_ROOT/helper-scripts/start_ollama.sh)
-echo "--- Ollama server started with PID: ${OLLAMA_SERVER_PID} ---" 
+bash $PROJECT_ROOT/helper-scripts/start_ollama.sh
 
 # Run test script
 echo "--- Running VirtualHome Test Script ---"
