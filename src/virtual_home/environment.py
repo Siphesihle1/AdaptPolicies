@@ -67,7 +67,7 @@ class VHEnvironment:
             N(self.graph).id(self.agent_in_roomid).get_first()["class_name"]
         )
         self.agent_has_obj: List[str] = (  # pyright: ignore
-            N(self.graph).id(*self.agent_has_objid).select("class_name")
+            N(self.graph).id_in(*self.agent_has_objid).select("class_name")
         )
         self.obj_ids_close: List[str] = (  # pyright: ignore
             E(self.graph).from_(self.agent).relation("CLOSE").select("to_id")

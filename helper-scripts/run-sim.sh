@@ -7,9 +7,3 @@ nohup xvfb-run -a \
   ${VIRTUALHOME_ROOT}/simulation/linux_exec.*${SIM_VERSION_NUMBER}.x86_64 \
   -batchmode -http-port=$SIM_PORT -logFile Player.log > $HOME/vh_sim.log 2>&1 &
 
-WRAPPER_PID=$!
-
-PID=$(pgrep -P $WRAPPER_PID 'Xvfb')
-
-echo $PID
-
