@@ -1,6 +1,5 @@
 setuptools<71
 matplotlib
-# patch-package
 openai>=1.0.0
 ollama
 weave

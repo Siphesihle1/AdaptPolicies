@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --partition=stampede
-#SBATCH --job-name=check-thor
-#SBATCH --output=/home-mscluster/smthethwa/slurm-logs/check-thor/%j.out
-#SBATCH --error=/home-mscluster/smthethwa/slurm-logs/check-thor/%j.err
+#SBATCH --partition=bigbatch
+#SBATCH --job-name=test-vh-sim-exec
+#SBATCH --output=/home-mscluster/smthethwa/slurm-logs/test-vh-sim-exec/%j.out
+#SBATCH --error=/home-mscluster/smthethwa/slurm-logs/test-vh-sim-exec/%j.err
 
 echo ------------------------------------------------------
 echo "Job is running on node  $SLURM_JOB_NODELIST"
@@ -16,8 +16,8 @@ echo ------------------------------------------------------
 
 cd $SLURM_SUBMIT_DIR
 
-JOB_OUTPUT_DIR=$HOME/outputs/check-thor/$SLURM_JOB_ID
-LOCAL_OUTPUT_DIR=/scratch/smthethwa/outputs/check-thor/$SLURM_JOB_ID
+JOB_OUTPUT_DIR=$HOME/outputs/test-vh-sim-exec/$SLURM_JOB_ID
+LOCAL_OUTPUT_DIR=/scratch/smthethwa/outputs/test-vh-sim-exec/$SLURM_JOB_ID
 
 # Create output directory for the job
 if [ ! -d "$JOB_OUTPUT_DIR" ]; then
@@ -32,13 +32,13 @@ fi
 source ~/.bashrc
 
 # Update conda env
-conda env update -f environment.yml -n research_proj
-conda run --live-stream -n research_proj patch-package
+# conda env update -f environment.yml -n research_proj
 
-# Run test script
-conda run --live-stream -n research_proj JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash src/test-scripts/ai2thor_test.sh
+# Run setup script
+conda run --live-stream -n research_proj JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash src/test-scripts/virtual_home_exec_test.sh
 
 # Copy results back to home directory
 mv $LOCAL_OUTPUT_DIR/* $JOB_OUTPUT_DIR/
 
 echo "-- Job Completed --"
+

@@ -5,7 +5,6 @@ channels:
   - nvidia
 dependencies:
   - python=3.10
-  #alfred
   - xorg-libsm
   - xorg-libxt
   - xorg-libxrender
@@ -27,5 +26,4 @@ dependencies:
   - setuptools<71
   - pip:
     - packaging==21.3
-    # - -r ./alfred/requirements.txt
     - -r ./src/requirements.txt
