@@ -11,7 +11,7 @@ echo  "--- VirtualHome Simulator PID: $SIM_PID ---"
 
 # Block using the ready endpoint
 echo "--- Waiting for VirtualHome Simulator to be ready... ---"
-time curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://127.0.0.1:$SIM_PORT
+time curl --retry 60 --retry-connrefused -sf http://127.0.0.1:$SIM_PORT
 
 # Run test script
 echo "--- Running VirtualHome Test Script ---"
