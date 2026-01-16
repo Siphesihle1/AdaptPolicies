@@ -32,10 +32,10 @@ from virtual_home.actions import (
     WalkForward,
     StandUp,
 )
-from progprompt.environment import ProgPromptEnvironment
+from methods.progprompt.environment import ProgPromptEnvironment
 from virtual_home.task import VHTask
 
-from subtasks import SUBTASKS
+from .subtasks import SUBTASKS
 
 """
 
