@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, TYPE_CHECKING
 import copy
 
-from .environment import VHEnvironment
+if TYPE_CHECKING:
+    from .environment import VHEnvironment
 
 
 class VHTask:
@@ -37,7 +38,7 @@ class VHTask:
     def terminate_current_subtask(self, value: bool):
         self._skip_actions = value
 
-    def finish(self, env: VHEnvironment):
+    def finish(self, env: "VHEnvironment"):
         # Adapted from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_execute.py#L160
         final_state = copy.deepcopy(env.graph)
         initial_state = copy.deepcopy(env.initial_state)
