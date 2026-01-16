@@ -25,7 +25,6 @@ class VHEnvironment:
         )
         self.images: List[MatLike] = []
         self.time_step = 0
-        self.obj_ids_for_adding_states = get_obj_ids_for_adding_states(self.graph)
         self.nodes_with_additonal_states = {}
         self.task = task
         self.actions_to_omit: List[Tuple[str, ...]] = []
@@ -45,6 +44,8 @@ class VHEnvironment:
         self.images.append(im[0])
 
         self.initial_state = self.graph
+
+        self.obj_ids_for_adding_states = get_obj_ids_for_adding_states(self.graph)
 
         self.initilialize_executor()
 
