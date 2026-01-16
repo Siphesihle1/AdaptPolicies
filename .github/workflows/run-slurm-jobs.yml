@@ -45,9 +45,9 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPTS_PREFIX,SLURM_LOGS_PREFIX,CONDA_PREFIX,OLLAMA_CLOUD_API_KEY,PROJECT_NAME,WANDB_API_KEY
           script: |
-            echo '--- Syncing local repo ---'
+            echo ':--- Syncing local repo ---:'
             cd $PROJECT_ROOT
-            git stash push -u -m "github-actions-$(date +%s)"
+            # git stash push -u -m "github-actions-$(date +%s)"
 
             echo '--- Fetching latest commit ---'
             git fetch origin --depth=1
