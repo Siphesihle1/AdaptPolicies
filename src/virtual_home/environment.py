@@ -2,8 +2,8 @@ from io import TextIOWrapper
 import os
 from typing import List, Tuple
 from cv2.typing import MatLike
-from graph_query import N, E
-from task import VHTask
+from .graph_query import N, E
+from .task import VHTask
 from unity_simulator.comm_unity import UnityCommunication
 from virtualhome.simulation.evolving_graph import utils
 from virtualhome.simulation.evolving_graph.scripts import parse_script_line, Script
@@ -12,7 +12,7 @@ from virtualhome.simulation.evolving_graph.environment import (
     EnvironmentGraph,
     EnvironmentState,
 )
-from utils import add_additional_obj_states, get_obj_ids_for_adding_states
+from .utils import add_additional_obj_states, get_obj_ids_for_adding_states
 
 
 class VHEnvironment:

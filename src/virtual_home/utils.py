@@ -1,4 +1,4 @@
-from graph_query import E, N
+from .graph_query import E, N
 
 from typing import Dict, Any, List, Tuple
 

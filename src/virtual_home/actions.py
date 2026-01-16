@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from random import choice
-from environment import VHEnvironment
-from task import VHTask
-from virtualhome_types import ObjectClassName
+from .environment import VHEnvironment
+from .task import VHTask
+from .virtualhome_types import ObjectClassName
 
 
 class Action(ABC):

@@ -1,7 +1,7 @@
 from typing import List
 import copy
 
-from environment import VHEnvironment
+from .environment import VHEnvironment
 
 
 class VHTask:
