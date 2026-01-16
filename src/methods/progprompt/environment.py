@@ -1,7 +1,7 @@
 from io import TextIOWrapper
-from task import VHTask
+from virtual_home.task import VHTask
 from typing_extensions import override
-from graph_query import E, N
+from virtual_home.graph_query import E, N
 from virtual_home.environment import VHEnvironment
 
 

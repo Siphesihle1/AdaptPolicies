@@ -1,11 +1,11 @@
-from actions import Action
-from task import VHTask
+from virtual_home.actions import Action
+from virtual_home.task import VHTask
 import re
 
-from progprompt.environment import ProgPromptEnvironment
-from progprompt.constants import CURRENT_STATE_PROMPT, MODEL
+from .environment import ProgPromptEnvironment
+from .constants import CURRENT_STATE_PROMPT, MODEL
 
-from llm import LM
+from methods.llm import LM
 
 
 def get_current_state_prompt():
