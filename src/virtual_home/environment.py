@@ -55,17 +55,27 @@ class VHEnvironment:
         self.executor = ScriptExecutor(env_graph, name_equivalence)
 
     def get_current_state(self):
-        self.agent = N(self.graph).class_name("character").get_first()["id"]
+        agent = N(self.graph).class_name("character").get_first()
+
+        if agent is None:
+            return
+
+        self.agent: str = agent["id"]
+
         self.agent_has_objid: List[str] = (  # pyright: ignore
             E(self.graph).from_(self.agent).relation("HOLD").select("to_id")
         )
 
-        self.agent_in_roomid: str = (
-            E(self.graph).from_(self.agent).relation("INSIDE").get_first()["to_id"]
-        )
-        self.agent_in_room: str = (
-            N(self.graph).id(self.agent_in_roomid).get_first()["class_name"]
-        )
+        agent_in_roomid = E(self.graph).from_(self.agent).relation("INSIDE").get_first()
+
+        if agent_in_roomid is not None:
+            self.agent_in_roomid: str = agent_in_roomid["to_id"]
+
+            agent_in_room = N(self.graph).id(self.agent_in_roomid).get_first()
+
+            if agent_in_room is not None:
+                self.agent_in_room: str = agent_in_room["class_name"]
+
         self.agent_has_obj: List[str] = (  # pyright: ignore
             N(self.graph).id_in(*self.agent_has_objid).select("class_name")
         )

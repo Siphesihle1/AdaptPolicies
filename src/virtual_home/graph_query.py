@@ -62,13 +62,14 @@ class NodeQuery:
         if len(fields) > 1:
             return list(zip(selected_fields))
 
-        return selected_fields[0]
+        return selected_fields[0] if len(selected_fields) > 0 else []
 
     def get_all(self):
         return [n for n in self.nodes if all(pred(n) for pred in self.predicates)]
 
     def get_first(self):
-        return [n for n in self.nodes if all(pred(n) for pred in self.predicates)][0]
+        result = [n for n in self.nodes if all(pred(n) for pred in self.predicates)]
+        return result[0] if len(result) > 0 else None
 
     def exists(self) -> bool:
         return any(all(pred(n) for pred in self.predicates) for n in self.nodes)
@@ -101,15 +102,15 @@ class RelationQuery:
         self.predicates.append(lambda e: e["to_id"] in node_ids)
         return self
 
-    def from_node(self, fn: Callable[[Dict[str, Any]], bool]):
+    def from_node(self, fn: Callable[[Dict[str, Any] | None], bool]):
         self.predicates.append(
             lambda e, f=fn: f(N(self.graph).id(e["from_id"]).get_first())
         )
         return self
 
-    def to_node(self, fn: Callable[[Dict[str, Any]], bool]):
+    def to_node(self, fn: Callable[[Dict[str, Any] | None], bool]):
         self.predicates.append(
-            lambda e, f=fn: f(N(self.graph).id(e["from_id"]).get_first())
+            lambda e, f=fn: f(N(self.graph).id(e["to_id"]).get_first())
         )
         return self
 
