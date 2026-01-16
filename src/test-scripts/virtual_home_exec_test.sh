@@ -1,21 +1,28 @@
 #!/bin/bash
 
-# run the simulator
-
-echo "--- Starting VirtualHome Simulator ---"
-
-VIRTUALHOME_SIM_VERSION=$VIRTUALHOME_SIM_VERSION VIRTUALHOME_ROOT=$VIRTUALHOME_ROOT SIM_PORT=$SIM_PORT bash $PROJECT_ROOT/helper-scripts/run-sim.sh
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 
-# Block using the ready endpoint
+# Starting the simulator
+echo "--- Starting VirtualHome Simulator ---"
+VIRTUALHOME_SIM_VERSION=$VIRTUALHOME_SIM_VERSION VIRTUALHOME_ROOT=$VIRTUALHOME_ROOT SIM_PORT=$SIM_PORT bash $PROJECT_ROOT/helper-scripts/run-sim.sh
+
+# Wait for the simulator to be ready
 echo "--- Waiting for VirtualHome Simulator to be ready... ---"
 time curl --retry 360 --retry-connrefused --retry-delay 2 -sf http://127.0.0.1:$SIM_PORT
+
+# Start ollama server
+echo '--- Starting ollama server ---'
+OLLAMA_SERVER_PID=$(bash $PROJECT_ROOT/helper-scripts/start_ollama.sh)
+echo "--- Ollama server started with PID: ${OLLAMA_SERVER_PID} ---" 
 
 # Run test script
 echo "--- Running VirtualHome Test Script ---"
 python $PROJECT_ROOT/src/methods/progprompt/run_eval.py
 
-# Kill the simulator
+# Kill the servers
 echo "--- Stopping VirtualHome Simulator ---"
 ps aux | grep "Xvfb" | awk '{print $2}' | head -n 1 | xargs kill -9
+
+echo "--- Stopping Ollama Server ---"
+kill -9 $OLLAMA_SERVER_PID
 
