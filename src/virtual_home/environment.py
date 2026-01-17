@@ -63,7 +63,10 @@ class VHEnvironment:
         self.agent: str = agent["id"]
 
         self.agent_has_objid: List[int] = (  # type: ignore
-            E(self.graph).from_(self.agent).relation("HOLD").select("to_id")
+            E(self.graph)
+            .from_(self.agent)
+            .relation_in("HOLDS_LH", "HOLDS_RH")
+            .select("to_id")
         )
 
         agent_in_roomid = E(self.graph).from_(self.agent).relation("INSIDE").get_first()

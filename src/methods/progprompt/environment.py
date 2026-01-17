@@ -63,7 +63,12 @@ class ProgPromptEnvironment(VHEnvironment):
 
         objs = list(set(objs.split(", ")))
         objs = [ob for ob in objs if len(ob) > 0]
-        objs = ", ".join(objs) + ", " + ", ".join(relations) + ". "
+        objs = (
+            ", ".join(objs)
+            + (", " if len(objs) > 0 and len(relations) > 0 else "")
+            + ", ".join(relations)
+            + ". "
+        )
 
         if len(self.agent_has_obj) > 0:
             objs += f" You have {', '.join(self.agent_has_obj)}. "
