@@ -151,6 +151,7 @@ class Drink(Open):
 class Grab(Open):
     def __init__(self, env: VHEnvironment, task: VHTask):
         super().__init__(env, task)
+        self.action_name = "grab"
 
 
 class LookAt(Open):

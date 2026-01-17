@@ -12,7 +12,7 @@ time curl --retry 360 --retry-connrefused --retry-delay 2 -sf http://127.0.0.1:$
 
 # Start ollama server
 echo '--- Starting ollama server ---'
-bash $PROJECT_ROOT/helper-scripts/start_ollama.sh
+OLLAMA_HOST=$OLLAMA_HOST bash $PROJECT_ROOT/helper-scripts/start_ollama.sh
 echo ""
 
 # Run test script
@@ -24,5 +24,5 @@ echo "--- Stopping VirtualHome Simulator ---"
 ps aux | grep -v "grep" | grep "Xvfb" | awk '{print $2}' | head -n 1 | xargs kill -9
 
 echo "--- Stopping Ollama Server ---"
-ps aux | grep -v "grep" | grep "ollama" | awk '{print $2}' | xargs kill -9
+ps aux | grep -v "grep" | grep "ollama" | awk '{print $2}' | head -n 1 | xargs kill -9
 

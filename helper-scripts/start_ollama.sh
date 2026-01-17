@@ -7,5 +7,5 @@ OLLAMA_EXEC=$OLLAMA_PREFIX/bin/ollama
 nohup $OLLAMA_EXEC serve > $HOME/ollama.log 2>&1 &
 
 # Block using the ready endpoint
-time curl --retry 360 --retry-connrefused --retry-delay 2 -sf http://localhost:11434
+time curl --retry 360 --retry-connrefused --retry-delay 2 -sf $OLLAMA_HOST
 

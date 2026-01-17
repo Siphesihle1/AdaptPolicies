@@ -101,7 +101,7 @@ def prepare_task_scripts(
         [
             IMPORTS,
             TASK_INIT(task_instruction, MAX_STEPS),
-            ENVIRONMENT_INIT(env_id, INITIAL_ROOM, task_instruction, log_file_prefix),
+            ENVIRONMENT_INIT(env_id, INITIAL_ROOM, log_file_prefix),
             ACTION_INIT,
             EXPORTS,
         ]

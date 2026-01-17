@@ -65,3 +65,7 @@ class ProgPromptEnvironment(VHEnvironment):
 
         if len(self.agent_has_obj) > 0:
             self.objs += f" You have {', '.join(self.agent_has_obj)}. "
+
+        self.log_file.write(
+            f"\n---- Current state (step: {self.task.step}, subtask: {self.task.current_subtask}): {self.objs} ----\n"
+        )
