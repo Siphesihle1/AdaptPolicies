@@ -1,6 +1,6 @@
 from io import TextIOWrapper
 import os
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from cv2.typing import MatLike
 from .graph_query import N, E
 from .task import VHTask
@@ -29,7 +29,7 @@ class VHEnvironment:
         self.task = task
         self.actions_to_omit: List[Tuple[str, ...]] = []
         self.log_file = log_file
-        self.found_id = ""
+        self.found_id: Optional[int] = None
         self.last_action: Tuple[str, ...] = tuple()
 
         self.comm.reset(self.env_id)
@@ -62,34 +62,34 @@ class VHEnvironment:
 
         self.agent: str = agent["id"]
 
-        self.agent_has_objid: List[str] = (  # pyright: ignore
+        self.agent_has_objid: List[int] = (  # type: ignore
             E(self.graph).from_(self.agent).relation("HOLD").select("to_id")
         )
 
         agent_in_roomid = E(self.graph).from_(self.agent).relation("INSIDE").get_first()
 
         if agent_in_roomid is not None:
-            self.agent_in_roomid: str = agent_in_roomid["to_id"]
+            self.agent_in_roomid: int = agent_in_roomid["to_id"]
 
             agent_in_room = N(self.graph).id(self.agent_in_roomid).get_first()
 
             if agent_in_room is not None:
                 self.agent_in_room: str = agent_in_room["class_name"]
 
-        self.agent_has_obj: List[str] = (  # pyright: ignore
+        self.agent_has_obj: List[str] = (  # type: ignore
             N(self.graph).id_in(*self.agent_has_objid).select("class_name")
         )
-        self.obj_ids_close: List[str] = (  # pyright: ignore
+        self.obj_ids_close: List[int] = (  # type: ignore
             E(self.graph).from_(self.agent).relation("CLOSE").select("to_id")
         )
 
         self.partial_graph = utils.get_visible_nodes(self.graph, agent_id=self.agent)
-        self.obj_close: List[str] = (  # pyright: ignore
+        self.obj_close: List[str] = (  # type: ignore
             N(self.partial_graph).id_in(*self.obj_ids_close).select("class_name")
         )
 
-    def find_obj(self, class_name: str) -> List[str]:
-        return N(self.graph).class_name(class_name).select("id")  # pyright: ignore
+    def find_obj(self, class_name: str) -> List[int]:
+        return N(self.graph).class_name(class_name).select("id")  # type: ignore
 
     def update_executor(self, state: EnvironmentState):
         self.graph = state.to_dict()

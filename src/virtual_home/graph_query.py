@@ -8,15 +8,15 @@ class NodeQuery:
         self.predicates: List[Predicate] = []
         self.nodes = graph["nodes"]
 
-    def id(self, node_id: str):
+    def id(self, node_id: int):
         self.predicates.append(lambda n: n["id"] == node_id)
         return self
 
-    def id_not(self, node_id: str):
+    def id_not(self, node_id: int):
         self.predicates.append(lambda n: n["id"] != node_id)
         return self
 
-    def id_in(self, *node_ids: str):
+    def id_in(self, *node_ids: int):
         self.predicates.append(lambda n: n["id"] in node_ids)
         return self
 
@@ -53,16 +53,14 @@ class NodeQuery:
 
     def select(self, *fields: str) -> List[Tuple[Any, ...]] | List[Any]:
         selected_fields = [
-            n[field]
-            for n in self.nodes
-            if all(pred(n) for pred in self.predicates)
+            [n[field] for n in self.nodes if all(pred(n) for pred in self.predicates)]
             for field in fields
         ]
 
         if len(fields) > 1:
-            return list(zip(selected_fields))
+            return list(zip(*(field for field in selected_fields)))
 
-        return selected_fields[0] if len(selected_fields) > 0 else []
+        return selected_fields[0]
 
     def get_all(self):
         return [n for n in self.nodes if all(pred(n) for pred in self.predicates)]
@@ -90,15 +88,15 @@ class RelationQuery:
         self.predicates.append(lambda e: e["from_id"] == node_id)
         return self
 
-    def from_in(self, *node_ids: str):
+    def from_in(self, *node_ids: int):
         self.predicates.append(lambda e: e["from_id"] in node_ids)
         return self
 
-    def to_(self, node_id: str):
+    def to_(self, node_id: int):
         self.predicates.append(lambda e: e["to_id"] == node_id)
         return self
 
-    def to_in(self, *node_ids: str):
+    def to_in(self, *node_ids: int):
         self.predicates.append(lambda e: e["to_id"] in node_ids)
         return self
 
