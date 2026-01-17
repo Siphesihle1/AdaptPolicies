@@ -225,3 +225,4 @@ Dockerfile
 docker-compose.yml
 virtualhome.zip
 **/.DS_Store
+rsync_copy_output
