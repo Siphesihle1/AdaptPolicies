@@ -3,11 +3,12 @@ from virtual_home.task import VHTask
 import re
 
 from .environment import ProgPromptEnvironment
-from .constants import CURRENT_STATE_PROMPT, MODEL
+from .constants import ASSERT_PROMPT_PREAMBLE, CURRENT_STATE_PROMPT, MODEL
 
 from methods.llm import LM
 
 
+# Adapted from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_execute.py#L48
 def get_current_state_prompt():
     ## fixed function to define "PROMPT for state check"
     objs = ["microwave", "book", "lightswitch", "bookshelf", "cereal"]
@@ -16,7 +17,7 @@ def get_current_state_prompt():
     state = "You see: " + ", ".join(
         [i.strip() for i in state if any(element in i for element in objs)]
     )
-    current_state_prompt = f"{state}\n\n{asserts}"
+    current_state_prompt = f"{ASSERT_PROMPT_PREAMBLE}{state}\n\n{asserts}"
     return current_state_prompt
 
 
@@ -31,6 +32,7 @@ class Assert(Action):
         return super().run(assert_cond)
 
     def action(self, *objs: str):
+        # Adapted from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_execute.py#L148
         (assert_cond,) = objs
 
         assert_objs = re.findall(r"\b[a-z]+", assert_cond)[0::2]
@@ -42,9 +44,7 @@ class Assert(Action):
 
         current_state = f"{self.current_state_prompt}\n\n{state}\n\n{action}\n"
 
-        _, check_state = LM(
-            prompt=current_state, model=MODEL, max_tokens=2, stop=["\n"]
-        )
+        _, check_state = LM(prompt=current_state, model=MODEL, max_tokens=2, stop=[" "])
 
         self.env.log_file.write(
             f"State check:\n{state}\n{action}\n{check_state.strip()}\n"

@@ -21,8 +21,8 @@ python $PROJECT_ROOT/src/methods/progprompt/run_eval.py
 
 # Kill the servers
 echo "--- Stopping VirtualHome Simulator ---"
-ps aux | grep -v "grep" | grep "Xvfb" | awk '{print $2}' | head -n 1 | xargs kill -9
+ps aux | grep $(whoami) | grep -v "grep" | grep "Xvfb" | awk '{print $2}' | head -n 1 | xargs kill -9
 
 echo "--- Stopping Ollama Server ---"
-ps aux | grep -v "grep" | grep "ollama" | awk '{print $2}' | head -n 1 | xargs kill -9
+ps aux | grep $(whoami) | grep -v "grep" | grep "ollama" | awk '{print $2}' | xargs kill -9
 

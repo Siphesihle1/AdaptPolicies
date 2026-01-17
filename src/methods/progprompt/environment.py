@@ -53,19 +53,23 @@ class ProgPromptEnvironment(VHEnvironment):
             N(self.graph).class_name_in(*self.obj_close).select("class_name", "states")
         )
 
+        objs = ""
+
         for states in obj_states:
             if len(states[1]) > 0:
-                objs = self.objs + states[0] + " is " + " and ".join(states[1]) + ", "
+                objs = objs + states[0] + " is " + " and ".join(states[1]) + ", "
             else:
-                objs = self.objs + states[0] + ", "
+                objs = objs + states[0] + ", "
 
-        objs = list(set(self.objs.split(", ")))
+        objs = list(set(objs.split(", ")))
         objs = [ob for ob in objs if len(ob) > 0]
-        self.objs = ", ".join(objs) + ", " + ", ".join(relations) + ". "
+        objs = ", ".join(objs) + ", " + ", ".join(relations) + ". "
 
         if len(self.agent_has_obj) > 0:
-            self.objs += f" You have {', '.join(self.agent_has_obj)}. "
+            objs += f" You have {', '.join(self.agent_has_obj)}. "
+
+        self.objs = objs
 
         self.log_file.write(
-            f"\n---- Current state (step: {self.task.step}, subtask: {self.task.current_subtask}): {self.objs} ----\n"
+            f"\n----\n Current state (step: {self.task.step}, subtask: {self.task.current_subtask}): {self.objs} \n----\n"
         )
