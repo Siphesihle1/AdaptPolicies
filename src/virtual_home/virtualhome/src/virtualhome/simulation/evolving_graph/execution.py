@@ -64,7 +64,7 @@ class JoinedExecutor(ActionExecutor):
     def __init__(self, *args):
         self.executors = args
 
-    def execute(self, script: Script, state: EnvironmentState, info: ExecutionInfo, char_index):
+    def execute(self, script: Script, state: EnvironmentState, info: ExecutionInfo, char_index, *args):
         for e in self.executors:
             for s in e.execute(script, state, info, char_index):
                 yield s
