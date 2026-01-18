@@ -18,7 +18,7 @@ def is_host(url: str, host: str) -> bool:
 @weave.op
 def LM(
     prompt: str,
-    model="deepseek-r1:8b",
+    model: str,
     max_tokens=128,
     temperature=0,
     stop: Optional[str | List[str]] = None,
