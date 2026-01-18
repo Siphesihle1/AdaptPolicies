@@ -27,7 +27,7 @@ OUTPUT FORMAT (MANDATORY):
 
 """
 
-MODEL = "deepseek-r1:32b"
+MODEL = "deepseek-r1:14b"
 
 MAX_STEPS = 10
 INITIAL_ROOM = "kitchen"
