@@ -11,8 +11,8 @@ on:
       - "src/slurm-scripts/*.slurm"
       - "**/requirements.txt"
       - "**/environment.yml"
-      - "alfred/**/*.py"
       - "env_vars/**"
+      - "helper-scripts/**"
 
 permissions:
   contents: read
