@@ -20,10 +20,10 @@ def LM(
     prompt: str,
     model: str,
     max_tokens: Optional[int] = None,
-    temperature=0,
+    temperature: Optional[float] = None,
     stop: Optional[str | List[str]] = None,
     logprobs=True,
-    frequency_penalty=0,
+    frequency_penalty: Optional[float] = None,
     think=True,
 ) -> Tuple[GenerateResponse, str]:
     headers = (

@@ -44,7 +44,7 @@ class Assert(Action):
 
         current_state = f"{ASSERT_PROMPT_PREAMBLE}\n\n{state}\n\n{action}\n"
 
-        _, check_state = LM(prompt=current_state, model=MODEL, stop=["\n"])
+        _, check_state = LM(prompt=current_state, model=MODEL)
 
         self.env.log_file.write(
             f"State check:\n{state}\n{action}\n{check_state.strip()}\n"
