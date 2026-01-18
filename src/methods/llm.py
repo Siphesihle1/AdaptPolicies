@@ -19,12 +19,12 @@ def is_host(url: str, host: str) -> bool:
 def LM(
     prompt: str,
     model: str,
-    max_tokens=128,
+    max_tokens: Optional[int] = None,
     temperature=0,
     stop: Optional[str | List[str]] = None,
     logprobs=True,
     frequency_penalty=0,
-    think=False,
+    think=True,
 ) -> Tuple[GenerateResponse, str]:
     headers = (
         {"Authorization": "Bearer " + os.environ.get("OLLAMA_CLOUD_API_KEY", "")}
