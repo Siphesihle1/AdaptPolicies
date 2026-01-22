@@ -52,20 +52,20 @@ class Assert(Action):
             f"{os.getenv('EXPERIMENT_NAME')}:{self.task.task_instruction}"
         )
 
-        with weave.attributes(
-            {
-                "task_instruction": self.task.task_instruction,
-                "subtask": self.task.current_subtask,
-            }
-        ):
-            llmResult: Tuple[Completion, str] = LLMOpenAI(
-                prompt=current_state,
-                model=MODEL,
-                thread_id=self.task.thread_id,
-                __weave={
-                    "display_name": weave_display_name,
-                },
-            )
+        with weave.thread(thread_id=self.task.thread_id):
+            with weave.attributes(
+                {
+                    "task_instruction": self.task.task_instruction,
+                    "subtask": self.task.current_subtask,
+                }
+            ):
+                llmResult: Tuple[Completion, str] = LLMOpenAI(
+                    prompt=current_state,
+                    model=MODEL,
+                    __weave={
+                        "display_name": weave_display_name,
+                    },
+                )
 
         _, check_state = llmResult
 
