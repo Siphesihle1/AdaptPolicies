@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --partition=bigbatch
-#SBATCH -w mscluster80
+#SBATCH -w mscluster82
 #SBATCH --job-name=test-vh-sim-exec
 #SBATCH --output=/home-mscluster/smthethwa/slurm-logs/test-vh-sim-exec/%j.out
 #SBATCH --error=/home-mscluster/smthethwa/slurm-logs/test-vh-sim-exec/%j.err
@@ -33,7 +33,7 @@ fi
 source ~/.bashrc
 
 # Update conda env
-# conda env update -f environment.yml -n research_proj
+conda env update -f environment.yml -n research_proj
 
 # Run setup script
 conda run --live-stream -n research_proj JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash src/test-scripts/virtual_home_exec_test.sh
