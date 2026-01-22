@@ -1,11 +1,16 @@
+from typing import Tuple
+
+from openai.types.completion import Completion
+import weave
 from virtual_home.actions import Action
 from virtual_home.task import VHTask
 import re
+import os
 
 from .environment import ProgPromptEnvironment
 from .constants import ASSERT_PROMPT_PREAMBLE, CURRENT_STATE_PROMPT, MODEL
 
-from methods.llm import LM
+from methods.llm import LLMOpenAI
 
 
 # Adapted from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_execute.py#L48
@@ -43,8 +48,26 @@ class Assert(Action):
         action = f"{self.action_name}({assert_cond})"
 
         current_state = f"{ASSERT_PROMPT_PREAMBLE}\n\n{state}\n\n{action}\n"
+        weave_display_name = (
+            f"{os.getenv('EXPERIMENT_NAME')}:{self.task.task_instruction}"
+        )
 
-        _, check_state = LM(prompt=current_state, model=MODEL)
+        with weave.attributes(
+            {
+                "task_instruction": self.task.task_instruction,
+                "subtask": self.task.current_subtask,
+            }
+        ):
+            llmResult: Tuple[Completion, str] = LLMOpenAI(
+                prompt=current_state,
+                model=MODEL,
+                thread_id=self.task.thread_id,
+                __weave={
+                    "display_name": weave_display_name,
+                },
+            )
+
+        _, check_state = llmResult
 
         self.env.log_file.write(
             f"State check:\n{state}\n{action}\n{check_state.strip()}\n"

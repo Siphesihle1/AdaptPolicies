@@ -1,11 +1,14 @@
 import os
 from ollama import Client, GenerateResponse, Options
+from openai import OpenAI
 from urllib.parse import urlparse
+from openai.types.completion import Completion
 import weave
 
 from typing import List, Tuple, Optional
 
-
+wandb_project_name = os.getenv("PROJECT_NAME", "")
+entity, project = wandb_project_name.split("/", 1)
 weave.init(os.getenv("PROJECT_NAME", ""))
 
 
@@ -16,7 +19,7 @@ def is_host(url: str, host: str) -> bool:
 
 
 @weave.op
-def LM(
+def LMOllama(
     prompt: str,
     model: str,
     max_tokens: Optional[int] = None,
@@ -25,6 +28,7 @@ def LM(
     logprobs=True,
     frequency_penalty: Optional[float] = None,
     think=True,
+    thread_id: Optional[str] = None,
 ) -> Tuple[GenerateResponse, str]:
     headers = (
         {"Authorization": "Bearer " + os.environ.get("OLLAMA_CLOUD_API_KEY", "")}
@@ -42,8 +46,41 @@ def LM(
         stop=stop,
     )
 
-    response = client.generate(
-        model=model, prompt=prompt, logprobs=logprobs, options=options, think=think
+    with weave.thread(thread_id=thread_id):
+        response = client.generate(
+            model=model, prompt=prompt, logprobs=logprobs, options=options, think=think
+        )
+
+        return response, response.response.strip()
+
+
+@weave.op
+def LLMOpenAI(
+    prompt: str,
+    model: str,
+    max_tokens: Optional[int] = None,
+    temperature: Optional[float] = None,
+    stop: Optional[str | List[str]] = None,
+    frequency_penalty: Optional[float] = None,
+    thread_id: Optional[str] = None,
+) -> Tuple[Completion, str]:
+    ollama_host = os.getenv("OLLAMA_HOST", "")
+    api_key = (
+        os.getenv("OLLAMA_CLOUD_API_KEY", "")
+        if is_host(ollama_host, "ollama.com")
+        else "ollama"
     )
 
-    return response, response.response.strip()
+    client = OpenAI(base_url=f"{ollama_host}/v1", api_key=api_key)
+
+    with weave.thread(thread_id=thread_id):
+        response = client.completions.create(
+            model=model,
+            prompt=prompt,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            stop=stop,
+            frequency_penalty=frequency_penalty,
+        )
+
+        return response, response.choices[0].text.strip()

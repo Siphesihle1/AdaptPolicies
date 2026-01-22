@@ -10,3 +10,4 @@ export LIBGL_ALWAYS_INDIRECT=0
 export OLLAMA_HOST=http://localhost:11430
 export VIRTUALHOME_SIM_VERSION=v2.0/v2.3.0
 export SIM_PORT=8082
+export EXPERIMENT_NAME=weave_test

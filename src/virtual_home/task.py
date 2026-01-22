@@ -1,5 +1,6 @@
 from typing import List, TYPE_CHECKING
 import copy
+from uuid_utils import uuid7
 
 if TYPE_CHECKING:
     from .environment import VHEnvironment
@@ -21,6 +22,7 @@ class VHTask:
         self.executable_steps = 0
         self.max_steps = max_steps
         self.terminate_current_subtask = False
+        self.thread_id = str(uuid7())
 
     def track_subtask(self, subtask_index: int):
         self.step = 1
