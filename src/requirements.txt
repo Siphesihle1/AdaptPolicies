@@ -2,6 +2,6 @@ setuptools<71
 matplotlib
 openai>=1.0.0
 ollama
-weave
+weave==0.52.24
 wandb
 uuid_utils
