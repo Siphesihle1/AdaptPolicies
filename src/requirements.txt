@@ -1,4 +1,4 @@
-setuptools<71
+setuptools
 matplotlib
 openai>=1.0.0
 ollama
