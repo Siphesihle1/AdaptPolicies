@@ -2,6 +2,7 @@ import os
 from ollama import Client, GenerateResponse, Options
 from openai import OpenAI
 from urllib.parse import urlparse
+from openai.types.chat import ChatCompletion
 from openai.types.completion import Completion
 import weave
 
@@ -28,7 +29,7 @@ def LMOllama(
     logprobs=True,
     frequency_penalty: Optional[float] = None,
     think=True,
-) -> str:
+) -> GenerateResponse:
     headers = (
         {"Authorization": "Bearer " + os.environ.get("OLLAMA_CLOUD_API_KEY", "")}
         if is_host(os.getenv("OLLAMA_HOST", ""), "ollama.com")
@@ -49,7 +50,7 @@ def LMOllama(
         model=model, prompt=prompt, logprobs=logprobs, options=options, think=think
     )
 
-    return response.response.strip()
+    return response
 
 
 @weave.op
@@ -60,7 +61,7 @@ def LLMOpenAI(
     temperature: Optional[float] = None,
     stop: Optional[str | List[str]] = None,
     frequency_penalty: Optional[float] = None,
-) -> str:
+) -> ChatCompletion:
     ollama_host = os.getenv("OLLAMA_HOST", "")
     api_key = (
         os.getenv("OLLAMA_CLOUD_API_KEY", "")
@@ -70,13 +71,13 @@ def LLMOpenAI(
 
     client = OpenAI(base_url=f"{ollama_host}/v1", api_key=api_key)
 
-    response = client.completions.create(
+    response = client.chat.completions.create(
         model=model,
-        prompt=prompt,
+        messages=[{"role": "user", "content": prompt}],
         max_tokens=max_tokens,
         temperature=temperature,
         stop=stop,
         frequency_penalty=frequency_penalty,
     )
 
-    return response.choices[0].text.strip()
+    return response

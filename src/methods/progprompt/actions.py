@@ -1,5 +1,6 @@
 from typing import Tuple
 
+from openai.types.chat import ChatCompletion
 from openai.types.completion import Completion
 import weave
 from virtual_home.actions import Action
@@ -59,13 +60,15 @@ class Assert(Action):
                     "subtask": self.task.current_subtask,
                 }
             ):
-                check_state: str = LLMOpenAI(
+                response: ChatCompletion = LLMOpenAI(
                     prompt=current_state,
                     model=MODEL,
                     __weave={
                         "display_name": weave_display_name,
                     },
                 )
+
+        check_state = response.choices[0].message.content or ""
 
         self.env.log_file.write(
             f"State check:\n{state}\n{action}\n{check_state.strip()}\n"
