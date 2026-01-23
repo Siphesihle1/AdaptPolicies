@@ -59,15 +59,13 @@ class Assert(Action):
                     "subtask": self.task.current_subtask,
                 }
             ):
-                llmResponse: Completion = LLMOpenAI(
+                check_state: str = LLMOpenAI(
                     prompt=current_state,
                     model=MODEL,
                     __weave={
                         "display_name": weave_display_name,
                     },
                 )
-
-        check_state = llmResponse.choices[0].text.strip()
 
         self.env.log_file.write(
             f"State check:\n{state}\n{action}\n{check_state.strip()}\n"

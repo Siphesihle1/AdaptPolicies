@@ -28,7 +28,7 @@ def LMOllama(
     logprobs=True,
     frequency_penalty: Optional[float] = None,
     think=True,
-) -> GenerateResponse:
+) -> str:
     headers = (
         {"Authorization": "Bearer " + os.environ.get("OLLAMA_CLOUD_API_KEY", "")}
         if is_host(os.getenv("OLLAMA_HOST", ""), "ollama.com")
@@ -49,7 +49,7 @@ def LMOllama(
         model=model, prompt=prompt, logprobs=logprobs, options=options, think=think
     )
 
-    return response
+    return response.response.strip()
 
 
 @weave.op
@@ -60,7 +60,7 @@ def LLMOpenAI(
     temperature: Optional[float] = None,
     stop: Optional[str | List[str]] = None,
     frequency_penalty: Optional[float] = None,
-) -> Completion:
+) -> str:
     ollama_host = os.getenv("OLLAMA_HOST", "")
     api_key = (
         os.getenv("OLLAMA_CLOUD_API_KEY", "")
@@ -79,4 +79,4 @@ def LLMOpenAI(
         frequency_penalty=frequency_penalty,
     )
 
-    return response
+    return response.choices[0].text.strip()
