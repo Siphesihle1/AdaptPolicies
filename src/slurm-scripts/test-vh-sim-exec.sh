@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --partition=bigbatch
-##SBATCH -w mscluster42
+##SBATCH -w mscluster77
 #SBATCH --job-name=test-vh-sim-exec
 #SBATCH --output=/home-mscluster/smthethwa/slurm-logs/test-vh-sim-exec/%j.out
 #SBATCH --error=/home-mscluster/smthethwa/slurm-logs/test-vh-sim-exec/%j.err
