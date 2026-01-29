@@ -70,7 +70,7 @@ class PromptBuilder:
         return self
 
     def with_objects(self):
-        objects: List[str] = N(self.graph).select("class_name")  # type: ignore
+        objects: List[str] = list(set(N(self.graph).select("class_name")))  # type: ignore
         self._objects.extend(objects)
         return self
 
