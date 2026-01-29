@@ -96,7 +96,7 @@ class PromptBuilder:
         tasks: List[str] = []
 
         if test_set is not None:
-            dir_path = f"{os.getenv('DATASET_DIR')}/data/{test_set}"
+            dir_path = f"{os.getenv('DATASET_DIR')}/{test_set}"
             tasks = load_tasks_from_dir(dir_path)
         else:
             file_path = (
