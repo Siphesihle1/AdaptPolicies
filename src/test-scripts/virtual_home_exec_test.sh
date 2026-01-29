@@ -19,12 +19,7 @@ PROGPROMPT_PREFIX=$PROJECT_ROOT/src/methods/progprompt
 
 # Copy dataset to output directory
 echo "--- Copying Progprompt dataset to output directory ---"
-
-if [ ! -d "$DATASET_DIR/progprompt" ]; then
-  mkdir $DATASET_DIR/progprompt
-fi
-
-cp -r $PROGPROMPT_PREFIX/data/ $DATASET_DIR/progprompt/
+cp -r $PROGPROMPT_PREFIX/data/ $DATASET_DIR/
 
 # Run test script
 echo "--- Running VirtualHome Test Script ---"
