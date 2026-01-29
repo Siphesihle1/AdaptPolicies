@@ -113,7 +113,7 @@ class PromptBuilder:
         sections.append("\n".join(self._imports))
 
         if len(self._objects) > 0:
-            sections.append(f"objects = {', '.join(self._objects)}")
+            sections.append(f"objects = {self._objects}")
 
         sections.append("\n\n".join(self._examples))
 
