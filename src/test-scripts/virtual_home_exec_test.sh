@@ -15,9 +15,20 @@ echo '--- Starting ollama server ---'
 OLLAMA_HOST=$OLLAMA_HOST bash $PROJECT_ROOT/helper-scripts/start_ollama.sh
 echo ""
 
+PROGPROMPT_PREFIX=$PROJECT_ROOT/src/methods/progprompt
+
+# Copy dataset to output directory
+echo "--- Copying Progprompt dataset to output directory ---"
+
+if [ ! -d "$DATASET_DIR/progprompt" ]; then
+  mkdir $DATASET_DIR/progprompt
+fi
+
+cp -r $PROGPROMPT_PREFIX/data/ $DATASET_DIR/progprompt/
+
 # Run test script
 echo "--- Running VirtualHome Test Script ---"
-python $PROJECT_ROOT/src/methods/progprompt/run_eval.py
+python $PROGPROMPT_PREFIX/run_eval.py
 
 # Kill the servers
 echo "--- Stopping VirtualHome Simulator ---"

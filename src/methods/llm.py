@@ -3,10 +3,9 @@ from ollama import Client, GenerateResponse, Options
 from openai import OpenAI
 from urllib.parse import urlparse
 from openai.types.chat import ChatCompletion
-from openai.types.completion import Completion
 import weave
 
-from typing import List, Tuple, Optional
+from typing import List, Optional
 
 wandb_project_name = os.getenv("PROJECT_NAME", "")
 entity, project = wandb_project_name.split("/", 1)

@@ -1,7 +1,4 @@
-from typing import Tuple
-
 from openai.types.chat import ChatCompletion
-from openai.types.completion import Completion
 import weave
 from virtual_home.actions import Action
 from virtual_home.task import VHTask
@@ -9,7 +6,7 @@ import re
 import os
 
 from .environment import ProgPromptEnvironment
-from .constants import ASSERT_PROMPT_PREAMBLE, CURRENT_STATE_PROMPT, MODEL
+from .constants import ASSERT_PROMPT_PREAMBLE, CURRENT_STATE_PROMPT_EXAMPLE, MODEL
 
 from methods.llm import LLMOpenAI
 
@@ -18,7 +15,7 @@ from methods.llm import LLMOpenAI
 def get_current_state_prompt():
     ## fixed function to define "PROMPT for state check"
     objs = ["microwave", "book", "lightswitch", "bookshelf", "cereal"]
-    state, asserts = CURRENT_STATE_PROMPT.split("\n\n")
+    state, asserts = CURRENT_STATE_PROMPT_EXAMPLE.split("\n\n")
     state = state.split(",")
     state = "You see: " + ", ".join(
         [i.strip() for i in state if any(element in i for element in objs)]

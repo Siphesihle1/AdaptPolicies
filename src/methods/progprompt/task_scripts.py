@@ -1,4 +1,6 @@
 import os
+import json
+import cv2
 from pathlib import Path
 from methods.parser import (
     Parser,
@@ -19,7 +21,11 @@ from .constants import (
     TASK_INIT,
 )
 
-from typing import List, Tuple
+from typing import List, Tuple, Any
+from pathlib import Path
+from importlib import import_module
+
+from cv2.typing import MatLike
 
 
 def extract_plan_artifacts(plan: str):
@@ -120,3 +126,74 @@ def prepare_task_scripts(
     )
 
     return (True, f"Task scripts for '{task_instruction}' created successfully.")
+
+
+def generate_task_scripts(
+    log_file_prefix: str,
+    task_scripts_prefix: str,
+    task_instruction: str,
+    plan: str,
+    env_id: int,
+):
+    # log_file_prefix = f"{os.getenv('JOB_OUTPUT_DIR')}/task_logs/{task_instruction}"
+    # task_scripts_prefix = f"{os.getenv('JOB_OUTPUT_DIR')}/tasks"
+    #
+
+    # Create necessary directories and files
+    os.makedirs(log_file_prefix, exist_ok=True)
+    os.makedirs(task_scripts_prefix, exist_ok=True)
+
+    tasks_module_init_file = Path(f"{task_scripts_prefix}/__init__.py")
+    tasks_module_init_file.touch(exist_ok=True)
+
+    # Prepare task scripts
+    sucess, message = prepare_task_scripts(
+        task_instruction, plan, env_id, log_file_prefix, task_scripts_prefix
+    )
+
+    if not sucess:
+        raise RuntimeError(message)
+
+
+def exec_task(
+    task_instruction: str, log_file_prefix: str
+) -> Tuple[Any, Any, float, List[MatLike]] | None:
+    # Assuming the system path contains the tasks module
+    task_module = import_module(f"tasks.{task_instruction}.task")
+
+    if hasattr(task_module, "exec_task"):
+        with open(f"{log_file_prefix}/task_logs.txt", "a") as f:
+            f.write(f"----Executing task: {task_instruction}----\n")
+
+        try:
+            return task_module.exec_task()
+        except Exception as e:
+            with open(f"{log_file_prefix}/task_logs.txt", "a") as f:
+                f.write(f"----Error executing task {task_instruction}: {str(e)}\n")
+
+    return None
+
+
+def task_postpocess(
+    log_file_prefix: str,
+    images_dir: str,
+    task_results: Tuple[Any, Any, float, List[MatLike]],
+):
+    final_state, initial_state, success_rate, images = task_results
+
+    with open(f"{log_file_prefix}/task_logs.txt", "a") as f:
+        f.write(f"\n----Task success rate: {success_rate}----\n")
+
+    with open(f"{log_file_prefix}/initial_state.json", "w") as f:
+        json.dump(initial_state, f, indent=4)
+
+    with open(f"{log_file_prefix}/final_state.json", "w") as f:
+        json.dump(final_state, f, indent=4)
+
+    # Store cv2 imges inside the output directory
+    # images_dir = f"{os.getenv('JOB_OUTPUT_DIR')}/task_images/{task_instruction}"
+    os.makedirs(images_dir, exist_ok=True)
+
+    for idx, img in enumerate(images):
+        img_path = f"{images_dir}/step_{idx + 1}.png"
+        cv2.imwrite(img_path, img)
