@@ -19,7 +19,7 @@ cd $SLURM_SUBMIT_DIR
 
 JOB_OUTPUT_DIR=$HOME/outputs/test-vh-sim-exec/$SLURM_JOB_ID
 LOCAL_OUTPUT_DIR=/scratch/smthethwa/outputs/test-vh-sim-exec/$SLURM_JOB_ID
-DATASET_DIR=/sratch/smthethwa/datasets
+DATASET_DIR=/scratch/smthethwa/datasets
 
 # Create output directory for the job
 if [ ! -d "$JOB_OUTPUT_DIR" ]; then

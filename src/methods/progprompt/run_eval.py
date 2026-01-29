@@ -1,5 +1,5 @@
-from .constants import TASK_PROMPT_ACTION_IMPORTS
-from .prompt import PromptBuilder
+from methods.progprompt.constants import TASK_PROMPT_ACTION_IMPORTS
+from methods.progprompt.prompt import PromptBuilder
 
 
 # Execute the generated task script
