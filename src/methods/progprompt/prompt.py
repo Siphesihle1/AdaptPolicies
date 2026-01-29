@@ -20,7 +20,7 @@ def init_simulator(env_id: int) -> Dict[str, Any]:
 
 def load_task_prompt_examples() -> Dict[str, str]:
     with open(
-        f"{os.getenv('DATASET_DIR')}/data/pythonic_plans/train_complete_plan_set.json",
+        f"{os.getenv('DATASET_DIR')}/pythonic_plans/train_complete_plan_set.json",
         "r",
     ) as f:
         tmp = json.load(f)
@@ -99,7 +99,9 @@ class PromptBuilder:
             dir_path = f"{os.getenv('DATASET_DIR')}/data/{test_set}"
             tasks = load_tasks_from_dir(dir_path)
         else:
-            file_path = f"{os.getenv('DATASET_DIR')}/data/new_env/env{self.env_id}_annotated.json"
+            file_path = (
+                f"{os.getenv('DATASET_DIR')}/new_env/env{self.env_id}_annotated.json"
+            )
             tasks = load_tasks_from_file(file_path)
 
         self._tasks.extend(tasks)

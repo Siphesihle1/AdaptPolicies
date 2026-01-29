@@ -42,7 +42,7 @@ source ~/.bashrc
 conda run --live-stream -n research_proj DATASET_DIR=$DATASET_DIR JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash src/test-scripts/virtual_home_exec_test.sh
 
 # Copy results back to home directory
-mv $LOCAL_OUTPUT_DIR/* $JOB_OUTPUT_DIR/
+mv $LOCAL_OUTPUT_DIR/ $JOB_OUTPUT_DIR/
 
 echo "-- Job Completed --"
 
