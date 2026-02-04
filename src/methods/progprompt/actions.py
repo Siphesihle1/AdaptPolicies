@@ -46,9 +46,6 @@ class Assert(Action):
         action = f"{self.action_name}({assert_cond})"
 
         current_state = f"{ASSERT_PROMPT_PREAMBLE}\n\n{state}\n\n{action}\n"
-        weave_display_name = (
-            f"{os.getenv('EXPERIMENT_NAME')}:{self.task.task_instruction}"
-        )
 
         with weave.thread(thread_id=self.task.thread_id):
             with weave.attributes(
@@ -61,7 +58,7 @@ class Assert(Action):
                     prompt=current_state,
                     model=MODEL,
                     __weave={
-                        "display_name": weave_display_name,
+                        "display_name": self.task.thread_id,
                     },
                 )
 

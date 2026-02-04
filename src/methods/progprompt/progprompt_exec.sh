@@ -4,7 +4,10 @@ SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 
 # Starting the simulator
 echo "--- Starting VirtualHome Simulator ---"
-VIRTUALHOME_SIM_VERSION=$VIRTUALHOME_SIM_VERSION VIRTUALHOME_ROOT=$VIRTUALHOME_ROOT SIM_PORT=$SIM_PORT bash $PROJECT_ROOT/helper-scripts/run-sim.sh
+VIRTUALHOME_SIM_VERSION=$VIRTUALHOME_SIM_VERSION \
+VIRTUALHOME_ROOT=$VIRTUALHOME_ROOT \
+SIM_PORT=$SIM_PORT bash \
+$PROJECT_ROOT/helper-scripts/run-sim.sh
 
 # Wait for the simulator to be ready
 echo "--- Waiting for VirtualHome Simulator to be ready... ---"
@@ -21,14 +24,21 @@ PROGPROMPT_PREFIX=$PROJECT_ROOT/src/methods/progprompt
 echo "--- Copying Progprompt dataset to output directory ---"
 cp -r $PROGPROMPT_PREFIX/data/* $PROGPROMPT_DATASET_DIR/
 
-# Run test script
-echo "--- Running VirtualHome Test Script ---"
-python $PROGPROMPT_PREFIX/run_eval.py
+# Run progprompt script
+echo "--- Running Progprompt Script ---"
+python run_eval.py --expt-name "ProgPrompt_Eval" \
+  --env-id 0 \
+  --test-set "test_seen" \
+  --examples-type "default" \
+  --examples-num 3
 
 # Kill the servers
 echo "--- Stopping VirtualHome Simulator ---"
-ps aux | grep -v "grep" | grep "Xvfb" | awk '{print $2}' | head -n 1 | xargs kill -9 > /dev/null 2>&1 || true
+ps aux | grep -v "grep" | grep "Xvfb" | awk '{print $2}' | head -n 1 | xargs \
+  kill -9 > /dev/null 2>&1 || true
 
 echo "--- Stopping Ollama Server ---"
-ps aux | grep -v "grep" | grep "ollama" | awk '{print $2}' | xargs kill -9 > /dev/null 2>&1 || true
+ps aux | grep -v "grep" | grep "ollama" | awk '{print $2}' | xargs \
+  kill -9 > /dev/null 2>&1 || true
+
 

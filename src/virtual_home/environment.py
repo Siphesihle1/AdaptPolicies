@@ -1,7 +1,9 @@
 from io import TextIOWrapper
 import os
 from typing import List, Optional, Tuple
+import cv2
 from cv2.typing import MatLike
+import weave
 from .graph_query import N, E
 from .task import VHTask
 from unity_simulator.comm_unity import UnityCommunication
@@ -13,6 +15,8 @@ from virtualhome.simulation.evolving_graph.environment import (
     EnvironmentState,
 )
 from .utils import add_additional_obj_states, get_obj_ids_for_adding_states
+
+from PIL import Image
 
 
 class VHEnvironment:
@@ -100,6 +104,7 @@ class VHEnvironment:
         name_equivalence = utils.load_name_equivalence()
         self.executor = ScriptExecutor(env_graph, name_equivalence)
 
+    @weave.op
     def get_observation(self):
         last_action_name = self.last_action[0]
         _, camera_count = self.comm.camera_count()
@@ -114,6 +119,15 @@ class VHEnvironment:
             )
 
         self.images.append(im[0])
+
+        images_dir = (
+            f"{os.getenv('JOB_OUTPUT_DIR')}/task_images/{self.task.task_instruction}"
+        )
+        os.makedirs(images_dir, exist_ok=True)
+        img_path = f"{images_dir}/step_{len(self.images) + 1}.png"
+        cv2.imwrite(img_path, im[0])
+
+        return Image.open(img_path)
 
     def execute(self, script_instruction: str):
         self.log_file.write(f"{script_instruction}\n")
@@ -142,7 +156,10 @@ class VHEnvironment:
         self.task.executable_steps += 1
 
         self.update_executor(final_state)
-        self.get_observation()
+
+        with weave.thread(thread_id=self.task.thread_id):
+            self.get_observation()
+
         self.get_current_state()
 
         self.nodes_with_additonal_states = add_additional_obj_states(

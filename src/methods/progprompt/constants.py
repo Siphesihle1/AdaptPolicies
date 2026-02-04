@@ -68,9 +68,9 @@ from .subtasks import SUBTASKS
 
 """
 
-TASK_INIT: Callable[[str, int], str] = (
-    lambda task_instruction, max_steps: f"""
-task = VHTask("{task_instruction}", SUBTASKS, max_steps={max_steps})
+TASK_INIT: Callable[[str, str, int], str] = (
+    lambda task_instruction, thread_id, max_steps: f"""
+task = VHTask("{task_instruction}", "{thread_id}", SUBTASKS, max_steps={max_steps})
 """
 )
 

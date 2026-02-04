@@ -1,56 +1,58 @@
-from methods.progprompt.constants import TASK_PROMPT_ACTION_IMPORTS
-from methods.progprompt.prompt import PromptBuilder
+import argparse
+from dataclasses import dataclass
+import os
+from typing import Optional, cast
+
+from methods.progprompt.agent import ProgPromptAgent
+from methods.progprompt.prompt import Env0TestSet, ExamplesType
 
 
-# Execute the generated task script
-# sys.path.insert(0, os.getenv("JOB_OUTPUT_DIR", ""))
-# invalidate_caches()
-#
+@dataclass
+class ProgramArgs:
+    env_id: int
+    test_set: Env0TestSet
+    examples_type: ExamplesType
+    examples_num: int
+    expt_name: Optional[str] = None
 
-builder = (
-    PromptBuilder(env_id=0)
-    .with_imports([TASK_PROMPT_ACTION_IMPORTS])
-    .with_objects()
-    .with_examples("default")
-    .with_tasks("test_seen")
-)
 
-for prompt in builder:
-    print("=== Env 0 ===")
-    print("=== Task Instruction ===")
-    print(prompt.task_instruction)
-    print("=== Prompt ===")
-    print(prompt.text)
-    print("=" * 80 + "\n")
+def execute_progprompt_agent(args: ProgramArgs):
+    progprompt_agent = ProgPromptAgent(
+        env_id=args.env_id,
+        test_set=args.test_set,
+        examples_type=args.examples_type,
+        examples_num=args.examples_num,
+    )
 
-builder = (
-    PromptBuilder(env_id=1)
-    .with_imports([TASK_PROMPT_ACTION_IMPORTS])
-    .with_objects()
-    .with_examples("default")
-    .with_tasks()
-)
+    progprompt_agent.generate_task_plans()
+    progprompt_agent.generate_tasks_scripts()
+    progprompt_agent.exec_plans()
+    progprompt_agent.eval()
+    progprompt_agent.log_eval_results()
 
-for prompt in builder:
-    print("=== Env 1 ===")
-    print("=== Task Instruction ===")
-    print(prompt.task_instruction)
-    print("=== Prompt ===")
-    print(prompt.text)
-    print("=" * 80 + "\n")
 
-builder = (
-    PromptBuilder(env_id=2)
-    .with_imports([TASK_PROMPT_ACTION_IMPORTS])
-    .with_objects()
-    .with_examples("default")
-    .with_tasks()
-)
+# Adapted from https://github.com/tan90cot0/progprompt-vh/blob/main/scripts/run_eval.py#L253
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
 
-for prompt in builder:
-    print("=== Env 2 ===")
-    print("=== Task Instruction ===")
-    print(prompt.task_instruction)
-    print("=== Prompt ===")
-    print(prompt.text)
-    print("=" * 80 + "\n")
+    parser.add_argument("--expt-name", type=str, required=False)
+    parser.add_argument("--env-id", type=int, default=0)
+    parser.add_argument(
+        "--test-set",
+        type=str,
+        default="test_unseen",
+        choices=["test_unseen", "test_seen", "test_unseen_ambiguous"],
+    )
+    parser.add_argument(
+        "--examples-type",
+        type=str,
+        default="default",
+        choices=["default", "random"],
+    )
+    parser.add_argument("--examples-num", type=int, default=3, choices=range(1, 7))
+
+    args = cast(ProgramArgs, parser.parse_args())
+
+    os.environ["EXPERIMENT_NAME"] = args.expt_name if args.expt_name else ""
+
+    execute_progprompt_agent(args)

@@ -13,6 +13,7 @@ class VHTask:
     def __init__(
         self,
         task_instruction: str,
+        thread_id: str,
         subtasks: List[str],
         max_steps: int = -1,
     ):
@@ -25,9 +26,7 @@ class VHTask:
         self.executable_steps = 0
         self.max_steps = max_steps
         self.terminate_current_subtask = False
-        self.thread_id = (
-            f"{os.getenv('EXPERIMENT_NAME')}:{self.task_instruction}:{str(uuid7())}"
-        )
+        self.thread_id = thread_id
 
     def track_subtask(self, subtask_index: int):
         self.step = 1

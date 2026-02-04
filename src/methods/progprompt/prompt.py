@@ -20,7 +20,7 @@ def init_simulator(env_id: int) -> Dict[str, Any]:
 
 def load_task_prompt_examples() -> Dict[str, str]:
     with open(
-        f"{os.getenv('DATASET_DIR')}/pythonic_plans/train_complete_plan_set.json",
+        f"{os.getenv('PROGPROMPT_DATASET_DIR')}/pythonic_plans/train_complete_plan_set.json",
         "r",
     ) as f:
         tmp = json.load(f)
@@ -96,12 +96,10 @@ class PromptBuilder:
         tasks: List[str] = []
 
         if test_set is not None:
-            dir_path = f"{os.getenv('DATASET_DIR')}/{test_set}"
+            dir_path = f"{os.getenv('PROGPROMPT_DATASET_DIR')}/{test_set}"
             tasks = load_tasks_from_dir(dir_path)
         else:
-            file_path = (
-                f"{os.getenv('DATASET_DIR')}/new_env/env{self.env_id}_annotated.json"
-            )
+            file_path = f"{os.getenv('PROGPROMPT_DATASET_DIR')}/new_env/env{self.env_id}_annotated.json"
             tasks = load_tasks_from_file(file_path)
 
         self._tasks.extend(tasks)
@@ -122,7 +120,7 @@ class PromptBuilder:
 
         final_prompt = "\n\n".join(sections)
 
-        return Prompt(text=f"{final_prompt}\n\t", task_instruction=task)
+        return Prompt(text=f"{final_prompt}\n\t", task_instruction=task_function_name)
 
     def __iter__(self):
         for task in self._tasks:

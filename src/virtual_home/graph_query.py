@@ -159,8 +159,3 @@ def has(prop: str, value=None):
     if value is None:
         return lambda n: prop in n
     return lambda n: n.get(prop) == value
-
-
-def prop_in(prop: str, *values):
-    values = set(values)
-    return lambda n: n.get(prop) in values

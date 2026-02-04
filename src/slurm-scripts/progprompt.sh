@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --partition=bigbatch
 ##SBATCH -w mscluster77
-#SBATCH --job-name=test-vh-sim-exec
-#SBATCH --output=/home-mscluster/smthethwa/slurm-logs/test-vh-sim-exec/%j.out
-#SBATCH --error=/home-mscluster/smthethwa/slurm-logs/test-vh-sim-exec/%j.err
+#SBATCH --job-name=progprompt
+#SBATCH --output=/home-mscluster/smthethwa/slurm-logs/progprompt/%j.out
+#SBATCH --error=/home-mscluster/smthethwa/slurm-logs/progprompt/%j.err
 
 echo ------------------------------------------------------
 echo "Job is running on node  $SLURM_JOB_NODELIST"
@@ -17,9 +17,9 @@ echo ------------------------------------------------------
 
 cd $SLURM_SUBMIT_DIR
 
-JOB_OUTPUT_DIR=$HOME/outputs/test-vh-sim-exec/$SLURM_JOB_ID
-LOCAL_OUTPUT_DIR=/scratch/smthethwa/outputs/test-vh-sim-exec/$SLURM_JOB_ID
-DATASET_DIR=/scratch/smthethwa/datasets/progprompt
+JOB_OUTPUT_DIR=$HOME/outputs/progprompt/$SLURM_JOB_ID
+LOCAL_OUTPUT_DIR=/scratch/smthethwa/outputs/progprompt/$SLURM_JOB_ID
+PROGPROMPT_DATASET_DIR=/scratch/smthethwa/datasets/progprompt
 
 # Create output directory for the job
 if [ ! -d "$JOB_OUTPUT_DIR" ]; then
@@ -31,15 +31,19 @@ if [ ! -d "$LOCAL_OUTPUT_DIR" ]; then
 fi
 
 # Create dataset directory
-if [ ! -d "$DATASET_DIR" ]; then
-  mkdir -p $DATASET_DIR
+if [ ! -d "$PROGPROMPT_DATASET_DIR" ]; then
+  mkdir -p $PROGPROMPT_DATASET_DIR
 fi
 
 # Load conda to environment
 source ~/.bashrc
 
 # Run setup script
-conda run --live-stream -n research_proj DATASET_DIR=$DATASET_DIR JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash src/test-scripts/virtual_home_exec_test.sh
+conda run \
+  --live-stream -n research_proj \
+  PROGPROMPT_DATASET_DIR=$PROGPROMPT_DATASET_DIR \
+  JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash \
+  src/methods/progprompt/progprompt_exec.sh
 
 # Copy results back to home directory
 mv $LOCAL_OUTPUT_DIR/ $JOB_OUTPUT_DIR/
