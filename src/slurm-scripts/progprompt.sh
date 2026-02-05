@@ -20,6 +20,7 @@ cd $SLURM_SUBMIT_DIR
 JOB_OUTPUT_DIR=$HOME/outputs/progprompt/$SLURM_JOB_ID
 LOCAL_OUTPUT_DIR=/scratch/smthethwa/outputs/progprompt/$SLURM_JOB_ID
 PROGPROMPT_DATASET_DIR=/scratch/smthethwa/datasets/progprompt
+PROGPROMPT_PREFIX=$PROJECT_ROOT/src/methods/progprompt
 
 # Create output directory for the job
 if [ ! -d "$JOB_OUTPUT_DIR" ]; then
@@ -42,8 +43,9 @@ source ~/.bashrc
 conda run \
   --live-stream -n research_proj \
   PROGPROMPT_DATASET_DIR=$PROGPROMPT_DATASET_DIR \
+  PROGPROMPT_PREFIX=$PROGPROMPT_PREFIX \
   JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash \
-  src/methods/progprompt/progprompt_exec.sh
+  $PROGPROMPT_PREFIX/progprompt_exec.sh
 
 # Copy results back to home directory
 mv $LOCAL_OUTPUT_DIR/ $JOB_OUTPUT_DIR/
