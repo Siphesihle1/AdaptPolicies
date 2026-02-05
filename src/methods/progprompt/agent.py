@@ -107,7 +107,7 @@ class ProgPromptAgent:
             plan = response.choices[0].message.content or ""
             self.plans[task] = [plan.strip(), thread_id]
 
-        with open(f"{os.getenv('JOB_OUTPUT_DIR')}/plans.json") as f:
+        with open(f"{os.getenv('JOB_OUTPUT_DIR')}/plans.json", "w") as f:
             json.dump(self.plans, f, indent=4)
 
     def generate_tasks_scripts(self):
