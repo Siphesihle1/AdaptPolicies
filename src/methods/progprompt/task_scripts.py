@@ -1,6 +1,4 @@
 import os
-import json
-import cv2
 from pathlib import Path
 from methods.parser import (
     Parser,

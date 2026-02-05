@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-from graph_query import N
+from virtual_home.graph_query import N
 from openai.types.chat import ChatCompletion
 from uuid_utils import uuid7
 import weave
@@ -39,7 +39,7 @@ def get_ground_truth_final_states(test_set: str) -> List[Dict[str, Any]]:
     final_states_gt: List[Dict[str, Any]] = []
 
     with open(
-        f"{os.getenv('PROGPROMPT_DATASET_DIR')}/data/final_states/final_states_{test_set}.json",
+        f"{os.getenv('PROGPROMPT_DATASET_DIR')}/final_states/final_states_{test_set}.json",
         "r",
     ) as f:
         for line in f.readlines():

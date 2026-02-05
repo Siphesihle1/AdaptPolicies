@@ -3,7 +3,6 @@ import weave
 from virtual_home.actions import Action
 from virtual_home.task import VHTask
 import re
-import os
 
 from .environment import ProgPromptEnvironment
 from .constants import ASSERT_PROMPT_PREAMBLE, CURRENT_STATE_PROMPT_EXAMPLE, MODEL

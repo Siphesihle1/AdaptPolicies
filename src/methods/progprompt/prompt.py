@@ -3,8 +3,8 @@ import json
 import random
 from dataclasses import dataclass
 from typing import List, Dict, Any, Literal, Optional
-from graph_query import N
-from unity_simulator.comm_unity import UnityCommunication
+from virtual_home.graph_query import N
+from virtualhome.simulation.unity_simulator import UnityCommunication
 
 from .constants import DEFAULT_EXAMPLES
 
