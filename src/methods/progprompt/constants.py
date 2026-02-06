@@ -180,4 +180,39 @@ Task: You are given a function header that describes a virtual home household ta
 - Do NOT include markdown, backticks, or explanations.
 - Do NOT include explanations, markdown, or text outside the function.
 - Stop immediately after the function ends.
-</output-format>"""
+</output-format>
+
+<assert-syntax-rules>
+- The `assert` statements in this code are part of a custom domain-specific language. They do NOT follow standard Python syntax and must be reproduced exactly as shown.
+- Valid assert forms:
+```
+1. Proximity check:
+	assert('close' to OBJECT)
+		else: ACTION(OBJECT)
+
+2. State check:
+	assert(OBJECT is STATE)
+		else: ACTION(OBJECT)
+
+3. Possession check:
+	assert(OBJECT in 'hands')
+		else: ACTION(OBJECT)
+
+4. Location check:
+    assert(OBJECT on LOCATION)
+        else: ACTION(OBJECT)
+    
+    OR
+
+    assert(OBJECT in LOCATION)
+        else: ACTION(OBJECT)
+```
+- The `else:` block must be on the next line and indented once.
+- An assert may contain one or more `else:` lines.
+- Each `else:` represents a fallback action.
+- Preserve ordering of `else:` actions.
+- Do NOT rewrite, optimize, or correct assert syntax.
+- Do NOT replace asserts with if-statements.
+- Always follow the patterns demonstrated in the examples.
+</assert-syntax-rules>
+"""
