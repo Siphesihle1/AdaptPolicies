@@ -3,12 +3,14 @@ import json
 import os
 import sys
 
+from ollama import GenerateResponse
+
 from virtual_home.graph_query import N
 from openai.types.chat import ChatCompletion
 from uuid_utils import uuid7
 import weave
 
-from methods.llm import LLMOpenAI
+from methods.llm import LLMOpenAI, LMOllama
 from .constants import MODEL, TASK_PROMPT_ACTION_IMPORTS
 from .prompt import Env0TestSet, ExamplesType, PromptBuilder
 from .task_scripts import exec_task, generate_task_scripts
@@ -95,7 +97,7 @@ class ProgPromptAgent:
                         "task_instruction": task,
                     }
                 ):
-                    response: ChatCompletion = LLMOpenAI(
+                    response: GenerateResponse = LMOllama(
                         prompt=prompt_text,
                         model=MODEL,
                         __weave={
@@ -103,7 +105,7 @@ class ProgPromptAgent:
                         },
                     )
 
-            plan = response.choices[0].message.content or ""
+            plan = response.response or ""
 
             if not plan.strip().startswith("def"):
                 print(

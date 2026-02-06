@@ -207,7 +207,7 @@ Task: You are given a function header that describes a virtual home household ta
     assert(OBJECT in LOCATION)
         else: ACTION(OBJECT)
 ```
-- The `else:` block must be on the next line and indented once.
+- The `else:` block must be on the next line and indented once with the action function call on the same line.
 - An assert may contain one or more `else:` lines.
 - Each `else:` represents a fallback action.
 - Preserve ordering of `else:` actions.
