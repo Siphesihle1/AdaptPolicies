@@ -173,6 +173,9 @@ Task: You are given a function header that describes a virtual home household ta
 - Do NOT invent new actions, objects, or syntax.
 - Do NOT skip steps, merge steps, or assume shortcuts.
 - As a rule of thumb, find the object first before interacting with it.
+- Not all actions can be applied to all objects.
+- You must only choose actions that make sense for the object.
+- If an action does not logically apply to an object, do not use it.
 </rules>
 
 <output-format>

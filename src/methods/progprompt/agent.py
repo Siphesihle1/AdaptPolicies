@@ -108,16 +108,20 @@ class ProgPromptAgent:
 
             if not plan.strip().startswith("def"):
                 print(
-                    f"Plan for task '{task}' does not start with a function definition."
+                    f"Plan for task '{task}' does not start with a function definition.\n\n{plan}"
                 )
                 continue
 
             if plan.strip().count("def") > 1:
-                print(f"Plan for task '{task}' contains multiple function definitions.")
+                print(
+                    f"Plan for task '{task}' contains multiple function definitions.\n\n{plan}"
+                )
                 continue
 
             if "```" in plan.strip():
-                print(f"Plan for task '{task}' contains code block formatting.")
+                print(
+                    f"Plan for task '{task}' contains code block formatting.\n\n{plan}"
+                )
                 continue
 
             self.plans[task] = [plan.strip(), thread_id]
