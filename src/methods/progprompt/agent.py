@@ -6,11 +6,10 @@ import sys
 from ollama import GenerateResponse
 
 from virtual_home.graph_query import N
-from openai.types.chat import ChatCompletion
 from uuid_utils import uuid7
 import weave
 
-from methods.llm import LLMOpenAI, LMOllama
+from methods.llm import LMOllama
 from .constants import MODEL, TASK_PROMPT_ACTION_IMPORTS
 from .prompt import Env0TestSet, ExamplesType, PromptBuilder
 from .task_scripts import exec_task, generate_task_scripts
