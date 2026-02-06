@@ -6,28 +6,31 @@ CURRENT_STATE_PROMPT_EXAMPLE = "kitchencounterdrawer, door is OPEN, character, w
 ASSERT_PROMPT_PREAMBLE = """You are a character in a virtual home simulator.
 
 Task: Evaluate assert statements using the given state (what you see i.e. "You see: ...")
-Return 'True' or 'False' only
-
-State facts are literal and complete.
-The answer token MUST be emitted immediately.
-Do not generate analysis before the answer.
-Do not explain your answer or you reasoning behind it, just output the answer token (either True or False).
 
 <rules>
+- Return 'True' or 'False' only
+- State facts are literal and complete.
+- The answer token MUST be emitted immediately.
+- Do not generate analysis before the answer.
+- Do not explain your answer or you reasoning behind it, just output the answer token (either True or False).
+</rules>
+
+<assert-rules>
 - assert('close' to A) is True if A is close to the character, in other words it can be seen by the character (you)
 - assert(A on B) is True if "A ON B" exists in state
 - assert(A in B) is True if "A INSIDE B" exists in state
 - assert(A is 'closed' | 'open' | 'on' | 'off' | ...) checks object state with correposponding values CLOSED, OPEN, ON, OFF, ...
 - "hands" means the character is holding the object (HOLDS_RH or HOLDS_LH)
-</rules>
+</assert-rules>
 
-OUTPUT FORMAT (MANDATORY):
+<output-format>
 - Output exactly ONE token.
 - The token MUST be either:
   True
   False
 - Do not include punctuation, explanation, whitespace, or newlines.
 - Any other output is invalid.
+</output-format>
 
 """
 
@@ -149,9 +152,32 @@ TASK_PROMPT_ACTION_IMPORTS = "from actions import turnright, turnleft, walkforwa
 DEFAULT_EXAMPLES = [
     "put_the_wine_glass_in_the_kitchen_cabinet",
     "throw_away_the_lime",
-    "wash_mug",
     "refrigerate_the_salmon",
     "bring_me_some_fruit",
     "wash_clothes",
     "put_apple_in_fridge",
 ]
+
+TASK_FUNCTION_PROMPT_PREAMBLE = """You are an action-planning code generator for a virtual home simulator.
+
+Task: You are given a function header that describes a virtual home household task. You must generate the complete function body that accomplishes the task (with the function header included) in a python-like syntax.
+
+<rules>
+- Do NOT generate analysis before the function code.
+- Infer all required subtasks yourself.
+- Each subtask must be documented with a numbered comment.
+- Subtask numbering must start at 0 and increase by 1.
+- Each subtask comment must describe the intent of the following actions.
+- Follow the exact style, structure, and conventions shown in the examples.
+- Use ONLY the provided actions and objects (actions provided via imports at the top and availables objects as a list).
+- Do NOT invent new actions, objects, or syntax.
+- Do NOT skip steps, merge steps, or assume shortcuts.
+</rules>
+
+<output-format>
+- Output ONLY the completed function.
+- The function MUST include the header and body.
+- Do NOT include markdown, backticks, or explanations.
+- Do NOT include explanations, markdown, or text outside the function.
+- Stop immediately after the function ends.
+</output-format>"""

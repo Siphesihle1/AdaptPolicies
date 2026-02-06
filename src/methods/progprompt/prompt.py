@@ -6,7 +6,7 @@ from typing import List, Dict, Any, Literal, Optional
 from virtual_home.graph_query import N
 from virtualhome.simulation.unity_simulator import UnityCommunication
 
-from .constants import DEFAULT_EXAMPLES
+from .constants import DEFAULT_EXAMPLES, TASK_FUNCTION_PROMPT_PREAMBLE
 
 Env0TestSet = Literal["test_unseen", "test_seen", "test_unseen_ambiguous_goals"]
 ExamplesType = Literal["default", "random"]
@@ -92,6 +92,7 @@ class PromptBuilder:
     def with_tasks(
         self,
         test_set: Optional[Env0TestSet] = None,
+        num_tasks: Optional[int] = None,
     ):
         tasks: List[str] = []
 
@@ -102,21 +103,42 @@ class PromptBuilder:
             file_path = f"{os.getenv('PROGPROMPT_DATASET_DIR')}/new_env/env{self.env_id}_annotated.json"
             tasks = load_tasks_from_file(file_path)
 
-        self._tasks.extend(tasks)
+        self._tasks = tasks[:num_tasks] if num_tasks else tasks
         return self
 
-    def _build_prompt(self, task: str) -> Prompt:
+    def _build_prompt(
+        self, task: str, include_preamble=True, include_section_divisions=True
+    ) -> Prompt:
         sections: List[str] = []
 
-        sections.append("\n".join(self._imports))
+        if include_preamble:
+            sections.append(TASK_FUNCTION_PROMPT_PREAMBLE)
+
+        if len(self._imports) > 0:
+            actions_section_heading = (
+                "# Available actions\n" if include_section_divisions else ""
+            )
+            sections.append(f"{actions_section_heading}'\n'.join(self._imports)")
 
         if len(self._objects) > 0:
-            sections.append(f"objects = {self._objects}")
+            objects_section_heading = (
+                "# Available objects\n" if include_section_divisions else ""
+            )
+            sections.append(f"{objects_section_heading}objects = {self._objects}")
 
-        sections.append("\n\n".join(self._examples))
+        if len(self._examples) > 0:
+            examples_section_heading = (
+                "# Example task functions\n\n" if include_section_divisions else ""
+            )
+            sections.append(f"{examples_section_heading}\n\n".join(self._examples))
 
+        task_section_heading = (
+            "# Now complete the following task function\n\n"
+            if include_section_divisions
+            else ""
+        )
         task_function_name = "_".join(task.split(" "))
-        sections.append(f"def {task_function_name}():")
+        sections.append(f"{task_section_heading}def {task_function_name}():")
 
         final_prompt = "\n\n".join(sections)
 

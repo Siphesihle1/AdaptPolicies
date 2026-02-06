@@ -10,5 +10,6 @@ python "$PROGPROMPT_PREFIX/run_eval.py" \
   --expt-name "ProgPrompt_Eval" \
   --env-id 0 \
   --test-set "test_seen" \
+  --num-tasks 1 \
   --examples-type "default" \
   --examples-num 3

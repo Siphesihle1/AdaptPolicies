@@ -14,6 +14,7 @@ class ProgramArgs:
     examples_type: ExamplesType
     examples_num: int
     expt_name: Optional[str] = None
+    num_tasks: Optional[int] = None
 
 
 def execute_progprompt_agent(args: ProgramArgs):
@@ -22,6 +23,7 @@ def execute_progprompt_agent(args: ProgramArgs):
         test_set=args.test_set,
         examples_type=args.examples_type,
         examples_num=args.examples_num,
+        num_tasks=args.num_tasks,
     )
 
     progprompt_agent.generate_task_plans()
@@ -43,6 +45,7 @@ if __name__ == "__main__":
         default="test_unseen",
         choices=["test_unseen", "test_seen", "test_unseen_ambiguous"],
     )
+    parser.add_argument("--num-tasks", type=int, required=False)
     parser.add_argument(
         "--examples-type",
         type=str,

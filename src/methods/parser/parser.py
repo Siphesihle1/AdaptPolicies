@@ -101,7 +101,13 @@ class IndentationParser:
             if line.indent < base_indent:
                 break
 
-            node, consumed = self.parse_line(lines, index)
+            parsed_line = self.parse_line(lines, index)
+
+            if not parsed_line:
+                index += 1
+                continue
+
+            node, consumed = parsed_line
             ast.append(node)
             index += consumed
 
@@ -146,6 +152,10 @@ class Parser:
 
     def parse(self, text: str):
         lines = tokenize_lines(text)
+
+        if len(lines) == 0:
+            raise SyntaxError("No code to parse.")
+
         ast, _ = self.indent_parser.parse_block(lines, 0)
         self.ast = ast
 

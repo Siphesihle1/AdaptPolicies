@@ -115,7 +115,7 @@ def prepare_task_scripts(
     try:
         plan_artifacts = extract_plan_artifacts(plan)
     except ValueError as e:
-        return (False, f"Error processing plan for task '{task_instruction}': {e}")
+        return (False, f"Error parsing plan for task '{task_instruction}': {e}")
 
     create_script_files(
         task_instruction,

@@ -55,6 +55,7 @@ class ProgPromptAgent:
         examples_type: ExamplesType = "default",
         examples_num=3,
         test_set: Optional[Env0TestSet] = None,
+        num_tasks: Optional[int] = None,
     ):
         self.env_id = env_id
         self.test_set = test_set
@@ -63,7 +64,7 @@ class ProgPromptAgent:
             .with_imports([TASK_PROMPT_ACTION_IMPORTS])
             .with_objects()
             .with_examples(examples_type, examples_num)
-            .with_tasks(test_set=test_set)
+            .with_tasks(test_set=test_set, num_tasks=num_tasks)
         )
         self.plans: Dict[str, List[str]] = {}
         self.final_states: List[Dict[str, Any]] = []
@@ -105,6 +106,28 @@ class ProgPromptAgent:
                     )
 
             plan = response.choices[0].message.content or ""
+
+            if not plan.strip().startswith("def"):
+                print(
+                    f"Plan for task '{task}' does not start with a function definition.",
+                    file=sys.stderr,
+                )
+                continue
+
+            if plan.strip().count("def") > 1:
+                print(
+                    f"Plan for task '{task}' contains multiple function definitions.",
+                    file=sys.stderr,
+                )
+                continue
+
+            if "```" in plan.strip():
+                print(
+                    f"Plan for task '{task}' contains code block formatting.",
+                    file=sys.stderr,
+                )
+                continue
+
             self.plans[task] = [plan.strip(), thread_id]
 
         with open(f"{os.getenv('JOB_OUTPUT_DIR')}/plans.json", "w") as f:
