@@ -176,6 +176,9 @@ Task: You are given a function header that describes a virtual home household ta
 - Not all actions can be applied to all objects.
 - You must only choose actions that make sense for the object.
 - If an action does not logically apply to an object, do not use it.
+- Some objects (movable objects) must be in the agent's hands before they can be used or interacted with. For these objects, the agent must grab the object before performing any other action with it.
+- Do NOT attempt to grab fixed objects or containers.
+- Never interact with a handheld object unless it is first in the agent's hands.
 </rules>
 
 <output-format>
@@ -200,7 +203,7 @@ Task: You are given a function header that describes a virtual home household ta
 
 3. Possession check:
 	assert(OBJECT in 'hands')
-		else: ACTION(OBJECT)
+		else: grab(OBJECT)
 
 4. Location check:
     assert(OBJECT on LOCATION)
