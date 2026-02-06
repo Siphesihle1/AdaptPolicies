@@ -98,8 +98,6 @@ class ProgPromptAgent:
                     response: ChatCompletion = LLMOpenAI(
                         prompt=prompt_text,
                         model=MODEL,
-                        stop=["def"],
-                        frequency_penalty=0.15,
                         __weave={
                             "display_name": thread_id,
                         },
