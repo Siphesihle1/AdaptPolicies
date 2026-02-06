@@ -178,9 +178,10 @@ class ProgPromptAgent:
 
             pred.finish()
 
-        self.evaluation_logger.log_summary(
-            self.results["overall"], auto_summarize=False
-        )
+        if "overall" in self.results:
+            self.evaluation_logger.log_summary(
+                self.results["overall"], auto_summarize=False
+            )
 
     # Adapted from https://github.com/tan90cot0/progprompt-vh/blob/main/scripts/run_eval.py#L37
     def eval(self):

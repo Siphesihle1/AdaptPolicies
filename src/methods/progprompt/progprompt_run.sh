@@ -12,4 +12,4 @@ python "$PROGPROMPT_PREFIX/run_eval.py" \
   --test-set "test_seen" \
   --num-tasks 1 \
   --examples-type "default" \
-  --examples-num 3
+  --examples-num 1

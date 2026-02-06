@@ -34,7 +34,7 @@ Task: Evaluate assert statements using the given state (what you see i.e. "You s
 
 """
 
-MODEL = "deepseek-r1:14b"
+MODEL = "deepseek-r1:32b"
 
 MAX_STEPS = 10
 INITIAL_ROOM = "kitchen"

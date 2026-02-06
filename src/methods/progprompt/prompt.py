@@ -129,7 +129,9 @@ class PromptBuilder:
 
         if len(self._examples) > 0:
             examples_section_heading = (
-                "# Example task functions\n\n" if include_section_divisions else ""
+                f"# Example task function{'s' if len(self._examples) > 1 else ''}\n"
+                if include_section_divisions
+                else ""
             )
             examples_code = "\n\n".join(self._examples)
             sections.append(f"{examples_section_heading}{examples_code}")
