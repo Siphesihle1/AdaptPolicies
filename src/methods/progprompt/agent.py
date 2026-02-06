@@ -158,9 +158,13 @@ class ProgPromptAgent:
 
     def log_eval_results(self):
         for task, metrics in self.results.items():
+            if task == "overall":
+                continue
+
             inputs = {
                 "task_instruction": task,
             }
+
             pred = self.evaluation_logger.log_prediction(
                 inputs=inputs, output=self.plans[task][0]
             )
