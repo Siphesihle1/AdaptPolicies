@@ -118,7 +118,8 @@ class PromptBuilder:
             actions_section_heading = (
                 "# Available actions\n" if include_section_divisions else ""
             )
-            sections.append(f"{actions_section_heading}'\n'.join(self._imports)")
+            imports_code = "\n".join(self._imports)
+            sections.append(f"{actions_section_heading}{imports_code}")
 
         if len(self._objects) > 0:
             objects_section_heading = (
@@ -130,10 +131,11 @@ class PromptBuilder:
             examples_section_heading = (
                 "# Example task functions\n\n" if include_section_divisions else ""
             )
-            sections.append(f"{examples_section_heading}\n\n".join(self._examples))
+            examples_code = "\n\n".join(self._examples)
+            sections.append(f"{examples_section_heading}{examples_code}")
 
         task_section_heading = (
-            "# Now complete the following task function\n\n"
+            "# Now complete the following task function\n"
             if include_section_divisions
             else ""
         )

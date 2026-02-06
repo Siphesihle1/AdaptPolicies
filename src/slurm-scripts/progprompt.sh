@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --partition=bigbatch
-##SBATCH -w mscluster77
+##SBATCH -w mscluster55
 #SBATCH --job-name=progprompt
 #SBATCH --output=/home-mscluster/smthethwa/slurm-logs/progprompt/%j.out
 #SBATCH --error=/home-mscluster/smthethwa/slurm-logs/progprompt/%j.err

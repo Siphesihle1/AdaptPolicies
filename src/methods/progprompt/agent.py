@@ -244,9 +244,10 @@ class ProgPromptAgent:
                 "Exec": self.exec_per_task[task],
             }
 
-        self.results["overall"] = {
-            "PSR": sum(sr) / len(sr),
-            "SR": sr.count(1.0) / len(sr),
-            "Precision": 1 - sum(unchanged_conds) / sum(total_unchanged_conds),
-            "Exec": sum(self.exec_per_task.values()) / len(self.exec_per_task),
-        }
+        if len(test_tasks) > 0:
+            self.results["overall"] = {
+                "PSR": sum(sr) / len(sr),
+                "SR": sr.count(1.0) / len(sr),
+                "Precision": 1 - sum(unchanged_conds) / sum(total_unchanged_conds),
+                "Exec": sum(self.exec_per_task.values()) / len(self.exec_per_task),
+            }
