@@ -160,12 +160,6 @@ class LookAt(Open):
         self.action_name = "lookat"
 
 
-class WalkTowards(Open):
-    def __init__(self, env: VHEnvironment, task: VHTask):
-        super().__init__(env, task)
-        self.action_name = "walktowards"
-
-
 class SwitchOff(Open):
     def __init__(self, env: VHEnvironment, task: VHTask):
         super().__init__(env, task)

@@ -243,9 +243,6 @@ class ProgPromptAgent:
                 "Exec": self.exec_per_task[task],
             }
 
-            with open(task_log_file, "a") as f:
-                json.dump(self.results[task], f)
-
         if len(test_tasks) > 0:
             self.results["overall"] = {
                 "PSR": sum(sr) / len(sr),

@@ -52,7 +52,6 @@ from virtual_home.actions import (
     Drink,
     Grab,
     LookAt,
-    WalkTowards,
     SwitchOff,
     SwitchOn,
     Sit,
@@ -96,7 +95,6 @@ close = Close(env, task)
 drink = Drink(env, task)
 grab = Grab(env, task)
 lookat = LookAt(env, task)
-walktowards = WalkTowards(env, task)
 switchoff = SwitchOff(env, task)
 switchon = SwitchOn(env, task)
 sit = Sit(env, task)
@@ -125,7 +123,6 @@ __all__ = [
     "drink",
     "grab",
     "lookat",
-    "walktowards",
     "switchoff",
     "switchon",
     "sit",
@@ -147,7 +144,7 @@ def exec_task():
 """
 )
 
-TASK_PROMPT_ACTION_IMPORTS = "from actions import turnright, turnleft, walkforward, walktowards <obj>, walk <obj>, run <obj>, grab <obj>, switchon <obj>, switchoff <obj>, open <obj>, close <obj>, lookat <obj>, sit <obj>, standup, find <obj>, turnto <obj>, drink <obj>, pointat <obj>, watch <obj>, putin <obj> <obj>, putback <obj> <obj>"
+TASK_PROMPT_ACTION_IMPORTS = "from actions import turnright, turnleft, walkforward, walk <obj>, run <obj>, grab <obj>, switchon <obj>, switchoff <obj>, open <obj>, close <obj>, lookat <obj>, sit <obj>, standup, find <obj>, turnto <obj>, drink <obj>, pointat <obj>, watch <obj>, putin <obj> <obj>, putback <obj> <obj>"
 
 DEFAULT_EXAMPLES = [
     "put_the_wine_glass_in_the_kitchen_cabinet",
@@ -173,6 +170,7 @@ Task: You are given a function header that describes a virtual home household ta
 - Do NOT invent new actions, objects, or syntax.
 - Do NOT skip steps, merge steps, or assume shortcuts.
 - As a rule of thumb, find the object first before interacting with it.
+- Before finding or interacting with an object, you should first walk to the room that most likely contains the object.
 - Not all actions can be applied to all objects.
 - You must only choose actions that make sense for the object.
 - If an action does not logically apply to an object, do not use it.
@@ -191,6 +189,7 @@ Task: You are given a function header that describes a virtual home household ta
 
 <assert-syntax-rules>
 - The `assert` statements in this code are part of a custom domain-specific language. They do NOT follow standard Python syntax and must be reproduced exactly as shown.
+- The `assert` statements check whether the condition is true in the current state of the environment. If true, nothing happends and the agent continues with the next action. If false, the agent must perform the action(s) specified in the `else:` lines in order, and then continues with the next action.
 - Valid assert forms:
 ```
 1. Proximity check:
@@ -214,10 +213,8 @@ Task: You are given a function header that describes a virtual home household ta
     assert(OBJECT in LOCATION)
         else: ACTION(OBJECT)
 ```
-- The `else:` block must be on the next line and indented once with the action function call on the same line.
-- An assert may contain one or more `else:` lines.
-- Each `else:` represents a fallback action.
-- Preserve ordering of `else:` actions.
+- The `else:` line(s) must be on the next line and indented once with the action function call on the same line.
+- An `assert` may contain one or more `else:` lines.
 - Do NOT rewrite, optimize, or correct assert syntax.
 - Do NOT replace asserts with if-statements.
 - Always follow the patterns demonstrated in the examples.
