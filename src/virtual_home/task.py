@@ -35,7 +35,7 @@ class VHTask:
 
     @property
     def terminate_current_subtask(self):
-        if self.step != -1 and self.step > self.max_steps:
+        if self.step > self.max_steps:
             return True
 
         return self._skip_actions

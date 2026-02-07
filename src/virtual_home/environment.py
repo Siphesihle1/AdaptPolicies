@@ -143,13 +143,16 @@ class VHEnvironment:
         try:
             script = parse_script_line(script, 0)
         except:
+            self.log_file.write(
+                f"act_success: False, message: Failed to parse script line {script}\n"
+            )
             return False
 
         success, final_state, _ = self.executor.execute(Script([script]))
 
         if not success:
             self.log_file.write(
-                f"act_success: {success}, message: {self.executor.info.get_error_string()}\n"
+                f"act_success: False, message: {self.executor.info.get_error_string()}\n"
             )
             return False
 
