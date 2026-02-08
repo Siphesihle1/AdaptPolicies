@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --partition=bigbatch
-##SBATCH -w mscluster46
+##SBATCH -w mscluster55
 #SBATCH --job-name=progprompt
 #SBATCH --output=/home-mscluster/smthethwa/slurm-logs/progprompt/%j.out
 #SBATCH --error=/home-mscluster/smthethwa/slurm-logs/progprompt/%j.err
@@ -42,6 +42,9 @@ source ~/.bashrc
 # Run setup script
 conda run \
   --live-stream -n research_proj \
+  SLURM_JOB_ID=$SLURM_JOB_ID \
+  SLURM_JOB_NAME=$SLURM_JOB_NAME \
+  SLURM_JOB_NODELIST=$SLURM_JOB_NODELIST \
   PROGPROMPT_DATASET_DIR=$PROGPROMPT_DATASET_DIR \
   PROGPROMPT_PREFIX=$PROGPROMPT_PREFIX \
   JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash \

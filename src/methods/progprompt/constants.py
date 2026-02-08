@@ -168,6 +168,8 @@ Task: You are given a function header that describes a virtual home household ta
 - Follow the exact style, structure, and conventions shown in the examples.
 - Use ONLY the provided actions and objects (actions provided via imports at the top and availables objects as a list).
 - Do NOT invent new actions, objects, or syntax.
+- Panctuations (e.g `.`) before function calls are STICTLY probihibited.
+- Be consistent with indentation as shown in the example.
 - Do NOT skip steps, merge steps, or assume shortcuts.
 - You MUST find an object first before interacting with it.
 - Before finding or interacting with an object, you should first walk to the room that most likely contains the object.
@@ -175,14 +177,14 @@ Task: You are given a function header that describes a virtual home household ta
 - You must only choose actions that make sense for the object.
 - If an action does not logically apply to an object, DO NOT use it.
 - Actions that do not make sense for an object are strictly forbidden.
-- When in doubt, prefer find(), walk(), or lookat() over applying an invalid action.
+- When in doubt, prefer `find`, `walk`, or `lookat` over applying an invalid action.
 - Some objects (movable objects) must be in the agent's hands before they can be used or interacted with. For these objects, the agent must grab the object before performing any other action with it.
 - Do NOT attempt to grab fixed objects or containers.
 - Never interact with a handheld object unless it is first in the agent's hands.
 - You must include all actions required to reach a sensible final state.
 - You must not end a task while objects are in an intermediate or transient state.
 - Always include the 'Done' step to indicate the end of the task as demontrated in the example.
-- For actions that require the agent to be facing an object, always include a lookat() action before interacting with the object.
+- For actions that require the agent to be facing an object, ensure the agent is looking at the object before interacting with the it.
 </rules>
 
 <output-format>

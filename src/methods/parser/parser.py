@@ -8,7 +8,7 @@ ASSERT_RE = re.compile(r"\s*assert\((.+)\)$")
 ELSE_RE = re.compile(r"\s*else:\s*(.+)$")
 COMMENT_RE = re.compile(r"\s*#\s*(.+)$")
 FUNC_RE = re.compile(r"^def (\w+)\(\):$")
-ACTION_RE = re.compile(r"(.+)\(.*\)")
+ACTION_RE = re.compile(r"\b(?<!\.)([^:\.\s_]+)\(.*\)")
 
 
 def tokenize_lines(text: str) -> list[Line]:
@@ -16,7 +16,7 @@ def tokenize_lines(text: str) -> list[Line]:
     for lineno, raw in enumerate(text.splitlines()):
         if not raw.strip():
             continue
-        indent = len(raw) - len(raw.lstrip(" "))
+        indent = len(raw) - len(raw.lstrip())
         lines.append(Line(indent, raw.strip(), lineno))
     return lines
 
