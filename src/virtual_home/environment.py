@@ -64,7 +64,7 @@ class VHEnvironment:
         if agent is None:
             return
 
-        self.agent: str = agent["id"]
+        self.agent: int = agent["id"]
 
         self.obj_ids_in_hand: List[int] = (  # type: ignore
             E(self.graph)
@@ -96,6 +96,18 @@ class VHEnvironment:
         )
 
     def find_obj(self, class_name: str) -> List[int]:
+        # First look for the object in the current room and then everywhere else
+        obj_in_room: List[int] = (
+            E(self.graph)
+            .from_node(lambda n: n["class_name"] == class_name)
+            .to_node(lambda n: n["id"] == self.agent_in_roomid)
+            .relation("INSIDE")
+            .select("from_id")
+        )  # type: ignore
+
+        if len(obj_in_room) > 0:
+            return obj_in_room
+
         return N(self.graph).class_name(class_name).select("id")  # type: ignore
 
     def update_executor(self, state: EnvironmentState):

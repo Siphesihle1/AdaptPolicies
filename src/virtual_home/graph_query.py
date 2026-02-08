@@ -84,7 +84,7 @@ class RelationQuery:
         self.predicates: List[Predicate] = []
         self.nodes = graph["nodes"]
 
-    def from_(self, node_id: str):
+    def from_(self, node_id: int):
         self.predicates.append(lambda e: e["from_id"] == node_id)
         return self
 
@@ -100,15 +100,15 @@ class RelationQuery:
         self.predicates.append(lambda e: e["to_id"] in node_ids)
         return self
 
-    def from_node(self, fn: Callable[[Dict[str, Any] | None], bool]):
+    def from_node(self, fn: Callable[[Dict[str, Any]], bool]):
         self.predicates.append(
-            lambda e, f=fn: f(N(self.graph).id(e["from_id"]).get_first())
+            lambda e, f=fn: f(N(self.graph).id(e["from_id"]).get_first())  # type: ignore
         )
         return self
 
-    def to_node(self, fn: Callable[[Dict[str, Any] | None], bool]):
+    def to_node(self, fn: Callable[[Dict[str, Any]], bool]):
         self.predicates.append(
-            lambda e, f=fn: f(N(self.graph).id(e["to_id"]).get_first())
+            lambda e, f=fn: f(N(self.graph).id(e["to_id"]).get_first())  # type: ignore
         )
         return self
 
