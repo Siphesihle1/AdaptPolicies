@@ -6,7 +6,7 @@ from cv2.typing import MatLike
 import weave
 from .graph_query import N, E
 from .task import VHTask
-from unity_simulator.comm_unity import UnityCommunication
+from virtualhome.simulation.unity_simulator import UnityCommunication
 from virtualhome.simulation.evolving_graph import utils
 from virtualhome.simulation.evolving_graph.scripts import parse_script_line, Script
 from virtualhome.simulation.evolving_graph.execution import ScriptExecutor
@@ -66,7 +66,7 @@ class VHEnvironment:
 
         self.agent: str = agent["id"]
 
-        self.agent_has_objid: List[int] = (  # type: ignore
+        self.obj_ids_in_hand: List[int] = (  # type: ignore
             E(self.graph)
             .from_(self.agent)
             .relation_in("HOLDS_LH", "HOLDS_RH")
@@ -83,8 +83,8 @@ class VHEnvironment:
             if agent_in_room is not None:
                 self.agent_in_room: str = agent_in_room["class_name"]
 
-        self.agent_has_obj: List[str] = (  # type: ignore
-            N(self.graph).id_in(*self.agent_has_objid).select("class_name")
+        self.objs_in_hand: List[str] = (  # type: ignore
+            N(self.graph).id_in(*self.obj_ids_in_hand).select("class_name")
         )
         self.obj_ids_close: List[int] = (  # type: ignore
             E(self.graph).from_(self.agent).relation("CLOSE").select("to_id")
@@ -130,6 +130,7 @@ class VHEnvironment:
         return Image.open(img_path)
 
     def execute(self, script_instruction: str):
+        # Adapted from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_execute.py#L224
         self.log_file.write(f"{script_instruction}\n")
         self.comm.render_script(
             [script_instruction],

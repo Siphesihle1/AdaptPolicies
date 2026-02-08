@@ -42,7 +42,7 @@ class PutIn(Action):
         (obj, receptacle) = objs
         self.env.last_action = (self.action_name, *objs)
         obj_ids = [
-            id for id in self.env.find_obj(obj) if id in self.env.agent_has_objid
+            id for id in self.env.find_obj(obj) if id in self.env.obj_ids_in_hand
         ]
         receptable_ids = self.env.find_obj(receptacle)
 

@@ -179,6 +179,10 @@ Task: You are given a function header that describes a virtual home household ta
 - Some objects (movable objects) must be in the agent's hands before they can be used or interacted with. For these objects, the agent must grab the object before performing any other action with it.
 - Do NOT attempt to grab fixed objects or containers.
 - Never interact with a handheld object unless it is first in the agent's hands.
+- You MUST include all actions required to reach a sensible final state.
+- You MUST NOT end a task while objects are in an intermediate or transient state.
+- Ending a task early is an error.
+- Some actions require the agent to be oriented a certain way relative to the object. In these cases, you MUST include the necessary actions to orient the agent correctly before performing the action.
 </rules>
 
 <output-format>

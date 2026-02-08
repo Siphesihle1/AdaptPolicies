@@ -217,7 +217,14 @@ class ProgPromptAgent:
             unsatisfied_obj_states = changed_gt_obj_states - changed_obj_states
 
             task_log_file = f"{os.getenv('JOB_OUTPUT_DIR')}/task_logs/{'_'.join(task.split(' '))}/task_logs.txt"
+
             with open(task_log_file, "a") as f:
+                f.write(
+                    f"\nchanged ground truth relations: {changed_gt_relations}, changed ground truth states: {changed_gt_obj_states}"
+                )
+                f.write(
+                    f"\nchanged relations: {changed_relations}, changed object states: {changed_obj_states}"
+                )
                 f.write(
                     f"\nunsatisfied state conditions: relations: {unsatisfied_relations}, object states: {unsatisfied_obj_states}"
                 )
