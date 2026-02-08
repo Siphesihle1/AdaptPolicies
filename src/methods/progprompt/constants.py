@@ -168,8 +168,6 @@ Task: You are given a function header that describes a virtual home household ta
 - Follow the exact style, structure, and conventions shown in the examples.
 - Use ONLY the provided actions and objects (actions provided via imports at the top and availables objects as a list).
 - Do NOT invent new actions, objects, or syntax.
-- Panctuations (e.g `.`) before function calls are STICTLY probihibited.
-- Be consistent with indentation as shown in the example.
 - Do NOT skip steps, merge steps, or assume shortcuts.
 - You MUST find an object first before interacting with it.
 - Before finding or interacting with an object, you should first walk to the room that most likely contains the object.
@@ -185,6 +183,7 @@ Task: You are given a function header that describes a virtual home household ta
 - You must not end a task while objects are in an intermediate or transient state.
 - Always include the 'Done' step to indicate the end of the task as demontrated in the example.
 - For actions that require the agent to be facing an object, ensure the agent is looking at the object before interacting with the it.
+- Each action should be referenced exactly as it is shown in the imports without any additional characters or mofifications.
 </rules>
 
 <output-format>
@@ -193,6 +192,7 @@ Task: You are given a function header that describes a virtual home household ta
 - Do NOT include markdown, backticks, or explanations.
 - Do NOT include explanations, markdown, or text outside the function.
 - Stop immediately after the function ends.
+- Be consistent with indentation as shown in the example.
 </output-format>
 
 <assert-syntax-rules>
