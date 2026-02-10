@@ -185,7 +185,7 @@ Task: You are given a function header that describes a virtual home household ta
 </rules>
 
 <output-format>
-- Sentence punctuation (., !) is never allowed anywhere in the code.
+- The characters `.` and `!` are NOT allowed anywhere in the code.
 - Output ONLY the completed function.
 - The function MUST include the header and body.
 - Do NOT include markdown, backticks, or explanations.
