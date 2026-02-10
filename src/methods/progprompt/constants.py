@@ -193,6 +193,9 @@ Task: You are given a function header that describes a virtual home household ta
 - Do NOT include explanations, markdown, or text outside the function.
 - Stop immediately after the function ends.
 - Be consistent with indentation as shown in the example.
+- The output is NOT natural language.
+- The output is a strict action script.
+- Sentence punctuation (., !) is never allowed anywhere in the output.
 </output-format>
 
 <assert-syntax-rules>
