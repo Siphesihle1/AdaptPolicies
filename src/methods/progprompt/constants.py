@@ -179,21 +179,19 @@ Task: You are given a function header that describes a virtual home household ta
 - Some objects (movable objects) must be in the agent's hands before they can be used or interacted with. For these objects, the agent must grab the object before performing any other action with it.
 - Do NOT attempt to grab fixed objects or containers.
 - Never interact with a handheld object unless it is first in the agent's hands.
-- You must include all actions required to reach a sensible final state.
-- You must not end a task while objects are in an intermediate or transient state.
 - Always include the 'Done' step to indicate the end of the task as demontrated in the example.
 - For actions that require the agent to be facing an object, ensure the agent is looking at the object before interacting with the it.
 - Each action should be referenced exactly as it is shown in the imports without any additional characters or mofifications.
 </rules>
 
 <output-format>
+- Sentence punctuation (., !) is never allowed anywhere in the code.
 - Output ONLY the completed function.
 - The function MUST include the header and body.
 - Do NOT include markdown, backticks, or explanations.
 - Do NOT include explanations, markdown, or text outside the function.
 - Stop immediately after the function ends.
 - Be consistent with indentation as shown in the example.
-- Sentence punctuation (., !) is never allowed anywhere in the code.
 </output-format>
 
 <assert-syntax-rules>
