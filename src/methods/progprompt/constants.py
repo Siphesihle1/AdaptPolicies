@@ -181,8 +181,6 @@ Task: You are given a function header that describes a virtual home household ta
 - Always include the 'Done' step to indicate the end of the task as demontrated in the example.
 - For actions that require the agent to be facing an object, ensure the agent is looking at the object before interacting with the it.
 - Each action should be referenced exactly as it is shown in the imports without any additional characters or mofifications.
-- Include ONLY the actions that are strictly necessary to achieve the task goal.
-- Optional, comfort-based, or stylistic actions are forbidden unless explicitly required by the task.
 - Object proximity must never be assumed unless explicitly stated in the task or required by a precondition.
 </rules>
 
