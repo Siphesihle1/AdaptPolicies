@@ -178,10 +178,11 @@ Task: You are given a function header that describes a virtual home household ta
 - Some objects (movable objects) must be in the agent's hands before they can be used or interacted with. For these objects, the agent must grab the object before performing any other action with it.
 - Do NOT attempt to grab fixed objects or containers.
 - Never interact with a handheld object unless it is first in the agent's hands.
+- You must include all actions required to reach a sensible final state.
+- Object proximity must never be assumed unless explicitly stated in the task or required by a precondition.
 - Always include the 'Done' step to indicate the end of the task as demontrated in the example.
 - For actions that require the agent to be facing an object, ensure the agent is looking at the object before interacting with the it.
 - Each action should be referenced exactly as it is shown in the imports without any additional characters or mofifications.
-- Object proximity must never be assumed unless explicitly stated in the task or required by a precondition.
 </rules>
 
 <output-format>
