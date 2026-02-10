@@ -43,7 +43,7 @@ def load_tasks_from_file(file_path: str) -> List[str]:
 def load_tasks_from_dir(dir_path: str) -> List[str]:
     tasks: List[str] = []
 
-    for file in os.listdir(dir_path):
+    for file in sorted(os.listdir(dir_path))[::-1]:
         with open(os.path.join(dir_path, file), "r") as f:
             for line in f.readlines():
                 tasks.append(list(json.loads(line.strip()).keys())[0])

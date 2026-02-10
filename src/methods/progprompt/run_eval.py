@@ -43,7 +43,7 @@ if __name__ == "__main__":
         "--test-set",
         type=str,
         default="test_unseen",
-        choices=["test_unseen", "test_seen", "test_unseen_ambiguous"],
+        choices=["train", "test_unseen", "test_seen", "test_unseen_ambiguous"],
     )
     parser.add_argument("--num-tasks", type=int, required=False)
     parser.add_argument(
