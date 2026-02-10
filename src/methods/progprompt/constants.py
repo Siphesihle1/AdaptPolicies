@@ -168,7 +168,6 @@ Task: You are given a function header that describes a virtual home household ta
 - Follow the exact style, structure, and conventions shown in the examples.
 - Use ONLY the provided actions and objects (actions provided via imports at the top and availables objects as a list).
 - Do NOT invent new actions, objects, or syntax.
-- Do NOT skip steps, merge steps, or assume shortcuts.
 - You MUST find an object first before interacting with it.
 - Before finding or interacting with an object, you should first walk to the room that most likely contains the object.
 - Not all actions can be applied to all objects.
