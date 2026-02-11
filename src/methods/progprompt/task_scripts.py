@@ -143,13 +143,15 @@ def generate_task_scripts(
     tasks_module_init_file.touch(exist_ok=True)
 
     # Prepare task scripts
-    sucess, message = prepare_task_scripts(
+    success, message = prepare_task_scripts(
         task_instruction, thread_id, plan, env_id, log_file_prefix, task_scripts_prefix
     )
 
-    if not sucess:
+    if not success:
         with open(f"{log_file_prefix}/task_logs.txt", "a") as f:
             f.write(f"{message}\n")
+
+    return success
 
 
 def exec_task(

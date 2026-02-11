@@ -10,7 +10,11 @@ from uuid_utils import uuid7
 import weave
 
 from methods.llm import LMOllama
-from .constants import MODEL, TASK_PROMPT_ACTION_IMPORTS
+from .constants import (
+    MODEL,
+    TASK_FUNCTION_PROMPT_PREAMBLE_QWEN,
+    TASK_PROMPT_ACTION_IMPORTS,
+)
 from .prompt import Env0TestSet, ExamplesType, PromptBuilder
 from .task_scripts import exec_task, generate_task_scripts
 
@@ -61,7 +65,7 @@ class ProgPromptAgent:
         self.env_id = env_id
         self.test_set = test_set
         self.prompt_builder = (
-            PromptBuilder(env_id=env_id)
+            PromptBuilder(env_id=env_id, preamble=TASK_FUNCTION_PROMPT_PREAMBLE_QWEN)
             .with_imports([TASK_PROMPT_ACTION_IMPORTS])
             .with_objects()
             .with_examples(examples_type, examples_num)
@@ -134,7 +138,7 @@ class ProgPromptAgent:
             log_file_prefix = f"{os.getenv('JOB_OUTPUT_DIR')}/task_logs/{task}"
             task_scripts_prefix = f"{os.getenv('JOB_OUTPUT_DIR')}/tasks"
 
-            generate_task_scripts(
+            success = generate_task_scripts(
                 log_file_prefix,
                 task_scripts_prefix,
                 task,
@@ -142,6 +146,9 @@ class ProgPromptAgent:
                 plan,
                 self.env_id,
             )
+
+            if not success:
+                del self.plans[task]
 
     def exec_plans(self):
         invalidate_caches()

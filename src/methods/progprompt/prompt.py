@@ -6,7 +6,7 @@ from typing import List, Dict, Any, Literal, Optional
 from virtual_home.graph_query import N
 from virtualhome.simulation.unity_simulator import UnityCommunication
 
-from .constants import DEFAULT_EXAMPLES, TASK_FUNCTION_PROMPT_PREAMBLE
+from .constants import DEFAULT_EXAMPLES, TASK_FUNCTION_PROMPT_PREAMBLE_DEEPSEEK
 
 Env0TestSet = Literal["test_unseen", "test_seen", "test_unseen_ambiguous_goals"]
 ExamplesType = Literal["default", "random"]
@@ -57,13 +57,14 @@ class Prompt:
 
 
 class PromptBuilder:
-    def __init__(self, env_id: int):
+    def __init__(self, env_id: int, preamble: Optional[str] = None):
         self._imports: List[str] = []
         self._objects: List[str] = []
         self._examples: List[str] = []
         self._tasks: List[str] = []
         self.env_id = env_id
         self.graph = init_simulator(env_id)
+        self.preamble = preamble
 
     def with_imports(self, imports: List[str]):
         self._imports.extend(imports)
@@ -111,8 +112,8 @@ class PromptBuilder:
     ) -> Prompt:
         sections: List[str] = []
 
-        if include_preamble:
-            sections.append(TASK_FUNCTION_PROMPT_PREAMBLE)
+        if include_preamble and self.preamble is not None:
+            sections.append(self.preamble)
 
         if len(self._imports) > 0:
             actions_section_heading = (

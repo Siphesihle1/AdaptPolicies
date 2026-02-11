@@ -34,7 +34,7 @@ Task: Evaluate assert statements using the given state (what you see i.e. "You s
 
 """
 
-MODEL = "deepseek-r1:32b"
+MODEL = "qwen3-coder:30b"
 
 MAX_STEPS = 10
 INITIAL_ROOM = "kitchen"
@@ -155,7 +155,7 @@ DEFAULT_EXAMPLES = [
     "put_apple_in_fridge",
 ]
 
-TASK_FUNCTION_PROMPT_PREAMBLE = """You are an action-planning code generator for a virtual home simulator.
+TASK_FUNCTION_PROMPT_PREAMBLE_DEEPSEEK = """You are an action-planning code generator for a virtual home simulator.
 
 Task: You are given a function header that describes a virtual home household task. You must generate the complete function body that accomplishes the task (with the function header included) in a python-like syntax.
 
@@ -196,7 +196,7 @@ Task: You are given a function header that describes a virtual home household ta
 
 <assert-syntax-rules>
 - The `assert` statements in this code are part of a custom domain-specific language. They do NOT follow standard Python syntax and must be reproduced exactly as shown.
-- The `assert` statements check whether the condition is true in the current state of the environment. If true, nothing happends and the agent continues with the next action. If false, the agent must perform the action(s) specified in the `else:` lines in order, and then continues with the next action.
+- The `assert` statements check whether the condition is true in the current state of the environment. If true, nothing happens and the agent continues with the next action. If false, the agent must perform the action(s) specified in the `else:` lines in order, and then continues with the next action.
 - Valid assert forms:
 ```
 1. Proximity check:
@@ -226,4 +226,14 @@ Task: You are given a function header that describes a virtual home household ta
 - Do NOT replace asserts with if-statements.
 - Always follow the patterns demonstrated in the example.
 </assert-syntax-rules>
+"""
+
+TASK_FUNCTOIN_PROMPT_PREAMBLE_QWEN = """You are an action-planning code generator for a virtual home simulator.
+
+Task: You are given a function header that describes a virtual home household task. You must generate the complete function body that accomplishes the task (with the function header included) in a python-like syntax.
+
+IMPORTANT: 
+- Output only the function code and nothing else.
+- Follow the example task function structure and style.
+- Use asserts as shown in the example to check for preconditions before performing actions where necessary. If the precondition is met, execution continues to the next action, otherwise the actions in the `else` clauses will be executed.
 """
