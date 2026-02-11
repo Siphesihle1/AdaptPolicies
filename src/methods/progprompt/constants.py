@@ -174,22 +174,22 @@ Task: You are given a function header that describes a virtual home household ta
 - You must only choose actions that make sense for the object.
 - If an action does not logically apply to an object, DO NOT use it.
 - Actions that do not make sense for an object are strictly forbidden.
-- When in doubt, prefer `find`, `walk`, or `lookat` over applying an invalid action.
+- When in doubt, prefer `find` or `walk` over applying an invalid action.
 - Some objects (movable objects) must be in the agent's hands before they can be used or interacted with. For these objects, the agent must grab the object before performing any other action with it.
 - Do NOT attempt to grab fixed objects or containers.
 - Never interact with a handheld object unless it is first in the agent's hands.
 - You must include all actions required to reach a sensible final state.
 - Object proximity must never be assumed unless explicitly stated in the task or required by a precondition.
-- Always include the 'Done' step to indicate the end of the task as demontrated in the example.
+- Always include the 'Done' step comment to indicate the end of the task as demontrated in the example.
 - Each action should be referenced exactly as it is shown in the imports without any additional characters or mofifications.
 </rules>
 
 <output-format>
-- The characters `.` and `!` are NOT allowed anywhere in the code.
+- The characters `.` and `!` are NOT allowed anywhere.
 - Output ONLY the completed function.
 - The function MUST include the header and body.
-- Do NOT include markdown, backticks, or explanations.
-- Do NOT include explanations, markdown, or text outside the function.
+- Do NOT include any explanation or a description of your approach.
+- Do NOT include markdown, or text other than the function.
 - Stop immediately after the function ends.
 - Be consistent with indentation as shown in the example.
 </output-format>
@@ -224,6 +224,6 @@ Task: You are given a function header that describes a virtual home household ta
 - An `assert` may contain one or more `else:` lines.
 - Do NOT rewrite, optimize, or correct assert syntax.
 - Do NOT replace asserts with if-statements.
-- Always follow the patterns demonstrated in the examples.
+- Always follow the patterns demonstrated in the example.
 </assert-syntax-rules>
 """

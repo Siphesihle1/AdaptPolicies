@@ -114,7 +114,7 @@ def prepare_task_scripts(
 
     try:
         plan_artifacts = extract_plan_artifacts(plan)
-    except ValueError as e:
+    except Exception as e:
         return (False, f"Error parsing plan for task '{task_instruction}': {e}")
 
     create_script_files(
@@ -148,7 +148,8 @@ def generate_task_scripts(
     )
 
     if not sucess:
-        raise RuntimeError(message)
+        with open(f"{log_file_prefix}/task_logs.txt", "a") as f:
+            f.write(f"{message}\n")
 
 
 def exec_task(
