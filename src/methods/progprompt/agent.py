@@ -197,6 +197,7 @@ class ProgPromptAgent:
 
             if task_results is None:
                 plan_execution_status_file.write(f"Task: {task}, Success: False\n")
+                self.plans[task] = []
                 continue
 
             plan_execution_status_file.write(f"Task: {task}, Success: True\n")
@@ -254,6 +255,9 @@ class ProgPromptAgent:
         for g, g_gt, g_in, task in zip(
             self.final_states, self.final_states_gt, self.initial_states, test_tasks
         ):
+            if len(self.plans[task]) != 2:
+                continue
+
             relations_in = get_object_relations(g_in)
             obj_states_in = get_object_states(g_in)
 
