@@ -228,7 +228,7 @@ Task: You are given a function header that describes a virtual home household ta
 </assert-syntax-rules>
 """
 
-TASK_FUNCTOIN_PROMPT_PREAMBLE_QWEN = """You are an action-planning code generator for a virtual home simulator.
+TASK_FUNCTION_PROMPT_PREAMBLE_QWEN = """You are an action-planning code generator for a virtual home simulator.
 
 Task: You are given a function header that describes a virtual home household task. You must generate the complete function body that accomplishes the task (with the function header included) in a python-like syntax.
 

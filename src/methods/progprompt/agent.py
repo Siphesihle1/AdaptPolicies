@@ -79,6 +79,7 @@ class ProgPromptAgent:
         self.exec_per_task: Dict[str, float] = {}
         self.results: Dict[str, Dict[str, float]] = {}
         self.evaluation_logger = weave.EvaluationLogger(
+            name=f"{os.getenv('EXPERIMENT_NAME')}:{uuid7()}",
             model=MODEL,
             dataset=self.dataset,
             eval_attributes={
@@ -87,8 +88,14 @@ class ProgPromptAgent:
                 "environment_id": self.env_id,
             },
         )
+        self.num_tasks_parsed = 0
+        self.num_tasks_executed = 0
 
     def generate_task_plans(self):
+        plan_parsing_status_file = open(
+            f"{os.getenv('JOB_OUTPUT_DIR')}/plan_parsing_status.txt", "w"
+        )
+
         for prompt in self.prompt_builder:
             task = prompt.task_instruction
             prompt_text = prompt.text
@@ -114,18 +121,24 @@ class ProgPromptAgent:
                 print(
                     f"\n\n---Plan for task '{task}' does not start with a function definition.---\n\n{plan}"
                 )
+                self.plans[task] = []
+                plan_parsing_status_file.write(f"Task: {task}, Success: False\n")
                 continue
 
             if plan.strip().count("def") > 1:
                 print(
                     f"\n\n---Plan for task '{task}' contains multiple function definitions.---\n\n{plan}"
                 )
+                self.plans[task] = []
+                plan_parsing_status_file.write(f"Task: {task}, Success: False\n")
                 continue
 
             if "```" in plan.strip():
                 print(
                     f"\n\n---Plan for task '{task}' contains code block formatting.---\n\n{plan}"
                 )
+                self.plans[task] = []
+                plan_parsing_status_file.write(f"Task: {task}, Success: False\n")
                 continue
 
             self.plans[task] = [plan.strip(), thread_id]
@@ -133,11 +146,21 @@ class ProgPromptAgent:
         with open(f"{os.getenv('JOB_OUTPUT_DIR')}/plans.json", "w") as f:
             json.dump(self.plans, f, indent=4)
 
+        plan_parsing_status_file.close()
+
     def generate_tasks_scripts(self):
-        for task, (plan, thread_id) in self.plans.items():
+        plan_parsing_status_file = open(
+            f"{os.getenv('JOB_OUTPUT_DIR')}/plan_parsing_status.txt", "a"
+        )
+
+        for task, task_artifacts in self.plans.items():
             log_file_prefix = f"{os.getenv('JOB_OUTPUT_DIR')}/task_logs/{task}"
             task_scripts_prefix = f"{os.getenv('JOB_OUTPUT_DIR')}/tasks"
 
+            if len(task_artifacts) != 2:
+                continue
+
+            plan, thread_id = task_artifacts
             success = generate_task_scripts(
                 log_file_prefix,
                 task_scripts_prefix,
@@ -147,25 +170,44 @@ class ProgPromptAgent:
                 self.env_id,
             )
 
-            if not success:
-                del self.plans[task]
+            if success:
+                self.num_tasks_parsed += 1
+            else:
+                self.plans[task] = []
+
+            plan_parsing_status_file.write(f"Task: {task}, Success: {success}\n")
+
+        plan_parsing_status_file.close()
 
     def exec_plans(self):
         invalidate_caches()
 
-        for task, _ in self.plans.items():
+        plan_execution_status_file = open(
+            f"{os.getenv('JOB_OUTPUT_DIR')}/plan_execution_status.txt", "w"
+        )
+
+        for task, task_artifacts in self.plans.items():
+            if len(task_artifacts) != 2:
+                continue
+
             log_file_prefix = f"{os.getenv('JOB_OUTPUT_DIR')}/task_logs/{task}"
 
             task_results = exec_task(task, log_file_prefix)
 
             if task_results is None:
+                plan_execution_status_file.write(f"Task: {task}, Success: False\n")
                 continue
+
+            plan_execution_status_file.write(f"Task: {task}, Success: True\n")
+            self.num_tasks_executed += 1
 
             final_state, initial_state, task_exec, _ = task_results
 
             self.final_states.append(final_state)
             self.initial_states.append(initial_state)
             self.exec_per_task[task] = task_exec
+
+        plan_execution_status_file.close()
 
     def log_eval_results(self):
         for task, metrics in self.results.items():
@@ -186,9 +228,14 @@ class ProgPromptAgent:
             pred.finish()
 
         if "overall" in self.results:
-            self.evaluation_logger.log_summary(
-                self.results["overall"], auto_summarize=False
-            )
+            summary = {
+                "num_tasks": len(self.plans),
+                "num_tasks_parsed": self.num_tasks_parsed,
+                "num_tasks_executed": self.num_tasks_executed,
+                **self.results["overall"],
+            }
+
+            self.evaluation_logger.log_summary(summary, auto_summarize=False)
 
     # Adapted from https://github.com/tan90cot0/progprompt-vh/blob/main/scripts/run_eval.py#L37
     def eval(self):
