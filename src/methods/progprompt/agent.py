@@ -287,7 +287,9 @@ class ProgPromptAgent:
             unsatisf_conds = len(unsatisfied_relations) + len(unsatisfied_obj_states)
             total_goal_conds = len(changed_gt_relations) + len(changed_gt_obj_states)
 
-            sr.append(1 - unsatisf_conds / total_goal_conds)
+            sr.append(
+                1 - unsatisf_conds / total_goal_conds if total_goal_conds > 0 else 0
+            )
 
             unchanged_conds.append(
                 len(relations_gt.intersection(relations_in) - relations)
@@ -301,7 +303,11 @@ class ProgPromptAgent:
             self.results[task] = {
                 "PSR": sr[-1],
                 "SR": sr[-1:].count(1.0),
-                "Precision": 1 - unchanged_conds[-1] / total_unchanged_conds[-1],
+                "Precision": (
+                    1 - unchanged_conds[-1] / total_unchanged_conds[-1]
+                    if total_unchanged_conds[-1] > 0
+                    else 0
+                ),
                 "Exec": self.exec_per_task[task],
             }
 
@@ -309,6 +315,10 @@ class ProgPromptAgent:
             self.results["overall"] = {
                 "PSR": sum(sr) / len(sr),
                 "SR": sr.count(1.0) / len(sr),
-                "Precision": 1 - sum(unchanged_conds) / sum(total_unchanged_conds),
+                "Precision": (
+                    1 - sum(unchanged_conds) / sum(total_unchanged_conds)
+                    if sum(total_unchanged_conds) > 0
+                    else 0
+                ),
                 "Exec": sum(self.exec_per_task.values()) / len(self.exec_per_task),
             }
