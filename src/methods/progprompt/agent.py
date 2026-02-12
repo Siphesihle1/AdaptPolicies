@@ -109,6 +109,7 @@ class ProgPromptAgent:
                 ):
                     response: GenerateResponse = LMOllama(
                         prompt=prompt_text,
+                        think=False,
                         model=MODEL,
                         __weave={
                             "display_name": thread_id,
