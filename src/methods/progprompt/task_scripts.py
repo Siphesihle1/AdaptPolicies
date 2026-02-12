@@ -9,6 +9,7 @@ from methods.parser import (
     AssertParser,
 )
 from .constants import (
+    ACTION_MAP,
     EXEC_TASK_FUNCTION,
     ACTION_INIT,
     ENVIRONMENT_INIT,
@@ -61,7 +62,8 @@ def create_task_script_file(
 ):
     with open(task_script_path, "w") as f:
         for action in actions + ["env", "task"]:
-            f.write(f"from .task_imports import {action}\n")
+            mapped_action = ACTION_MAP.get(action, action)
+            f.write(f"from .task_imports import {mapped_action}\n")
         f.write("\n\n")
 
         f.write(f"{parsed_code}\n\n")
