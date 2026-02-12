@@ -52,7 +52,7 @@ def create_subtasks_file(subtasks: List[str], subtasks_path: str):
     with open(subtasks_path, "w") as f:
         f.write("SUBTASKS = [\n")
         for subtask in subtasks:
-            f.write(f"    '{subtask}',\n")
+            f.write(f'    "{subtask}",\n')
         f.write("]\n")
 
 

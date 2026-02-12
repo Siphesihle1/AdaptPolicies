@@ -4,10 +4,10 @@ from typing import List, Any, Tuple
 
 from .ast_nodes import Line, SubTask, Statement, AssertBlock, FunctionDef
 
-ASSERT_RE = re.compile(r"\s*assert\((.+)\)$")
-ELSE_RE = re.compile(r"\s*else:\s*(.+)$")
-COMMENT_RE = re.compile(r"\s*#\s*(.+)$")
-FUNC_RE = re.compile(r"^def (\w+)\(\):$")
+ASSERT_RE = re.compile(r"\s*assert\((.+)\)\s*$")
+ELSE_RE = re.compile(r"\s*else:\s*(.+)\s*$")
+COMMENT_RE = re.compile(r"\s*#\s*\d:\s*(.+)\s*$")
+FUNC_RE = re.compile(r"^def (\w+)\(\):\s*$")
 ACTION_RE = re.compile(r"\b(?<!\.)([^:\.\s_]+)\(.*\)")
 
 
