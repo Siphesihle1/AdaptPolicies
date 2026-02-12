@@ -118,7 +118,9 @@ class IndentationParser:
             if parser.match(lines, index):
                 return parser.parse(lines, index)
 
-        raise SyntaxError(f"Invalid syntax at line {lines[index].lineno}")
+        raise SyntaxError(
+            f"Invalid syntax at line {lines[index].lineno}: {lines[index].text}"
+        )
 
 
 class FunctionParser(LineParser):

@@ -68,11 +68,11 @@ class ProgPromptEnvironment(VHEnvironment):
             ", ".join(objs)
             + (", " if len(objs) > 0 and len(relations) > 0 else "")
             + ", ".join(relations)
-            + (". " if len(relations) > 0 else "")
+            + (". " if len(relations) > 0 or len(objs) > 0 else "")
         )
 
         if len(self.objs_in_hand) > 0:
-            objs += f"You have {', '.join(self.objs_in_hand)}{'.' if len(self.objs_in_hand) > 0 else ''}"
+            objs += f"You have {', '.join(self.objs_in_hand)}."
 
         self.objs = objs
 
