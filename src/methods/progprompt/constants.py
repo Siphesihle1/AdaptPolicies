@@ -235,5 +235,21 @@ Task: You are given a function header that describes a virtual home household ta
 IMPORTANT: 
 - Output only the function code and nothing else.
 - Follow the example task function structure and style.
-- Use asserts as shown in the example to check for preconditions before performing actions where necessary. If the precondition is met, execution continues to the next action, otherwise the actions in the `else` clauses will be executed.
+- Use ONLY the provided actions and objects (actions provided via imports at the top and availables objects as a list).
+
+<assert-syntax-rules>
+- The `assert` statements in this code are part of a custom domain-specific language. They do NOT follow standard Python syntax and must be reproduced exactly as shown.
+- The `assert` statements check whether the condition is true in the current state of the environment. If true, nothing happens and the agent continues with the next action. If false, the agent must perform the action(s) specified in the `else:` lines in order, and then continues with the next action.
+- Valid assert form:
+```
+assert(<condition>)
+    else: <action>
+    ...
+```
+- The `else:` line(s) must be on the next line and indented once with the action function call on the same line.
+- An `assert` may contain one or more `else:` lines.
+- Do NOT rewrite, optimize, or correct assert syntax.
+- Do NOT replace asserts with if-statements.
+- Always follow the patterns demonstrated in the examples.
+</assert-syntax-rules>
 """
