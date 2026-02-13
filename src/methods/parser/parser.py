@@ -2,6 +2,8 @@ import re
 from abc import ABC, abstractmethod
 from typing import List, Any, Tuple
 
+from .constants import ACTION_MAP
+
 from .ast_nodes import Line, SubTask, Statement, AssertBlock, FunctionDef
 
 ASSERT_RE = re.compile(r"\s*assert\((.+)\)\s*$")
@@ -174,23 +176,32 @@ class Parser:
                 subtask_count += 1
 
             elif isinstance(node, Statement):
-                m = ACTION_RE.match(node.text)
+                statement = node.text.strip()
+                m = ACTION_RE.match(statement)
 
                 if m:
-                    actions.append(m.group(1))
+                    action = m.group(1)
+                    mapped_action = ACTION_MAP.get(action, action)
+                    actions.append(mapped_action)
+                    statement = statement.replace(action, mapped_action, 1)
 
-                out.append(f"{base_indent}{node.text}")
+                out.append(f"{base_indent}{statement}")
 
             elif isinstance(node, AssertBlock):
-                out.append(f'{base_indent}if assert_("{node.condition}") == False:')
+                out.append(
+                    f'{base_indent}if assert_("{node.condition.strip()}") == False:'
+                )
 
                 for act in node.else_actions:
-                    out.append(f"{base_indent * 2}{act}")
-
                     m = ACTION_RE.match(act)
 
                     if m:
-                        actions.append(m.group(1))
+                        action = m.group(1)
+                        mapped_action = ACTION_MAP.get(action, action)
+                        actions.append(mapped_action)
+                        out.append(
+                            f"{base_indent * 2}{act.replace(action, mapped_action, 1)}"
+                        )
 
                 actions.append("assert_")
 

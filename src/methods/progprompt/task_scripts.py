@@ -62,8 +62,7 @@ def create_task_script_file(
 ):
     with open(task_script_path, "w") as f:
         for action in actions + ["env", "task"]:
-            mapped_action = ACTION_MAP.get(action, action)
-            f.write(f"from .task_imports import {mapped_action}\n")
+            f.write(f"from .task_imports import {action}\n")
         f.write("\n\n")
 
         f.write(f"{parsed_code}\n\n")
