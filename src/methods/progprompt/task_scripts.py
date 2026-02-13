@@ -9,7 +9,6 @@ from methods.parser import (
     AssertParser,
 )
 from .constants import (
-    ACTION_MAP,
     EXEC_TASK_FUNCTION,
     ACTION_INIT,
     ENVIRONMENT_INIT,
