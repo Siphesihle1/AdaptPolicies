@@ -83,7 +83,7 @@ env = ProgPromptEnvironment({env_id}, "{initial_room}", task, log_file)
 """
 )
 
-ACTION_MAP = {"open": "open_"}
+ACTION_MAP = {"open": "open_", "close": "close_"}
 
 ACTION_INIT = """
 assert_ = Assert(env, task)
@@ -93,7 +93,7 @@ find = Find(env, task)
 walk = Walk(env, task)
 open_ = Open(env, task)
 run = Run(env, task)
-close = Close(env, task)
+close_ = Close(env, task)
 drink = Drink(env, task)
 grab = Grab(env, task)
 lookat = LookAt(env, task)
@@ -121,7 +121,7 @@ __all__ = [
     "walk",
     "open_",
     "run",
-    "close",
+    "close_",
     "drink",
     "grab",
     "lookat",
