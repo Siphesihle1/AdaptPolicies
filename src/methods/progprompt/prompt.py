@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import random
 from dataclasses import dataclass
@@ -43,7 +44,11 @@ def load_tasks_from_file(file_path: str) -> List[str]:
 def load_tasks_from_dir(dir_path: str) -> List[str]:
     tasks: List[str] = []
 
-    for file in sorted(os.listdir(dir_path)):
+    def sort_key(filename: str) -> int:
+        match = re.search(r"\d+", filename)
+        return int(match.group()) if match else -1
+
+    for file in sorted(os.listdir(dir_path), key=sort_key):
         with open(os.path.join(dir_path, file), "r") as f:
             for line in f.readlines():
                 tasks.append(list(json.loads(line.strip()).keys())[0])
