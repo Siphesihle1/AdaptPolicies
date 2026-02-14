@@ -44,7 +44,7 @@ def add_microwave_states(
 
     if len(microwave_cond) > 0:
         food_in_microwave: List[int] = (
-            E(state).to_in(*microwave_cond).relation("INSIDE").select("id")
+            E(state).to_in(*microwave_cond).relation("INSIDE").select("from_id")
         )  # type: ignore
         food_in_microwave_cond = (
             N(state).id_in(*food_in_microwave).category("Food").get_all()
