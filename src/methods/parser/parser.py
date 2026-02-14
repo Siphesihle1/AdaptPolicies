@@ -8,7 +8,7 @@ from .ast_nodes import Line, SubTask, Statement, AssertBlock, FunctionDef
 
 ASSERT_RE = re.compile(r"\s*assert\((.+)\)\s*$")
 ELSE_RE = re.compile(r"\s*else:\s*(.+)\s*$")
-COMMENT_RE = re.compile(r"\s*#\s*\d+:\s*(.+)\s*$")
+SUBTASK_COMMENT_RE = re.compile(r"\s*#\s*\d+:\s*(.+)\s*$")
 FUNC_RE = re.compile(r"^def (\w+)\(\):\s*$")
 ACTION_RE = re.compile(r"\b(?<!\.)([^:\.\s_]+)\(.*\)")
 
@@ -41,10 +41,10 @@ class LineParser(ABC):
 
 class CommentTaskParser(LineParser):
     def match(self, lines, index):
-        return bool(COMMENT_RE.match(lines[index].text))
+        return bool(SUBTASK_COMMENT_RE.match(lines[index].text))
 
     def parse(self, lines, index):
-        m = COMMENT_RE.match(lines[index].text)
+        m = SUBTASK_COMMENT_RE.match(lines[index].text)
 
         if not m:
             return
@@ -81,11 +81,11 @@ class AssertParser(LineParser):
 
 class StatementParser(LineParser):
     def match(self, lines, index):
-        line = lines[index].text
-        return bool(line) and not line.startswith("#")
+        line = lines[index].text.strip()
+        return line != ""
 
     def parse(self, lines, index):
-        return Statement(lines[index].text), 1
+        return Statement(lines[index].text.strip()), 1
 
 
 class IndentationParser:
@@ -119,10 +119,6 @@ class IndentationParser:
         for parser in self.line_parsers:
             if parser.match(lines, index):
                 return parser.parse(lines, index)
-
-        raise SyntaxError(
-            f"Invalid syntax at line {lines[index].lineno}: {lines[index].text}"
-        )
 
 
 class FunctionParser(LineParser):
@@ -175,18 +171,6 @@ class Parser:
                 subtasks.append(node.label)
                 subtask_count += 1
 
-            elif isinstance(node, Statement):
-                statement = node.text.strip()
-                m = ACTION_RE.match(statement)
-
-                if m:
-                    action = m.group(1)
-                    mapped_action = ACTION_MAP.get(action, action)
-                    actions.append(mapped_action)
-                    statement = statement.replace(action, mapped_action, 1)
-
-                out.append(f"{base_indent}{statement}")
-
             elif isinstance(node, AssertBlock):
                 out.append(
                     f'{base_indent}if assert_("{node.condition.strip()}") == False:'
@@ -205,6 +189,18 @@ class Parser:
 
                 actions.append("assert_")
 
+            elif isinstance(node, Statement):
+                statement = node.text
+                m = ACTION_RE.match(statement)
+
+                if m:
+                    action = m.group(1)
+                    mapped_action = ACTION_MAP.get(action, action)
+                    actions.append(mapped_action)
+                    statement = statement.replace(action, mapped_action, 1)
+
+                out.append(f"{base_indent}{statement}")
+
         return subtasks, list(set(actions))
 
     def emit(self):
@@ -212,8 +208,14 @@ class Parser:
         function_artifacts: List[Tuple[List[str], List[str]]] = []
 
         for node in self.ast:
-            if isinstance(node, FunctionDef):
-                out.append(f"def {node.name}():")
-                function_artifacts.append(self.emit_function_body(node.body, out))
+            node_level_out = []
 
-        return "\n".join(out), function_artifacts
+            if isinstance(node, FunctionDef):
+                node_level_out.append(f"def {node.name}():")
+                function_artifacts.append(
+                    self.emit_function_body(node.body, node_level_out)
+                )
+
+            out.append("\n".join(node_level_out))
+
+        return "\n\n".join(out), function_artifacts
