@@ -18,9 +18,8 @@ Task: Evaluate assert statements using the given state (what you see i.e. "You s
 <assert-rules>
 - assert('close' to A) is True if A is close to the character, in other words it can be seen by the character (you)
 - assert(A on B) is True if "A ON B" exists in state
-- assert(A in B) is True if "A INSIDE B" exists in state
+- assert(A in B) is True if "A INSIDE B" exists in state or if B is "hands" it would be True if the character is holding A
 - assert(A is 'closed' | 'open' | 'on' | 'off' | ...) checks object state with correposponding values CLOSED, OPEN, ON, OFF, ...
-- "hands" means the character is holding the object (HOLDS_RH or HOLDS_LH)
 </assert-rules>
 
 <output-format>

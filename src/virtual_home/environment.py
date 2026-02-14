@@ -92,7 +92,10 @@ class VHEnvironment:
 
         self.partial_graph = utils.get_visible_nodes(self.graph, agent_id=self.agent)
         self.obj_close: List[str] = (  # type: ignore
-            N(self.partial_graph).id_in(*self.obj_ids_close).select("class_name")
+            N(self.partial_graph)
+            .id_in(*self.obj_ids_close)
+            .id_not(self.agent)
+            .select("class_name")
         )
 
     def find_obj(self, class_name: str) -> List[int]:

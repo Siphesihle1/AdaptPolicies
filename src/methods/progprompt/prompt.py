@@ -6,7 +6,7 @@ from typing import List, Dict, Any, Literal, Optional
 from virtual_home.graph_query import N
 from virtualhome.simulation.unity_simulator import UnityCommunication
 
-from .constants import DEFAULT_EXAMPLES, TASK_FUNCTION_PROMPT_PREAMBLE_DEEPSEEK
+from .constants import DEFAULT_EXAMPLES
 
 Env0TestSet = Literal["test_unseen", "test_seen", "test_unseen_ambiguous_goals"]
 ExamplesType = Literal["default", "random"]
@@ -43,7 +43,7 @@ def load_tasks_from_file(file_path: str) -> List[str]:
 def load_tasks_from_dir(dir_path: str) -> List[str]:
     tasks: List[str] = []
 
-    for file in sorted(os.listdir(dir_path))[::-1]:
+    for file in sorted(os.listdir(dir_path)):
         with open(os.path.join(dir_path, file), "r") as f:
             for line in f.readlines():
                 tasks.append(list(json.loads(line.strip()).keys())[0])

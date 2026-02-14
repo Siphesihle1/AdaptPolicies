@@ -21,7 +21,7 @@ class VHTask:
         self.subtasks = subtasks
         self.current_subtask_index = 0
         self.current_subtask = subtasks[0]
-        self.step = 1
+        self.step = 0
         self.total_steps = 0
         self.executable_steps = 0
         self.max_steps = max_steps
@@ -29,7 +29,7 @@ class VHTask:
         self.thread_id = thread_id
 
     def track_subtask(self, subtask_index: int):
-        self.step = 1
+        self.step = 0
         self.current_subtask_index = subtask_index
         self.current_subtask = self.subtasks[subtask_index]
 
