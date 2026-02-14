@@ -16,7 +16,8 @@ class Action(ABC):
             self.task.total_steps += 1
 
         omit_action = any(
-            self.action_name == action[0] and objs == action[1:]
+            self.action_name == action[0]
+            and all(obj1 == obj2 for (obj1, obj2) in zip(objs, action[1:]))
             for action in self.env.actions_to_omit
         )
 
