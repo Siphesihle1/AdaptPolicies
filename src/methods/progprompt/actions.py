@@ -55,6 +55,7 @@ class Assert(Action):
             ):
                 response: ChatCompletion = LLMOpenAI(
                     prompt=current_state,
+                    temperature=0,
                     model=MODEL,
                     __weave={
                         "display_name": self.task.thread_id,

@@ -235,6 +235,7 @@ IMPORTANT:
 - Output only the function code and nothing else.
 - Follow the example task function structure and style.
 - Use ONLY the provided actions and objects (actions provided via imports at the top and availables objects as a list).
+- All actions provided via imports at the top are functions that can be called with the appropriate objects as arguments. Some actions don't take in any arguments.
 
 <assert-syntax-rules>
 - The `assert` statements in this code are part of a custom domain-specific language. They do NOT follow standard Python syntax and must be reproduced exactly as shown.
