@@ -8,6 +8,7 @@ on:
       - '.github/workflows/**'
       - "src/**/*.py"
       - "src/**/*.sh"
+      - "src/**/*.json"
       - "src/slurm-scripts/*.slurm"
       - "**/requirements.txt"
       - "**/environment.yml"
