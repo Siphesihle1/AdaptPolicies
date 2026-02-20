@@ -198,31 +198,13 @@ class Watch(Open):
 
 
 # Zero argument actions
-class TurnRight(Action):
+class StandUp(Action):
     def __init__(self, env: VHEnvironment, task: VHTask):
         super().__init__(env, task)
-        self.action_name = "turnright"
+        self.action_name = "standup"
 
     def __call__(self):
         super().run()
 
     def action(self, *_: str):
         return self.env.execute(f"<char0> [{self.action_name}]")
-
-
-class TurnLeft(TurnRight):
-    def __init__(self, env: VHEnvironment, task: VHTask):
-        super().__init__(env, task)
-        self.action_name = "turnleft"
-
-
-class WalkForward(TurnRight):
-    def __init__(self, env: VHEnvironment, task: VHTask):
-        super().__init__(env, task)
-        self.action_name = "walkforward"
-
-
-class StandUp(TurnRight):
-    def __init__(self, env: VHEnvironment, task: VHTask):
-        super().__init__(env, task)
-        self.action_name = "standup"

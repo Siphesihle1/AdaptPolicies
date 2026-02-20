@@ -5,7 +5,7 @@ from virtual_home.task import VHTask
 import re
 
 from .environment import ProgPromptEnvironment
-from .constants import ASSERT_PROMPT_PREAMBLE, CURRENT_STATE_PROMPT_EXAMPLE, MODEL
+from .constants import CURRENT_STATE_PROMPT_EXAMPLE, MODEL
 
 from methods.llm import LLMOpenAI
 
@@ -19,8 +19,7 @@ def get_current_state_prompt():
     state = "You see: " + ", ".join(
         [i.strip() for i in state if any(element in i for element in objs)]
     )
-    current_state_prompt = f"{ASSERT_PROMPT_PREAMBLE}{state}\n\n{asserts}"
-    return current_state_prompt
+    return f"{state}\n\n{asserts}"
 
 
 class Assert(Action):
@@ -44,7 +43,7 @@ class Assert(Action):
         )
         action = f"{self.action_name}({assert_cond})"
 
-        current_state = f"{ASSERT_PROMPT_PREAMBLE}\n\n{state}\n\n{action}\n"
+        current_state = f"{get_current_state_prompt()}\n\n{state}\n\n{action}\n"
 
         with weave.thread(thread_id=self.task.thread_id):
             with weave.attributes(

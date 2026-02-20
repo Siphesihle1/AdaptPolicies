@@ -143,7 +143,7 @@ def exec_task():
 """
 )
 
-TASK_PROMPT_ACTION_IMPORTS = "from actions import turnright, turnleft, walkforward, walk <obj>, run <obj>, grab <obj>, switchon <obj>, switchoff <obj>, open <obj>, close <obj>, lookat <obj>, sit <obj>, standup, find <obj>, turnto <obj>, drink <obj>, pointat <obj>, watch <obj>, putin <obj> <obj>, putback <obj> <obj>"
+TASK_PROMPT_ACTION_IMPORTS = "from actions import walk <obj>, run <obj>, grab <obj>, switchon <obj>, switchoff <obj>, open <obj>, close <obj>, lookat <obj>, sit <obj>, standup, find <obj>, turnto <obj>, drink <obj>, pointat <obj>, watch <obj>, putin <obj> <obj>, putback <obj> <obj>"
 
 DEFAULT_EXAMPLES = [
     "put_the_wine_glass_in_the_kitchen_cabinet",
@@ -224,8 +224,7 @@ Task: You are given a function header that describes a virtual home household ta
 - Do NOT rewrite, optimize, or correct assert syntax.
 - Do NOT replace asserts with if-statements.
 - Always follow the patterns demonstrated in the example.
-</assert-syntax-rules>
-"""
+</assert-syntax-rules>"""
 
 TASK_FUNCTION_PROMPT_PREAMBLE_QWEN = """You are an action-planning code generator for a virtual home simulator.
 
@@ -251,5 +250,4 @@ assert(<condition>)
 - Do NOT rewrite, optimize, or correct assert syntax.
 - Do NOT replace asserts with if-statements.
 - Always follow the patterns demonstrated in the examples.
-</assert-syntax-rules>
-"""
+</assert-syntax-rules>"""
