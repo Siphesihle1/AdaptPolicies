@@ -57,9 +57,6 @@ from virtual_home.actions import (
     TurnTo,
     PointAt,
     Watch,
-    TurnRight,
-    TurnLeft,
-    WalkForward,
     StandUp,
 )
 from methods.progprompt.environment import ProgPromptEnvironment
@@ -100,9 +97,6 @@ sit = Sit(env, task)
 turnto = TurnTo(env, task)
 pointat = PointAt(env, task)
 watch = Watch(env, task)
-turnright = TurnRight(env, task)
-turnleft = TurnLeft(env, task)
-walkforward = WalkForward(env, task)
 standup = StandUp(env, task)
 
 """
@@ -128,9 +122,6 @@ __all__ = [
     "turnto",
     "pointat",
     "watch",
-    "turnright",
-    "turnleft",
-    "walkforward",
     "standup"
 ]
 """
