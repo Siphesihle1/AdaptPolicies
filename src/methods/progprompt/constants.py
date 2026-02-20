@@ -33,6 +33,15 @@ Task: Evaluate assert statements using the given state (what you see i.e. "You s
 
 """
 
+ASSERT_PROMPT_PREAMBLE_SHORT = """You are a character in a virtual home simulator.
+Task: Evaluate assert statements using the given state (what you see i.e. "You see: ...")
+
+IMPORTANT:
+- Return 'True' or 'False' only
+- DO NOT generate analysis before or after the answer, just output the answer token (either True or False).
+- Every object listed in the state is visible and close to you.
+- Objects along with their states and relations are separated by commas. Treat each segment between commas as a separate fact."""
+
 MODEL = "qwen3-coder:30b"
 
 MAX_STEPS = 10

@@ -5,7 +5,7 @@ from virtual_home.task import VHTask
 import re
 
 from .environment import ProgPromptEnvironment
-from .constants import CURRENT_STATE_PROMPT_EXAMPLE, MODEL
+from .constants import ASSERT_PROMPT_PREAMBLE_SHORT, CURRENT_STATE_PROMPT_EXAMPLE, MODEL
 
 from methods.llm import LLMOpenAI
 
@@ -19,7 +19,9 @@ def get_current_state_prompt():
     state = "You see: " + ", ".join(
         [i.strip() for i in state if any(element in i for element in objs)]
     )
-    return f"{state}\n\n{asserts}"
+    return (
+        f"{ASSERT_PROMPT_PREAMBLE_SHORT}\n\n<example>\n{state}\n\n{asserts}\n</example>"
+    )
 
 
 class Assert(Action):
@@ -27,7 +29,6 @@ class Assert(Action):
         self.env = env
         self.task = task
         self.action_name = "assert"
-        self.current_state_prompt = get_current_state_prompt()
 
     def __call__(self, assert_cond: str):
         return super().run(assert_cond)
