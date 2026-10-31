@@ -14,6 +14,7 @@ on:
       - "**/environment.yml"
       - "env_vars/**"
       - "helper-scripts/**"
+      - "config/**"
 
 permissions:
   contents: read
@@ -37,6 +38,9 @@ jobs:
           SLURM_SCRIPTS_PREFIX: ${{ env.HOME }}/AdaptPolicies/src/slurm-scripts
           SLURM_LOGS_PREFIX: ${{ env.HOME }}/slurm-logs
           OLLAMA_CLOUD_API_KEY: ${{ secrets.OLLAMA_CLOUD_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ADAPT_CONFIG: live
           PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
           WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }} 
 
@@ -44,7 +48,7 @@ jobs:
           host: ${{ secrets.HOSTNAME }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.PRIVATE_KEY }}
-          envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPTS_PREFIX,SLURM_LOGS_PREFIX,CONDA_PREFIX,OLLAMA_CLOUD_API_KEY,PROJECT_NAME,WANDB_API_KEY
+          envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPTS_PREFIX,SLURM_LOGS_PREFIX,CONDA_PREFIX,OLLAMA_CLOUD_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,ADAPT_CONFIG,PROJECT_NAME,WANDB_API_KEY
           script: |
             echo ':--- Syncing local repo ---:'
             cd $PROJECT_ROOT
@@ -62,12 +66,18 @@ jobs:
             
             cat >> $CONDA_PREFIX/activate.d/env_vars.sh <<EOF
             export OLLAMA_CLOUD_API_KEY=$OLLAMA_CLOUD_API_KEY
+            export OPENAI_API_KEY=$OPENAI_API_KEY
+            export ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY
+            export ADAPT_CONFIG=$ADAPT_CONFIG
             export PROJECT_NAME=$PROJECT_NAME
             export WANDB_API_KEY=$WANDB_API_KEY
             EOF
 
             cat >> $CONDA_PREFIX/deactivate.d/env_vars.sh <<EOF
             unset OLLAMA_CLOUD_API_KEY
+            unset OPENAI_API_KEY
+            unset ANTHROPIC_API_KEY
+            unset ADAPT_CONFIG
             unset PROJECT_NAME
             unset WANDB_API_KEY
             EOF

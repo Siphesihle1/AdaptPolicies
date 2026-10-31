@@ -1,13 +1,12 @@
-from openai.types.chat import ChatCompletion
-import weave
+from methods import telemetry as weave
 from virtual_home.actions import Action
 from virtual_home.task import VHTask
 import re
 
 from .environment import ProgPromptEnvironment
-from .constants import ASSERT_PROMPT_PREAMBLE_SHORT, CURRENT_STATE_PROMPT_EXAMPLE, MODEL
+from .constants import ASSERT_PROMPT_PREAMBLE_SHORT, CURRENT_STATE_PROMPT_EXAMPLE
 
-from methods.llm import LLMOpenAI
+from methods.llm import generate
 
 
 # Adapted from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_execute.py#L48
@@ -53,16 +52,13 @@ class Assert(Action):
                     "subtask": self.task.current_subtask,
                 }
             ):
-                response: ChatCompletion = LLMOpenAI(
+                check_state = generate(
                     prompt=current_state,
-                    temperature=0,
-                    model=MODEL,
+                    purpose="assertion",
                     __weave={
                         "display_name": self.task.thread_id,
                     },
                 )
-
-        check_state = response.choices[0].message.content or ""
 
         self.env.log_file.write(
             f"State check:\n{state}\n{action}\n{check_state.strip()}\n"

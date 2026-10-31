@@ -1,6 +1,6 @@
 name: research_proj
 channels:
-  - default
+  - defaults
   - conda-forge
   - nvidia
 dependencies:

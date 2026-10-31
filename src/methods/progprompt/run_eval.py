@@ -6,6 +6,8 @@ from typing import Optional, cast
 from methods.progprompt.agent import ProgPromptAgent
 from methods.progprompt.prompt import Env0TestSet, ExamplesType
 
+from methods.config import get_config
+
 
 @dataclass
 class ProgramArgs:
@@ -18,6 +20,7 @@ class ProgramArgs:
 
 
 def execute_progprompt_agent(args: ProgramArgs):
+    get_config()  # Validate before connecting to the simulator.
     progprompt_agent = ProgPromptAgent(
         env_id=args.env_id,
         test_set=args.test_set,

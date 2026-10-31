@@ -6,3 +6,4 @@ weave==0.52.24
 wandb
 uuid_utils
 Pillow
+PyYAML

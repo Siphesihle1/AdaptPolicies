@@ -1,82 +1,41 @@
-import os
-from ollama import Client, GenerateResponse, Options
-from openai import OpenAI
-from urllib.parse import urlparse
-from openai.types.chat import ChatCompletion
-import weave
+"""Configuration-driven provider selection and generation."""
 
-from typing import List, Optional
+from typing import Optional
 
-wandb_project_name = os.getenv("PROJECT_NAME", "")
-entity, project = wandb_project_name.split("/", 1)
-weave.init(os.getenv("PROJECT_NAME", ""))
+from .config import COMMON_OPTIONS, get_config
+from . import telemetry
+from .providers import LLMProvider, LMOllama, LLMOpenAI, LLMAnthropic
 
-
-def is_host(url: str, host: str) -> bool:
-    parsed = urlparse(url)
-    hostname = parsed.hostname or parsed.path
-    return hostname == host
+PROVIDERS = {
+    "ollama": LMOllama,
+    "openai": LLMOpenAI,
+    "lm_studio": LLMOpenAI,
+    "anthropic": LLMAnthropic,
+}
 
 
-@weave.op
-def LMOllama(
+def get_provider() -> LLMProvider:
+    settings = get_config()["llm"]
+    return PROVIDERS[settings["provider"]](settings)
+
+
+@telemetry.op
+def generate(
     prompt: str,
-    model: str,
-    max_tokens: Optional[int] = None,
-    temperature: Optional[float] = None,
-    stop: Optional[str | List[str]] = None,
-    logprobs=True,
-    frequency_penalty: Optional[float] = None,
-    think=True,
-) -> GenerateResponse:
-    headers = (
-        {"Authorization": "Bearer " + os.environ.get("OLLAMA_CLOUD_API_KEY", "")}
-        if is_host(os.getenv("OLLAMA_HOST", ""), "ollama.com")
-        else None
-    )
-    client = Client(
-        host=os.getenv("OLLAMA_HOST"),
-        headers=headers,
-    )
-    options: Options = Options(
-        temperature=temperature,
-        num_predict=max_tokens,
-        frequency_penalty=frequency_penalty,
-        stop=stop,
-    )
-
-    response = client.generate(
-        model=model, prompt=prompt, logprobs=logprobs, options=options, think=think
-    )
-
-    return response
-
-
-@weave.op
-def LLMOpenAI(
-    prompt: str,
-    model: str,
-    max_tokens: Optional[int] = None,
-    temperature: Optional[float] = None,
-    stop: Optional[str | List[str]] = None,
-    frequency_penalty: Optional[float] = None,
-) -> ChatCompletion:
-    ollama_host = os.getenv("OLLAMA_HOST", "")
-    api_key = (
-        os.getenv("OLLAMA_CLOUD_API_KEY", "")
-        if is_host(ollama_host, "ollama.com")
-        else "ollama"
-    )
-
-    client = OpenAI(base_url=f"{ollama_host}/v1", api_key=api_key)
-
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=max_tokens,
-        temperature=temperature,
-        stop=stop,
-        frequency_penalty=frequency_penalty,
-    )
-
-    return response
+    purpose: str = "plan",
+    *,
+    __weave: Optional[dict[str, str]] = None,
+) -> str:
+    """Generate text; the telemetry decorator consumes optional __weave metadata."""
+    provider = get_provider()
+    settings = provider.settings
+    if purpose not in {"plan", "assertion"}:
+        raise ValueError("purpose must be plan or assertion")
+    profile = settings["generation"][purpose]
+    options = {
+        key: value
+        for key, value in profile.items()
+        if key in COMMON_OPTIONS and value is not None
+    }
+    options.update(profile.get(settings["provider"], {}))
+    return provider.generate(prompt, options, purpose)

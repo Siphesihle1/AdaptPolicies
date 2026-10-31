@@ -3,7 +3,7 @@ import os
 from typing import List, Optional, Tuple
 import cv2
 from cv2.typing import MatLike
-import weave
+from methods import telemetry as weave
 from .graph_query import N, E
 from .task import VHTask
 from virtualhome.simulation.unity_simulator import UnityCommunication

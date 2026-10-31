@@ -1,0 +1,15 @@
+llm:
+  provider: ollama
+  model: qwen3-coder:30b
+  base_url: http://localhost:11430
+  timeout: 300
+  generation:
+    plan:
+      temperature: 0
+      ollama:
+        think: false
+        frequency_penalty: 0.15
+    assertion:
+      temperature: 0
+weave:
+  enabled: true

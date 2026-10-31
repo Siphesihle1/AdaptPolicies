@@ -3,15 +3,13 @@ import json
 import os
 import sys
 
-from ollama import GenerateResponse
-
 from virtual_home.graph_query import N
 from uuid_utils import uuid7
-import weave
+from methods import telemetry as weave
+from methods.config import get_config
 
-from methods.llm import LMOllama
+from methods.llm import generate
 from .constants import (
-    MODEL,
     TASK_FUNCTION_PROMPT_PREAMBLE_QWEN,
     TASK_PROMPT_ACTION_IMPORTS,
 )
@@ -78,9 +76,9 @@ class ProgPromptAgent:
         self.initial_states: List[Dict[str, Any]] = []
         self.exec_per_task: Dict[str, float] = {}
         self.results: Dict[str, Dict[str, float]] = {}
-        self.evaluation_logger = weave.EvaluationLogger(
+        self.evaluation_logger = weave.evaluation_logger(
             name=f"{os.getenv('EXPERIMENT_NAME')}:{uuid7()}",
-            model=MODEL,
+            model=get_config()["llm"]["model"],
             dataset=self.dataset,
             eval_attributes={
                 "experiment_name": os.getenv("EXPERIMENT_NAME"),
@@ -107,18 +105,13 @@ class ProgPromptAgent:
                         "task_instruction": task,
                     }
                 ):
-                    response: GenerateResponse = LMOllama(
+                    plan = generate(
                         prompt=prompt_text,
-                        think=False,
-                        temperature=0,
-                        frequency_penalty=0.15,
-                        model=MODEL,
+                        purpose="plan",
                         __weave={
                             "display_name": thread_id,
                         },
                     )
-
-            plan = response.response or ""
 
             if not plan.strip().startswith("def"):
                 print(
@@ -214,6 +207,9 @@ class ProgPromptAgent:
         plan_execution_status_file.close()
 
     def log_eval_results(self):
+        if self.evaluation_logger is None:
+            return
+
         for task, metrics in self.results.items():
             if task == "overall":
                 continue
@@ -252,13 +248,13 @@ class ProgPromptAgent:
         sr: List[float] = []
         unchanged_conds: List[int] = []
         total_unchanged_conds: List[int] = []
-        test_tasks = self.plans.keys()
+        test_tasks = list(self.plans)
+        ground_truth = dict(zip(test_tasks, self.final_states_gt))
 
-        for g, g_gt, g_in, task in zip(
-            self.final_states, self.final_states_gt, self.initial_states, test_tasks
+        for g, g_in, task in zip(
+            self.final_states, self.initial_states, self.exec_per_task
         ):
-            if len(self.plans[task]) != 2:
-                continue
+            g_gt = ground_truth[task]
 
             relations_in = get_object_relations(g_in)
             obj_states_in = get_object_states(g_in)
@@ -319,12 +315,16 @@ class ProgPromptAgent:
 
         if len(test_tasks) > 0:
             self.results["overall"] = {
-                "PSR": sum(sr) / len(sr),
-                "SR": sr.count(1.0) / len(sr),
+                "PSR": sum(sr) / len(sr) if sr else 0,
+                "SR": sr.count(1.0) / len(sr) if sr else 0,
                 "Precision": (
                     1 - sum(unchanged_conds) / sum(total_unchanged_conds)
                     if sum(total_unchanged_conds) > 0
                     else 0
                 ),
-                "Exec": sum(self.exec_per_task.values()) / len(self.exec_per_task),
+                "Exec": (
+                    sum(self.exec_per_task.values()) / len(self.exec_per_task)
+                    if self.exec_per_task
+                    else 0
+                ),
             }
