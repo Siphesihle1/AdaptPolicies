@@ -39,16 +39,11 @@ def get_object_states(state: Dict[str, Any]) -> Set[str]:
 
 
 def get_ground_truth_final_states(test_set: str) -> List[Dict[str, Any]]:
-    final_states_gt: List[Dict[str, Any]] = []
-
     with open(
         f"{os.getenv('PROGPROMPT_DATASET_DIR')}/final_states/final_states_{test_set}.json",
         "r",
     ) as f:
-        for line in f.readlines():
-            final_states_gt.append(json.loads(line))
-
-    return final_states_gt
+        return json.load(f)
 
 
 class ProgPromptAgent:

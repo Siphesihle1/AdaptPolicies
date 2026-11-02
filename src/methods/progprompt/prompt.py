@@ -24,21 +24,14 @@ def load_task_prompt_examples() -> Dict[str, str]:
         f"{os.getenv('PROGPROMPT_DATASET_DIR')}/pythonic_plans/train_complete_plan_set.json",
         "r",
     ) as f:
-        tmp = json.load(f)
-        prompt_examples = {}
-        for k, v in tmp.items():
-            prompt_examples[k] = v
-
-    return prompt_examples
+        return {
+            name: plan for example in json.load(f) for name, plan in example.items()
+        }
 
 
 def load_tasks_from_file(file_path: str) -> List[str]:
-    tasks: List[str] = []
-
     with open(file_path, "r") as f:
-        for line in f.readlines():
-            tasks.append(list(json.loads(line.strip()).keys())[0])
-    return tasks
+        return [next(iter(task)) for task in json.load(f)]
 
 
 def load_tasks_from_dir(dir_path: str) -> List[str]:
@@ -49,9 +42,7 @@ def load_tasks_from_dir(dir_path: str) -> List[str]:
         return int(match.group()) if match else -1
 
     for file in sorted(os.listdir(dir_path), key=sort_key):
-        with open(os.path.join(dir_path, file), "r") as f:
-            for line in f.readlines():
-                tasks.append(list(json.loads(line.strip()).keys())[0])
+        tasks.extend(load_tasks_from_file(os.path.join(dir_path, file)))
     return tasks
 
 
