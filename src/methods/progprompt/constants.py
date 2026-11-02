@@ -141,8 +141,6 @@ def exec_task():
 TASK_PROMPT_ACTION_IMPORTS = "from actions import walk <obj>, run <obj>, grab <obj>, switchon <obj>, switchoff <obj>, open <obj>, close <obj>, lookat <obj>, sit <obj>, standup, find <obj>, turnto <obj>, drink <obj>, pointat <obj>, watch <obj>, putin <obj> <obj>, putback <obj> <obj>"
 
 DEFAULT_EXAMPLES = [
-    "put_the_wine_glass_in_the_kitchen_cabinet",
-    "throw_away_the_lime",
     "refrigerate_the_salmon",
     "bring_me_some_fruit",
     "wash_clothes",

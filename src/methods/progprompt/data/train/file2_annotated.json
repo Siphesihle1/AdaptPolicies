@@ -68,52 +68,6 @@
     }
   },
   {
-    "wash mug": {
-      "0: walk to kitchen": [
-        "<char0> [walk] <kitchen> (205)"
-      ],
-      "1: find sink": [
-        "<char0> [find] <sink> (247)"
-      ],
-      "2: turn on faucet": [
-        "<char0> [find] <faucet> (248)",
-        "<char0> [find] <faucet> (248)",
-        "<char0> [find] <faucet> (50)",
-        "<char0> [switchon] <faucet> (50)"
-      ],
-      "3: put mug under water": [
-        "<char0> [find] <mug> (194)",
-        "<char0> [find] <mug> (194)",
-        "<char0> [find] <mug> (447)",
-        "<char0> [grab] <mug> (447)",
-        "<char0> [find] <sink> (247)",
-        "<char0> [putback] <mug> (447) <sink> (247)"
-      ],
-      "4: grab dishwashing liquid": [
-        "<char0> [find] <dishwashingliquid> (267)",
-        "<char0> [grab] <dishwashingliquid> (267)"
-      ],
-      "5: put dishwashing liquid on mug": [
-        "<char0> [find] <sink> (247)",
-        "<char0> [putback] <dishwashingliquid> (267) <sink> (247)"
-      ],
-      "6: grab washingsponge": [
-        "<char0> [find] <washingsponge> (266)",
-        "<char0> [grab] <washingsponge> (266)"
-      ],
-      "7: start scrubbing mug": [
-        "<char0> [find] <sink> (247)",
-        "<char0> [putback] <washingsponge> (266) <sink> (247)"
-      ],
-      "8: rinse mug off with water 1": [],
-      "9: dry mug with towel 1": [],
-      "10: Done": [
-        "<char0> [find] <faucet> (50)",
-        "<char0> [switchoff] <faucet> (50)"
-      ]
-    }
-  },
-  {
     "put clothes in closet": {
       "0: walk to bedroom": [
         "<char0> [walk] <bedroom> (73)"

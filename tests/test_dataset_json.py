@@ -28,7 +28,7 @@ class DatasetJsonTests(unittest.TestCase):
             with self.subTest(path=path.relative_to(DATASET_ROOT)):
                 records = json.loads(path.read_text(encoding="utf-8"))
                 self.assertIsInstance(records, list)
-                self.assertTrue(records)
+                self.assertTrue(records or path.parent.name == "train")
                 self.assertTrue(all(isinstance(record, dict) for record in records))
                 if path.parent.name == "final_states":
                     for graph in records:
@@ -64,7 +64,7 @@ class DatasetJsonTests(unittest.TestCase):
 
     def test_real_task_splits_load_with_existing_counts(self):
         for dataset, count in (
-            ("train", 34),
+            ("train", 24),
             ("test_seen", 10),
             ("test_unseen", 10),
             ("test_unseen_ambiguous_goals", 5),
@@ -82,7 +82,7 @@ class DatasetJsonTests(unittest.TestCase):
         records = json.loads(path.read_text(encoding="utf-8"))
         with patch.dict(os.environ, {"PROGPROMPT_DATASET_DIR": str(DATASET_ROOT)}):
             examples = load_task_prompt_examples()
-        self.assertEqual(len(examples), 34)
+        self.assertEqual(len(examples), 24)
         self.assertEqual(
             list(examples), [name for record in records for name in record]
         )
@@ -91,4 +91,33 @@ class DatasetJsonTests(unittest.TestCase):
         self.assertEqual(
             examples,
             {name: plan for record in records for name, plan in record.items()},
+        )
+
+    def test_task_splits_and_prompt_examples_do_not_overlap(self):
+        def normalize(name: str):
+            return " ".join(name.lower().replace("_", " ").split())
+
+        owners = {}
+        training_tasks = set()
+        for dataset in (
+            "train",
+            "test_seen",
+            "test_unseen",
+            "test_unseen_ambiguous_goals",
+        ):
+            for task in load_tasks_from_dir(str(DATASET_ROOT / dataset)):
+                name = normalize(task)
+                self.assertNotIn(name, owners, f"Duplicate task: {task}")
+                owners[name] = dataset
+                if dataset == "train":
+                    training_tasks.add(name)
+
+        self.assertEqual(owners["wash mug"], "test_seen")
+        path = DATASET_ROOT / "pythonic_plans/train_complete_plan_set.json"
+        examples = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            {normalize(name) for record in examples for name in record}, training_tasks
+        )
+        self.assertTrue(
+            all(normalize(name) in training_tasks for name in DEFAULT_EXAMPLES)
         )
