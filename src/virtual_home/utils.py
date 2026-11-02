@@ -1,6 +1,10 @@
+from math import dist
+from typing import Dict, Any, List, Tuple
+
 from .graph_query import E, N
 
-from typing import Dict, Any, List, Tuple
+GraphNodeData = Dict[str, Any]
+Point3D = Tuple[float, float, float]
 
 
 # Adapted from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_aug_env.py#L12
@@ -111,33 +115,79 @@ def add_washingmachine_states(
             nodes_with_additional_states[n["id"]] = n
 
 
+def _node_center(node: GraphNodeData) -> Point3D | None:
+    bounding_box: Dict[str, Any] | None = node.get("bounding_box")
+    if bounding_box is None:
+        return None
+    center: List[float] | Point3D | None = bounding_box.get("center")
+    if center is None or len(center) != 3:
+        return None
+    return float(center[0]), float(center[1]), float(center[2])
+
+
+def _matching_sink_faucet(
+    state: Dict[str, Any], sink: GraphNodeData, faucet_ids: List[int]
+) -> GraphNodeData | None:
+    room_ids = [room["id"] for room in N(state).category("Rooms").get_all()]
+    sink_room_ids = [
+        edge["to_id"]
+        for edge in E(state)
+        .from_(sink["id"])
+        .relation("INSIDE")
+        .to_in(*room_ids)
+        .get_all()
+    ]
+    same_room_faucet_ids = [
+        edge["from_id"]
+        for edge in E(state)
+        .from_in(*faucet_ids)
+        .relation("INSIDE")
+        .to_in(*sink_room_ids)
+        .get_all()
+    ]
+    candidates = N(state).id_in(*same_room_faucet_ids).get_all()
+    if not candidates:
+        return None
+    if len(candidates) == 1:
+        return candidates[0]
+
+    sink_center = _node_center(sink)
+    if sink_center is None:
+        return None
+    distances: Dict[int, float] = {}
+    for faucet in candidates:
+        faucet_center = _node_center(faucet)
+        if faucet_center is None:
+            continue
+        distances[faucet["id"]] = dist(sink_center, faucet_center)
+    return min(
+        (faucet for faucet in candidates if faucet["id"] in distances),
+        key=lambda faucet: distances[faucet["id"]],
+        default=None,
+    )
+
+
 def add_sink_states(
     state: Dict[str, Any],
     faucet_ids: List[int],
     sink_ids: List[int],
     nodes_with_additional_states: Dict[int, Any],
-):
-    faucet_near_sink: List[int] = (
-        E(state).from_in(*faucet_ids).select("from_id")
-    )  # type: ignore
-    # and n["relation_type"] == "CLOSE"]
+) -> None:
+    sinks = N(state).id_in(*sink_ids).get_all()
+    for sink in sinks:
+        faucet = _matching_sink_faucet(state, sink, faucet_ids)
+        if faucet is None or "ON" not in faucet["states"]:
+            continue
 
-    faucet_cond: List[str] = (
-        N(state).id_in(*faucet_near_sink).state("ON").select("id")
-    )  # type: ignore
-    # print(sink_ids, faucet_ids, faucet_near_sink, faucet_cond)
-
-    if len(faucet_cond) > 0:
-        # print("faucet on")
-        utensil_in_sink: List[int] = (
-            E(state).to_in(*sink_ids).relation("INSIDE").select("from_id")
-        )  # type: ignore
-        utensil_in_sink_cond = N(state).id_in(*utensil_in_sink).get_all()
-
-        for n in utensil_in_sink_cond:
-            # print("utensit in sink")
-            n["states"].append("WASHED")
-            nodes_with_additional_states[n["id"]] = n
+        object_ids = [
+            edge["from_id"]
+            for edge in E(state).to_(sink["id"]).relation_in("INSIDE", "ON").get_all()
+        ]
+        objects = N(state).id_in(*object_ids).get_all()
+        for node in objects:
+            if "WASHED" not in node["states"]:
+                node["states"].append("WASHED")
+            nodes_with_additional_states[node["id"]] = node
 
 
 # Adapated from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_aug_env.py#L24
@@ -145,7 +195,7 @@ def add_additional_obj_states(
     state: Dict[str, Any],
     ids: Tuple[List[int], ...],
     nodes_with_additional_states: Dict[int, Any],
-):
+) -> Dict[int, Any]:
     ## TODO fix faucet, stove, washingmachine
     (
         wallphone_ids,

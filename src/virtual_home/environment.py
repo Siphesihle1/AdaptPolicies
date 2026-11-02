@@ -151,7 +151,7 @@ class VHEnvironment:
             [script_instruction],
             recording=False,
             skip_animation=True,
-            find_solution=True,
+            find_solution=False,
         )
         script = script_instruction[7:]
         self.task.step += 1

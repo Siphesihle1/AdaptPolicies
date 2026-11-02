@@ -112,7 +112,7 @@ class RelationQuery:
         )
         return self
 
-    def relation(self, rel):
+    def relation(self, rel: str):
         self.predicates.append(lambda e: e["relation_type"] == rel)
         return self
 
