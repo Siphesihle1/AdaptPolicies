@@ -1,6 +1,7 @@
 """Evaluation regression checks without starting a simulator or loading its SDK."""
 
 import importlib
+import json
 import os
 from pathlib import Path
 import tempfile
@@ -59,6 +60,19 @@ class EvaluationTests(unittest.TestCase):
         self.agent.log_eval_results()
         self.assertEqual(self.agent.results["overall"]["SR"], 0)
         self.assertFalse((Path(self.directory.name) / "evaluation.json").exists())
+
+    def test_ground_truth_loader_preserves_array_order(self):
+        root = Path(self.directory.name)
+        (root / "final_states").mkdir()
+        graphs = [
+            {"nodes": [{"id": identifier}], "edges": []} for identifier in (20, 10)
+        ]
+        (root / "final_states/final_states_example.json").write_text(
+            json.dumps(graphs, indent=2)
+        )
+        module = importlib.import_module("methods.progprompt.agent")
+        with patch.dict(os.environ, {"PROGPROMPT_DATASET_DIR": str(root)}):
+            self.assertEqual(module.get_ground_truth_final_states("example"), graphs)
 
     def test_failed_task_does_not_shift_ground_truth(self):
         def graph(state):
