@@ -72,42 +72,62 @@ class JoinedExecutor(ActionExecutor):
 
 class WalkExecutor(ActionExecutor):
 
-    def execute(self, script: Script, state: EnvironmentState, info: ExecutionInfo, char_index, modify=True, in_place=False):
+    def execute(
+        self,
+        script: Script,
+        state: EnvironmentState,
+        info: ExecutionInfo,
+        char_index,
+        modify=True,
+        in_place=False,
+    ):
         current_line = script[0]
         info.set_current_line(current_line)
         current_obj = current_line.object()
 
-        #print("in walk execution, char_index = {}".format(char_index))
+        # print("in walk execution, char_index = {}".format(char_index))
 
         # select objects based on current_obj
         for node in state.select_nodes(current_obj):
             node_room = _get_room_node(state, node)
-            #print(state, node)
+            # print(state, node)
             if self.check_walk(state, node, info, char_index) and node_room is not None:
 
-                changes = [DeleteEdges(CharacterNode(char_index),
-                                       [Relation.INSIDE, Relation.CLOSE, Relation.FACING],
-                                       AnyNode(), delete_reverse=True),
-                           AddEdges(CharacterNode(char_index), Relation.INSIDE, NodeInstance(node_room)),
-                     ]
+                changes = [
+                    DeleteEdges(
+                        CharacterNode(char_index),
+                        [Relation.INSIDE, Relation.CLOSE, Relation.FACING],
+                        AnyNode(),
+                        delete_reverse=True,
+                    ),
+                    AddEdges(
+                        CharacterNode(char_index),
+                        Relation.INSIDE,
+                        NodeInstance(node_room),
+                    ),
+                ]
 
                 if node_room != node:
                     changes += [
-                           AddEdges(CharacterNode(char_index), Relation.CLOSE, BoxObjectNode(node), add_reverse=True),
-                           AddEdges(CharacterNode(char_index), Relation.CLOSE, BodyNode(), add_reverse=True),
-                           AddEdges(CharacterNode(char_index), Relation.CLOSE, NodeInstance(node), add_reverse=True)
-                     ]
-
-                # close to object in hands
-                char_node = _get_character_node(state, char_index)
-                char_room = _get_room_node(state, char_node)
-                nodes_in_hands = _find_nodes_from(state, char_node, relations=[Relation.HOLDS_LH, Relation.HOLDS_RH])
-                for node_in_hands in nodes_in_hands:
-                    changes.append(DeleteEdges(NodeInstance(node_in_hands), [Relation.INSIDE, Relation.CLOSE, Relation.FACING], AnyNode(), delete_reverse=True))
-
-                for node_in_hands in nodes_in_hands:
-                    changes.append(AddEdges(CharacterNode(char_index), Relation.CLOSE, NodeInstance(node_in_hands), add_reverse=True))
-                    changes.append(AddEdges(NodeInstance(node_in_hands), Relation.INSIDE, NodeInstance(char_room)))
+                        AddEdges(
+                            CharacterNode(char_index),
+                            Relation.CLOSE,
+                            BoxObjectNode(node),
+                            add_reverse=True,
+                        ),
+                        AddEdges(
+                            CharacterNode(char_index),
+                            Relation.CLOSE,
+                            BodyNode(),
+                            add_reverse=True,
+                        ),
+                        AddEdges(
+                            CharacterNode(char_index),
+                            Relation.CLOSE,
+                            NodeInstance(node),
+                            add_reverse=True,
+                        ),
+                    ]
 
                 # close to all objects on node
                 # if Property.SURFACES in node.properties:
@@ -115,17 +135,65 @@ class WalkExecutor(ActionExecutor):
 
                 # close to all objects inside
                 if Property.CAN_OPEN in node.properties:
-                    changes.append(AddEdges(CharacterNode(char_index), Relation.CLOSE, ObjectInsideNode(node), add_reverse=True))
+                    changes.append(
+                        AddEdges(
+                            CharacterNode(char_index),
+                            Relation.CLOSE,
+                            ObjectInsideNode(node),
+                            add_reverse=True,
+                        )
+                    )
 
                 # close to all objects that node is on
-                changes.append(AddEdges(CharacterNode(char_index), Relation.CLOSE, SurfaceObjectNode(node), add_reverse=True))
-
+                changes.append(
+                    AddEdges(
+                        CharacterNode(char_index),
+                        Relation.CLOSE,
+                        SurfaceObjectNode(node),
+                        add_reverse=True,
+                    )
+                )
 
                 if not modify:
                     yield state
                 else:
-                    yield state.change_state(changes, node, current_obj, in_place=in_place)
-    
+                    moved_state = state.change_state(
+                        changes, node, current_obj, in_place=in_place
+                    )
+                    char_node = _get_character_node(moved_state, char_index)
+                    char_room = _get_room_node(moved_state, char_node)
+                    nodes_in_hands = _find_nodes_from(
+                        moved_state,
+                        char_node,
+                        relations=[Relation.HOLDS_LH, Relation.HOLDS_RH],
+                    )
+                    carried_changes = []
+                    for node_in_hands in nodes_in_hands:
+                        carried_changes.append(
+                            DeleteEdges(
+                                NodeInstance(node_in_hands),
+                                [Relation.INSIDE, Relation.CLOSE, Relation.FACING],
+                                AnyNode(),
+                                delete_reverse=True,
+                            )
+                        )
+                        carried_changes.append(
+                            AddEdges(
+                                CharacterNode(char_index),
+                                Relation.CLOSE,
+                                NodeInstance(node_in_hands),
+                                add_reverse=True,
+                            )
+                        )
+                        carried_changes.append(
+                            AddEdges(
+                                NodeInstance(node_in_hands),
+                                Relation.INSIDE,
+                                NodeInstance(char_room),
+                            )
+                        )
+                    moved_state.apply_changes(carried_changes)
+                    yield moved_state
 
     def check_walk(self, state: EnvironmentState, node: GraphNode, info: ExecutionInfo, char_index):
 
