@@ -1,0 +1,12 @@
+{
+  "listen_to_radio": 6,
+  "bring_pillow_to_the_sofa": 7,
+  "open_window": 8,
+  "cut_apple": 9,
+  "wash_mug": 10,
+  "wash_the_rug_in_washing_machine": 0,
+  "put_all_the_cutlery_in_the_sink": 1,
+  "throw_away_the_lime": 2,
+  "put_the_wine_glass_in_the_kitchen_cabinet": 3,
+  "put_the_candle_on_the_living_room_shelf": 4
+}

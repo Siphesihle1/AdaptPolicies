@@ -1,0 +1,12 @@
+{
+  "watch_tv": 0,
+  "turn_off_light": 1,
+  "brush_teeth": 2,
+  "throw_away_apple": 3,
+  "make_toast": 4,
+  "eat_chips_on_the_sofa": 5,
+  "put_salmon_in_the_fridge": 6,
+  "wash_the_plate": 7,
+  "bring_coffeepot_and_cupcake_to_the_coffee_table": 8,
+  "microwave_salmon": 9
+}

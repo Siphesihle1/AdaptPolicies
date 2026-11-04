@@ -8,6 +8,8 @@ Load these files with `json.load()`, rather than parsing each line. Task files a
 
 The action vocabulary in `zero_shot_baseline_data` is already a valid JSON array of strings. Ground-truth mapping manifests, when present, are JSON objects mapping task names to graph indices.
 
+Mapping manifests now cover train, test_seen, test_unseen, test_unseen_ambiguous_goals, env1, and env2. Their values refer to stable zero-based indices; unused graphs are retained. See [the mapping audit](../../../../docs/ground_truth_graph_mapping_audit.md) for assignment evidence and unresolved graph/annotation issues. The agent validates these mappings before simulator construction and selects ground-truth graphs by task name.
+
 Task names are unique across the four train/test splits. Matching ignores case, underscores versus spaces, and repeated whitespace. Test assignments take precedence over training assignments. Training prompt examples and default examples contain training tasks only. The separate env1/env2 evaluations are excluded from this uniqueness rule.
 
 | Category | Before deduplication | After deduplication |
@@ -19,3 +21,5 @@ Task names are unique across the four train/test splits. Matching ignores case, 
 | Total task entries | 59 | 49 |
 
 All ten test_seen tasks were removed from training, including wash mug. Their training prompt examples were also removed (34 → 24). Default examples now start with refrigerate_the_salmon, bring_me_some_fruit, and wash_clothes. Empty training shards remain valid empty JSON arrays. Unlabelled graph arrays retain their existing order and indices; their entries are not counts of the revised training split. The all_plans_env0 collection is a source-plan archive, not a train/test assignment or the prompt-example pool.
+
+The [original dataset archive](../data_original/README.md) preserves all 35 JSON files from commit `69ad21bb021419feb32ab0dc5ab9366971b7719c` with formatting/representation changes only. It is outside active dataset scans. The active cutlery graph 1 preserves that original graph except for the two validated INSIDE-to-ON sink edges; the complete replay graph remains evidence.

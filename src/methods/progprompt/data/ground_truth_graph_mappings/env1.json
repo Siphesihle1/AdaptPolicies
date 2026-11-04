@@ -1,0 +1,12 @@
+{
+  "watch_tv": 0,
+  "turn_off_tablelamp": 1,
+  "put_the_soap_in_the_bathroomcabinet": 2,
+  "throw_away_plum": 3,
+  "make_toast": 4,
+  "bring_my_book_to_the_sofa": 5,
+  "put_chicken_in_the_fridge": 6,
+  "wash_the_dishbowl_in_dishwasher": 7,
+  "bring_coffeepot_and_peach_to_the_coffee_table": 8,
+  "microwave_chicken": 9
+}

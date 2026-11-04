@@ -1,0 +1,12 @@
+{
+  "open_the_curtains": 0,
+  "turn_on_tv": 1,
+  "put_the_soap_in_the_bathroomcabinet": 2,
+  "throw_away_bananas": 3,
+  "make_toast": 4,
+  "bring_my_book_to_the_sofa": 5,
+  "put_milk_in_the_fridge": 6,
+  "wash_the_cutlery_in_dishwasher": 7,
+  "make_coffee_in_coffeemaker": 8,
+  "heat_salmon_on_the_stove": 9
+}

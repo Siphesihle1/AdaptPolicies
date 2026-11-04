@@ -121,3 +121,85 @@ class DatasetJsonTests(unittest.TestCase):
         self.assertTrue(
             all(normalize(name) in training_tasks for name in DEFAULT_EXAMPLES)
         )
+
+    def test_ground_truth_mappings_cover_all_current_datasets(self):
+        for dataset, count in (
+            ("train", 24),
+            ("test_seen", 10),
+            ("test_unseen", 10),
+            ("test_unseen_ambiguous_goals", 5),
+            ("env1", 10),
+            ("env2", 10),
+        ):
+            with self.subTest(dataset=dataset):
+                if dataset.startswith("env"):
+                    tasks = load_tasks_from_file(
+                        str(DATASET_ROOT / "new_env" / f"{dataset}_annotated.json")
+                    )
+                else:
+                    tasks = load_tasks_from_dir(str(DATASET_ROOT / dataset))
+                mapping = json.loads(
+                    (
+                        DATASET_ROOT / "ground_truth_graph_mappings" / f"{dataset}.json"
+                    ).read_text()
+                )
+                graphs = json.loads(
+                    (
+                        DATASET_ROOT / "final_states" / f"final_states_{dataset}.json"
+                    ).read_text()
+                )
+                self.assertEqual(len(mapping), count)
+                self.assertEqual(
+                    set(mapping), {"_".join(task.split(" ")) for task in tasks}
+                )
+                self.assertEqual(len(set(mapping.values())), len(mapping))
+                for index in mapping.values():
+                    self.assertIs(type(index), int)
+                    self.assertGreaterEqual(index, 0)
+                    self.assertLess(index, len(graphs))
+                    self.assertIsInstance(graphs[index]["nodes"], list)
+                    self.assertIsInstance(graphs[index]["edges"], list)
+
+    def test_cutlery_goal_matches_corrected_sink_placements(self):
+        mapping = json.loads(
+            (DATASET_ROOT / "ground_truth_graph_mappings/test_seen.json").read_text()
+        )
+        graphs = json.loads(
+            (DATASET_ROOT / "final_states/final_states_test_seen.json").read_text()
+        )
+        graph = graphs[mapping["put_all_the_cutlery_in_the_sink"]]
+        edges = {
+            (edge["from_id"], edge["relation_type"], edge["to_id"])
+            for edge in graph["edges"]
+        }
+        for identifier in (280, 272):
+            self.assertIn((identifier, "ON", 247), edges)
+            self.assertNotIn((identifier, "INSIDE", 247), edges)
+
+    def test_mappings_select_environment_specific_goal_objects(self):
+        cases = (
+            ("train", "refrigerate_the_salmon", 327, "INSIDE", 305),
+            ("test_unseen_ambiguous_goals", "cook_lunch", 327, "ON", 269),
+            ("env1", "put_chicken_in_the_fridge", 241, "INSIDE", 225),
+            ("env2", "put_milk_in_the_fridge", 177, "INSIDE", 162),
+        )
+        for dataset, task, source, relation, target in cases:
+            with self.subTest(dataset=dataset, task=task):
+                mapping = json.loads(
+                    (
+                        DATASET_ROOT / "ground_truth_graph_mappings" / f"{dataset}.json"
+                    ).read_text()
+                )
+                graphs = json.loads(
+                    (
+                        DATASET_ROOT / "final_states" / f"final_states_{dataset}.json"
+                    ).read_text()
+                )
+                self.assertTrue(
+                    any(
+                        edge["from_id"] == source
+                        and edge["relation_type"] == relation
+                        and edge["to_id"] == target
+                        for edge in graphs[mapping[task]]["edges"]
+                    )
+                )

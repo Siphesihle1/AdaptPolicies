@@ -1,6 +1,7 @@
 from importlib import invalidate_caches
 import json
 import os
+from pathlib import Path
 import sys
 
 from virtual_home.graph_query import N
@@ -13,7 +14,14 @@ from .constants import (
     TASK_FUNCTION_PROMPT_PREAMBLE_QWEN,
     TASK_PROMPT_ACTION_IMPORTS,
 )
-from .prompt import Env0TestSet, ExamplesType, PromptBuilder
+from .ground_truth import load_ground_truth_graphs
+from .prompt import (
+    Env0TestSet,
+    ExamplesType,
+    PromptBuilder,
+    load_tasks_from_dir,
+    load_tasks_from_file,
+)
 from .task_scripts import exec_task, generate_task_scripts
 
 from typing import Any, Dict, List, Optional, Set
@@ -38,14 +46,6 @@ def get_object_states(state: Dict[str, Any]) -> Set[str]:
     )
 
 
-def get_ground_truth_final_states(test_set: str) -> List[Dict[str, Any]]:
-    with open(
-        f"{os.getenv('PROGPROMPT_DATASET_DIR')}/final_states/final_states_{test_set}.json",
-        "r",
-    ) as f:
-        return json.load(f)
-
-
 class ProgPromptAgent:
     def __init__(
         self,
@@ -57,6 +57,16 @@ class ProgPromptAgent:
     ):
         self.env_id = env_id
         self.test_set = test_set
+        self.dataset = test_set if test_set else f"env{env_id}"
+        dataset_dir = Path(os.environ["PROGPROMPT_DATASET_DIR"])
+        task_names = (
+            load_tasks_from_dir(str(dataset_dir / test_set))
+            if test_set
+            else load_tasks_from_file(
+                str(dataset_dir / "new_env" / f"env{env_id}_annotated.json")
+            )
+        )
+        self.ground_truth_graphs = load_ground_truth_graphs(self.dataset, task_names)
         self.prompt_builder = (
             PromptBuilder(env_id=env_id, preamble=TASK_FUNCTION_PROMPT_PREAMBLE_QWEN)
             .with_imports([TASK_PROMPT_ACTION_IMPORTS])
@@ -66,8 +76,6 @@ class ProgPromptAgent:
         )
         self.plans: Dict[str, List[str]] = {}
         self.final_states: List[Dict[str, Any]] = []
-        self.dataset = test_set if test_set else f"env{env_id}"
-        self.final_states_gt = get_ground_truth_final_states(self.dataset)
         self.initial_states: List[Dict[str, Any]] = []
         self.exec_per_task: Dict[str, float] = {}
         self.results: Dict[str, Dict[str, float]] = {}
@@ -244,12 +252,11 @@ class ProgPromptAgent:
         unchanged_conds: List[int] = []
         total_unchanged_conds: List[int] = []
         test_tasks = list(self.plans)
-        ground_truth = dict(zip(test_tasks, self.final_states_gt))
 
         for g, g_in, task in zip(
             self.final_states, self.initial_states, self.exec_per_task
         ):
-            g_gt = ground_truth[task]
+            ground_truth_graph = self.ground_truth_graphs[task]
 
             relations_in = get_object_relations(g_in)
             obj_states_in = get_object_states(g_in)
@@ -257,8 +264,8 @@ class ProgPromptAgent:
             relations = get_object_relations(g)
             obj_states = get_object_states(g)
 
-            relations_gt = get_object_relations(g_gt)
-            obj_states_gt = get_object_states(g_gt)
+            relations_gt = get_object_relations(ground_truth_graph)
+            obj_states_gt = get_object_states(ground_truth_graph)
 
             changed_gt_relations = relations_gt - relations_in
             changed_gt_obj_states = obj_states_gt - obj_states_in

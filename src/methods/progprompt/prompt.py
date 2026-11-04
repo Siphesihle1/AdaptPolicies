@@ -8,6 +8,7 @@ from virtual_home.graph_query import N
 from virtualhome.simulation.unity_simulator import UnityCommunication
 
 from .constants import DEFAULT_EXAMPLES
+from .ground_truth import normalize_task_name
 
 Env0TestSet = Literal["test_unseen", "test_seen", "test_unseen_ambiguous_goals"]
 ExamplesType = Literal["default", "random"]
@@ -138,7 +139,7 @@ class PromptBuilder:
             if include_section_divisions
             else ""
         )
-        task_function_name = "_".join(task.split(" "))
+        task_function_name = normalize_task_name(task)
         sections.append(f"{task_section_heading}def {task_function_name}():")
 
         final_prompt = "\n\n".join(sections)

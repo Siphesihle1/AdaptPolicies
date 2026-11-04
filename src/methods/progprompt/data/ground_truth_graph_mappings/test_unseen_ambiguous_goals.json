@@ -1,0 +1,7 @@
+{
+  "make_dinner": 0,
+  "make_breakfast": 1,
+  "bring_some_breakfast_to_the_coffeetable": 2,
+  "collect_4_fruits_such_as_apple,_banana,_etc_in_the_dishbowl": 3,
+  "cook_lunch": 4
+}

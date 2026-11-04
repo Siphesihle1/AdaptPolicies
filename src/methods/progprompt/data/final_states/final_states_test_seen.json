@@ -27431,7 +27431,7 @@
       },
       {
         "from_id": 280,
-        "relation_type": "INSIDE",
+        "relation_type": "ON",
         "to_id": 247
       },
       {
@@ -29096,7 +29096,7 @@
       },
       {
         "from_id": 272,
-        "relation_type": "INSIDE",
+        "relation_type": "ON",
         "to_id": 247
       },
       {
