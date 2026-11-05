@@ -45,7 +45,7 @@
         "<char0> [find] <breadslice> (233)",
         "<char0> [grab] <breadslice> (233)",
         "<char0> [find] <toaster> (231)",
-        "<char0> [putin] <breadslice> (233) <toaster> (231)",
+        "<char0> [putback] <breadslice> (233) <toaster> (231)",
         "<char0> [switchon] <toaster> (231)",
         "<char0> [switchoff] <toaster> (231)"
       ]

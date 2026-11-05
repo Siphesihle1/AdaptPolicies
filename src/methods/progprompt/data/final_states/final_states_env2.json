@@ -53660,7 +53660,9 @@
           "CUTTABLE",
           "EATABLE"
         ],
-        "states": [],
+        "states": [
+          "HEATED"
+        ],
         "prefab_name": "Bread_slice_1",
         "bounding_box": {
           "center": [
@@ -59343,11 +59345,6 @@
         "to_id": 11
       },
       {
-        "from_id": 179,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 370,
         "relation_type": "INSIDE",
         "to_id": 346
@@ -59461,11 +59458,6 @@
         "from_id": 20,
         "relation_type": "INSIDE",
         "to_id": 11
-      },
-      {
-        "from_id": 170,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 232,
@@ -59760,67 +59752,12 @@
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 137
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 142
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 143
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 144
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 162
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 165
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
         "to_id": 166
       },
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 167
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
         "to_id": 168
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 169
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 170
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 178
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 179
       },
       {
         "from_id": 1,
@@ -59835,22 +59772,7 @@
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 84
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
         "to_id": 85
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 86
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 87
       },
       {
         "from_id": 1,
@@ -60248,11 +60170,6 @@
         "to_id": 297
       },
       {
-        "from_id": 167,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 282,
         "relation_type": "ON",
         "to_id": 242
@@ -60326,11 +60243,6 @@
         "from_id": 30,
         "relation_type": "INSIDE",
         "to_id": 11
-      },
-      {
-        "from_id": 87,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 255,
@@ -60758,11 +60670,6 @@
         "to_id": 11
       },
       {
-        "from_id": 162,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 379,
         "relation_type": "INSIDE",
         "to_id": 346
@@ -60856,11 +60763,6 @@
         "from_id": 278,
         "relation_type": "INSIDE",
         "to_id": 241
-      },
-      {
-        "from_id": 84,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 100,
@@ -60976,11 +60878,6 @@
         "from_id": 401,
         "relation_type": "ON",
         "to_id": 393
-      },
-      {
-        "from_id": 165,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 401,
@@ -61393,11 +61290,6 @@
         "to_id": 11
       },
       {
-        "from_id": 142,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 359,
         "relation_type": "INSIDE",
         "to_id": 346
@@ -61446,11 +61338,6 @@
         "from_id": 1,
         "relation_type": "INSIDE",
         "to_id": 11
-      },
-      {
-        "from_id": 169,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 24,
@@ -61511,11 +61398,6 @@
         "from_id": 161,
         "relation_type": "INSIDE",
         "to_id": 11
-      },
-      {
-        "from_id": 137,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 133,
@@ -61663,11 +61545,6 @@
         "to_id": 241
       },
       {
-        "from_id": 178,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 125,
         "relation_type": "ON",
         "to_id": 157
@@ -61691,11 +61568,6 @@
         "from_id": 147,
         "relation_type": "INSIDE",
         "to_id": 11
-      },
-      {
-        "from_id": 143,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 375,
@@ -61921,11 +61793,6 @@
         "from_id": 103,
         "relation_type": "ON",
         "to_id": 131
-      },
-      {
-        "from_id": 144,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 105,
@@ -62154,11 +62021,6 @@
       },
       {
         "from_id": 72,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
-        "from_id": 86,
         "relation_type": "CLOSE",
         "to_id": 1
       },
@@ -62721,6 +62583,11 @@
         "from_id": 86,
         "relation_type": "INSIDE",
         "to_id": 11
+      },
+      {
+        "from_id": 168,
+        "to_id": 166,
+        "relation_type": "ON"
       }
     ]
   },

@@ -58,3 +58,9 @@ Evidence and exact edge audit: `outputs/local/reference16_minimal_corrections/ch
 Dinner and breakfast stage the pan on the stove before loading food and stage the plate on the kitchen table before serving. This avoids held-container placement rejection and native detachment when grabbing loaded plates. Both full trajectories pass; native final food ON plate ON table and derived HEATED are verified. References0/1 gain the missing salmon327 ON plate285 / bread310 ON plate278 and each food's replay-derived HEATED. Breakfast bread's stale bathroom11 room is corrected to kitchen205. No other node metadata or relations change.
 
 Evidence and exact reference changes: `outputs/local/promoted_cooking_candidates/changes.json`; successful replay paths are recorded there. No mapping indices or original-archive files changed. Revised goal conditions and augmentation require consistent benchmark-version reporting and rescoring.
+
+### Native food repair: toast
+
+Allthree make_toast annotations use supported ON-toaster placement instead of rejected INSIDE. Each full trajectory passes and target bread gains runtime HEATED. References gain target-bread HEATED; env1/2 also gain bread ON toaster, while unseen toast ends held as annotated. Env2 removes only newly introduced actor CLOSE conditions absent from the symbolic trajectory, following the same incidental-proximity rationale as change16. Other metadata/states/relations and all unrelated records are preserved.
+
+Evidence and exact reference changes: `outputs/local/promoted_toast_candidates/changes.json`; successful replay paths are recorded there. No mapping indices or original-archive files changed. Revised goal conditions and augmentation require consistent benchmark-version reporting and rescoring.

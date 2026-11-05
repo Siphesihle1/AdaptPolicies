@@ -66924,7 +66924,9 @@
           "EATABLE",
           "CUTTABLE"
         ],
-        "states": [],
+        "states": [
+          "HEATED"
+        ],
         "prefab_name": "Bread_slice_1",
         "bounding_box": {
           "center": [

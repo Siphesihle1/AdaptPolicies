@@ -45266,7 +45266,9 @@
           "CUTTABLE",
           "EATABLE"
         ],
-        "states": [],
+        "states": [
+          "HEATED"
+        ],
         "prefab_name": "Bread_slice_1",
         "bounding_box": {
           "center": [
@@ -50076,6 +50078,11 @@
         "from_id": 86,
         "relation_type": "INSIDE",
         "to_id": 50
+      },
+      {
+        "from_id": 233,
+        "to_id": 231,
+        "relation_type": "ON"
       }
     ]
   },
