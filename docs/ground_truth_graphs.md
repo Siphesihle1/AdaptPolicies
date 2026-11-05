@@ -33,6 +33,10 @@ The 69 assignments identify references using annotated IDs, states, placements,
 held objects, and proximity. They do not establish that every reference fully
 captures its task or that every annotation can execute in Unity.
 
+See the [2026-11-05 validation report](dataset_validation_2026-11-05.md) for
+full replay results, current-reference rescoring and the remaining native
+failures. The dataset is not yet fully Unity-valid.
+
 Training retains 34 graphs after task deduplication; ten are unassigned.
 Test_seen contains 11 graphs for ten tasks; the unrelated book graph at index 5
 is unassigned. See the [mapping audit](ground_truth_graph_mapping_audit.md)
