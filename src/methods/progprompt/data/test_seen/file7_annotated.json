@@ -9,7 +9,6 @@
       ],
       "2: find power socket": [],
       "3: plug in radio": [
-        "<char0> [grab] <radio> (176)",
         "<char0> [switchon] <radio> (176)"
       ],
       "4: find volume knob": [],

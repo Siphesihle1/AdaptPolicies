@@ -103945,11 +103945,6 @@
         "to_id": 73
       },
       {
-        "from_id": 1,
-        "relation_type": "HOLDS_RH",
-        "to_id": 176
-      },
-      {
         "from_id": 102,
         "relation_type": "INSIDE",
         "to_id": 73

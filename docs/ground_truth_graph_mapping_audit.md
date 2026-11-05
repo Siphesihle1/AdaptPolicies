@@ -30,3 +30,9 @@ Known issues requiring separate review:
 Evidence is under `outputs/local/ground_truth_graph_mapping_audit/` and `outputs/local/ground_truth_graph_candidates/sink_goal_repair_20261103T011347Z/`. Only cutlery was successfully replayed in that repair batch; no full replay claim is made for all mapped tasks.
 
 The agent validates complete dataset mappings before simulator construction and selects ground-truth graphs by task name. All CLI options are mandatory except that scenes 1 and 2 may omit `--test-set` to select env1 and env2. Explicit `--test-set env1` / `env2` selections require `--env-id 1` / `2`, respectively; scene 0 requires an explicit train/test split. See [dataset selection](dataset_selection.md) for supported commands.
+
+### Native repair: listen_to_radio
+
+Radio playback uses switchon on the stationary radio176; the rejected grab is removed. Reference6 removes only the unsupported character HOLDS_RH radio176 edge. Its ON goal, all node metadata, and every other relation/record are preserved. Three actions passed both engines in the unchanged scene.
+
+Evidence: `outputs/local/candidate_native_repairs_20261105T132712Z/radio_stationary/test_seen/listen_to_radio/`. This revises the benchmark reference; rescore compared systems consistently. The original-data archive and all mapping indices are unchanged.
