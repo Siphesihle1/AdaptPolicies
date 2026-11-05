@@ -70,3 +70,9 @@ Evidence and exact reference changes: `outputs/local/promoted_toast_candidates/c
 Env2 heat_salmon_on_the_stove uses supported salmon181 ON fryingpan62 instead of rejected INSIDE. All7 actions pass, including heating and final pickup; runtime salmon HEATED is verified. The existing reference already gives strictSR1 and is unchanged.
 
 Evidence and exact reference changes: `outputs/local/promoted_salmon_candidates/changes.json`; successful replay paths are recorded there. No mapping indices or original-archive files changed. Revised goal conditions and augmentation require consistent benchmark-version reporting and rescoring.
+
+### Native repair: put_my_slippers_near_the_bed
+
+Use accessible slippers201, preserving the task and destination bed109. Restore slippers200's original floor/rug placement; move only201 to the bed and update task-related proximity. All5 actions and native terminal placement pass.
+
+Reference index10: 7 removed edges and 7 added edges. Node metadata/states and unrelated records are unchanged. Exact before/after edge audit and successful native evidence: `outputs/local/promoted_slippers201_candidates/`. Only task-related facts and separately identified incidental reference goals change; mappings and the original archive remain intact. Report the revised benchmark version when comparing systems.

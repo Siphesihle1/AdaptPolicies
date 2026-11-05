@@ -5,16 +5,16 @@
         "<char0> [walk] <bedroom> (73)"
       ],
       "1: find slippers": [
-        "<char0> [find] <slippers> (200)"
+        "<char0> [find] <slippers> (201)"
       ],
       "2: grab slippers": [
-        "<char0> [grab] <slippers> (200)"
+        "<char0> [grab] <slippers> (201)"
       ],
       "3: walk to bed": [
         "<char0> [walk] <bed> (109)"
       ],
       "4: put slippers next to bed": [
-        "<char0> [putback] <slippers> (200) <bed> (109)"
+        "<char0> [putback] <slippers> (201) <bed> (109)"
       ],
       "5: Done": []
     }
