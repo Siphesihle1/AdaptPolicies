@@ -62,6 +62,8 @@ The installed simulator remains compiled official-v2.3.0. The [public Unity sour
 
 ### Source investigation after toolchain confirmation
 
+**Subsequent installation update:** the user installed Windows Editor2021.3.10f1 and Linux Mono support. Verified `C:/Program Files/Unity 2021.3.10f1/Editor/Unity.exe` and both Linux Mono player variation directories. An isolated empty-project batchmode startup reported `Unity has not been activated with a valid License`, so the next prerequisite is activation through Unity Hub. The smoke-test Editor processes were stopped; no VirtualHome project import, source repair, build or replay was performed. The earlier missing-installation observations below describe the preceding investigation.
+
 - In the pinned source, `Assets/Story Generator/Scripts/ScriptExecution.cs`, `IsOpenablePosition` requires either `Properties_door` or a root `HandInteraction` with an Open switch, as well as the applicable interaction-distance checks. A graph-level `CAN_OPEN` property alone does not satisfy this code.
 - `PrefabScripts/ObjAnnotator.cs` builds Open switches from model annotations and matching immediate child transforms. The pinned `Assets/Resources/Data/object_annotation.json` has no model annotation for `Dark_Grey_Washing_Machine` or `Garbage_can_2/6/7`. The washer prefab root also has no serialized HandInteraction. These are static source findings: another initialization path or differing installed assets must still be checked before claiming the precise native cause or a validated repair.
 - The upstream [washer failure report](https://github.com/xavierpuigf/virtualhome/issues/102) independently reports the same scene0 washer72, prefab name and advertised `CAN_OPEN` mismatch. It supplies no verified fix.
