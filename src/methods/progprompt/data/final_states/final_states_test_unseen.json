@@ -115454,11 +115454,6 @@
         "to_id": 335
       },
       {
-        "from_id": 264,
-        "relation_type": "FACING",
-        "to_id": 265
-      },
-      {
         "from_id": 30,
         "relation_type": "INSIDE",
         "to_id": 11
@@ -118717,11 +118712,6 @@
         "from_id": 31,
         "relation_type": "INSIDE",
         "to_id": 11
-      },
-      {
-        "from_id": 265,
-        "relation_type": "FACING",
-        "to_id": 264
       },
       {
         "from_id": 60,
