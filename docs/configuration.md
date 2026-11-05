@@ -1,5 +1,10 @@
 # Provider and experiment configuration
 
+Task evaluation uses an audited [task-to-ground_truth_graph mapping](ground_truth_graphs.md)
+and validates the full dataset before simulator construction. All six current
+datasets have mappings; reference-content limitations and the pending env1/env2
+CLI selection fix are documented there.
+
 The default configuration is `config/dev.yml`: LM Studio, with Weave disabled.
 The cluster workflow selects `config/live.yml`: Ollama, with Weave enabled.
 Choose a configuration **before starting Python**:

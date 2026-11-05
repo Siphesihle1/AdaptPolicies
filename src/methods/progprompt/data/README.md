@@ -23,3 +23,5 @@ Task names are unique across the four train/test splits. Matching ignores case, 
 All ten test_seen tasks were removed from training, including wash mug. Their training prompt examples were also removed (34 → 24). Default examples now start with refrigerate_the_salmon, bring_me_some_fruit, and wash_clothes. Empty training shards remain valid empty JSON arrays. Unlabelled graph arrays retain their existing order and indices; their entries are not counts of the revised training split. The all_plans_env0 collection is a source-plan archive, not a train/test assignment or the prompt-example pool.
 
 The [original dataset archive](../data_original/README.md) preserves all 35 JSON files from commit `69ad21bb021419feb32ab0dc5ab9366971b7719c` with formatting/representation changes only. It is outside active dataset scans. The active cutlery graph 1 preserves that original graph except for the two validated INSIDE-to-ON sink edges; the complete replay graph remains evidence.
+
+See [ground-truth evaluation](../../../../docs/ground_truth_graphs.md) for mapping validation, task-name selection, replay provenance, and dataset-version reporting.
