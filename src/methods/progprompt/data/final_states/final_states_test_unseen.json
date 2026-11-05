@@ -109234,7 +109234,9 @@
           "MOVABLE",
           "SURFACES"
         ],
-        "states": [],
+        "states": [
+          "WASHED"
+        ],
         "prefab_name": "PRE_PRO_Plate_01",
         "bounding_box": {
           "center": [
@@ -110781,7 +110783,9 @@
           "POURABLE",
           "CREAM"
         ],
-        "states": [],
+        "states": [
+          "WASHED"
+        ],
         "prefab_name": "PRE_PRO_Washing_liquid",
         "bounding_box": {
           "center": [
@@ -115943,7 +115947,7 @@
         "to_id": 264
       },
       {
-        "from_id": 49,
+        "from_id": 238,
         "relation_type": "CLOSE",
         "to_id": 1
       },
@@ -116108,7 +116112,7 @@
         "to_id": 127
       },
       {
-        "from_id": 50,
+        "from_id": 248,
         "relation_type": "CLOSE",
         "to_id": 1
       },
@@ -116604,7 +116608,7 @@
       },
       {
         "from_id": 267,
-        "relation_type": "INSIDE",
+        "relation_type": "ON",
         "to_id": 247
       },
       {
@@ -116740,7 +116744,7 @@
       {
         "from_id": 199,
         "relation_type": "ON",
-        "to_id": 111
+        "to_id": 247
       },
       {
         "from_id": 287,
@@ -117219,8 +117223,8 @@
       },
       {
         "from_id": 193,
-        "relation_type": "INSIDE",
-        "to_id": 247
+        "relation_type": "ON",
+        "to_id": 108
       },
       {
         "from_id": 62,
@@ -117680,12 +117684,12 @@
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 49
+        "to_id": 238
       },
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 50
+        "to_id": 248
       },
       {
         "from_id": 268,
@@ -118955,7 +118959,7 @@
       {
         "from_id": 199,
         "relation_type": "INSIDE",
-        "to_id": 73
+        "to_id": 205
       },
       {
         "from_id": 26,
@@ -119685,7 +119689,7 @@
       {
         "from_id": 1,
         "relation_type": "INSIDE",
-        "to_id": 11
+        "to_id": 205
       },
       {
         "from_id": 275,

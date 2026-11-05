@@ -176,6 +176,52 @@ class DatasetJsonTests(unittest.TestCase):
             self.assertIn((identifier, "ON", 247), edges)
             self.assertNotIn((identifier, "INSIDE", 247), edges)
 
+    def test_plate_washing_uses_feasible_plate_and_matching_kitchen_faucet(self):
+        records = json.loads(
+            (DATASET_ROOT / "test_unseen/file1_annotated.json").read_text()
+        )
+        steps = next(
+            record["wash the plate"] for record in records if "wash the plate" in record
+        )
+        actions = [action for instructions in steps.values() for action in instructions]
+        self.assertEqual(len(actions), 18)
+        self.assertEqual(
+            [key for key, value in steps.items() if not value],
+            ["5: scrub plate", "6: rinse plate", "8: Done"],
+        )
+        self.assertIn("<char0> [putback] <plate> (199) <sink> (247)", actions)
+        self.assertIn("<char0> [switchon] <faucet> (248)", actions)
+        self.assertIn("<char0> [switchoff] <faucet> (248)", actions)
+        self.assertFalse(
+            any(
+                "<plate> (193)" in action or "<faucet> (50)" in action
+                for action in actions
+            )
+        )
+        mapping = json.loads(
+            (DATASET_ROOT / "ground_truth_graph_mappings/test_unseen.json").read_text()
+        )
+        self.assertEqual(mapping["wash_the_plate"], 7)
+        graph = json.loads(
+            (DATASET_ROOT / "final_states/final_states_test_unseen.json").read_text()
+        )[7]
+        edges = {
+            (edge["from_id"], edge["relation_type"], edge["to_id"])
+            for edge in graph["edges"]
+        }
+        nodes = {node["id"]: node for node in graph["nodes"]}
+        for identifier in (199, 267):
+            self.assertIn((identifier, "ON", 247), edges)
+            self.assertIn((identifier, "INSIDE", 205), edges)
+            self.assertNotIn((identifier, "INSIDE", 247), edges)
+            self.assertIn("WASHED", nodes[identifier]["states"])
+        self.assertIn((193, "ON", 108), edges)
+        self.assertNotIn((193, "INSIDE", 247), edges)
+        self.assertIn((1, "INSIDE", 205), edges)
+        self.assertIn((1, "CLOSE", 248), edges)
+        for identifier in (50, 248):
+            self.assertIn("OFF", nodes[identifier]["states"])
+
     def test_mappings_select_environment_specific_goal_objects(self):
         cases = (
             ("train", "refrigerate_the_salmon", 327, "INSIDE", 305),

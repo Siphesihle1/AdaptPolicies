@@ -59,14 +59,14 @@
         "<char0> [find] <faucet> (248)",
         "<char0> [find] <faucet> (248)",
         "<char0> [find] <faucet> (248)",
-        "<char0> [find] <faucet> (50)",
-        "<char0> [switchon] <faucet> (50)"
+        "<char0> [find] <faucet> (248)",
+        "<char0> [switchon] <faucet> (248)"
       ],
       "3: put plate in sink": [
-        "<char0> [find] <plate> (193)",
-        "<char0> [grab] <plate> (193)",
+        "<char0> [find] <plate> (199)",
+        "<char0> [grab] <plate> (199)",
         "<char0> [find] <sink> (247)",
-        "<char0> [putback] <plate> (193) <sink> (247)"
+        "<char0> [putback] <plate> (199) <sink> (247)"
       ],
       "4: add dishwashing liquid to water": [
         "<char0> [find] <dishwashingliquid> (267)",
@@ -77,8 +77,8 @@
       "5: scrub plate": [],
       "6: rinse plate": [],
       "7: turn off faucet": [
-        "<char0> [find] <faucet> (50)",
-        "<char0> [switchoff] <faucet> (50)"
+        "<char0> [find] <faucet> (248)",
+        "<char0> [switchoff] <faucet> (248)"
       ],
       "8: Done": []
     }

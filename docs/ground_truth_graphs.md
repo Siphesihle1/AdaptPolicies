@@ -134,7 +134,16 @@ Precision is 1 in both cases. This is reference-version sensitivity, not improve
 LLM performance. Identify dataset versions and rescore or rerun compared systems
 consistently. The original-data archive alone does not restore historical code.
 
-Frying-pan/plate placement failures, incomplete ambiguous-goal references, and
+Test_unseen wash_the_plate now uses plate 199 and kitchen faucet 248. Its
+18-action annotation passed both engines in the unchanged scene; native final
+graphs confirm plate 199 and liquid 267 ON sink 247 and both faucets OFF. The
+runtime washing rule derives WASHED for both objects. Reference index 7 keeps
+the original metadata and unrelated relations, with nine task-related edge
+substitutions and those two replay-derived WASHED states. Plate 193 is restored
+to its original desk placement rather than renamed or removed. See the
+mapping audit for provenance and benchmark-version implications.
+
+The original frying-pan placement failure, incomplete ambiguous-goal references, and
 the candle annotation's bathroom shelf remain unresolved. Their mappings do not
 repair those goals. Details and evidence are in the mapping audit.
 
