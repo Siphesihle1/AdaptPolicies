@@ -135,36 +135,39 @@
   {
     "collect 4 fruits such as apple, banana, etc in the dishbowl": {
       "0: Find the dishbowl.": [
-        "<char0> [find] <dishbowl> (326)",
-        "<char0> [grab] <dishbowl> (326)"
+        "<char0> [find] <dishbowl> (288)"
       ],
       "1: Find an apple.": [
         "<char0> [find] <apple> (437)",
         "<char0> [grab] <apple> (437)"
       ],
       "2: Pick up the apple and put it in the dishbowl.": [
-        "<char0> [putin] <apple> (437) <dishbowl> (326)"
+        "<char0> [find] <dishbowl> (288)",
+        "<char0> [putback] <apple> (437) <dishbowl> (288)"
       ],
       "3: Find a banana.": [
         "<char0> [find] <bananas> (315)"
       ],
       "4: Pick up the banana and put it in the dishbowl.": [
         "<char0> [grab] <bananas> (315)",
-        "<char0> [putin] <bananas> (315) <dishbowl> (326)"
+        "<char0> [find] <dishbowl> (288)",
+        "<char0> [putback] <bananas> (315) <dishbowl> (288)"
       ],
       "5: Find a peach.": [
         "<char0> [find] <peach> (442)"
       ],
       "6: Pick up the peach and put it in the dishbowl.": [
         "<char0> [grab] <peach> (442)",
-        "<char0> [putin] <peach> (442) <dishbowl> (326)"
+        "<char0> [find] <dishbowl> (288)",
+        "<char0> [putback] <peach> (442) <dishbowl> (288)"
       ],
       "7: Find a plum.": [
         "<char0> [find] <plum> (443)"
       ],
       "8: Pick up the plum and put it in the dishbowl.": [
         "<char0> [grab] <plum> (443)",
-        "<char0> [putin] <plum> (443) <dishbowl> (326)"
+        "<char0> [find] <dishbowl> (288)",
+        "<char0> [putback] <plum> (443) <dishbowl> (288)"
       ],
       "9: Done.": []
     }

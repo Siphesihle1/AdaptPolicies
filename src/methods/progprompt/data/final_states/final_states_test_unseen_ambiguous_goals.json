@@ -56068,7 +56068,7 @@
       {
         "from_id": 443,
         "relation_type": "CLOSE",
-        "to_id": 326
+        "to_id": 288
       },
       {
         "from_id": 440,
@@ -56434,11 +56434,6 @@
         "from_id": 270,
         "relation_type": "FACING",
         "to_id": 265
-      },
-      {
-        "from_id": 437,
-        "relation_type": "INSIDE",
-        "to_id": 335
       },
       {
         "from_id": 103,
@@ -57431,17 +57426,17 @@
         "to_id": 335
       },
       {
-        "from_id": 326,
+        "from_id": 288,
         "relation_type": "CLOSE",
         "to_id": 1
       },
       {
-        "from_id": 326,
+        "from_id": 288,
         "relation_type": "CLOSE",
         "to_id": 442
       },
       {
-        "from_id": 326,
+        "from_id": 288,
         "relation_type": "CLOSE",
         "to_id": 443
       },
@@ -57474,11 +57469,6 @@
         "from_id": 260,
         "relation_type": "ON",
         "to_id": 230
-      },
-      {
-        "from_id": 371,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 424,
@@ -57573,12 +57563,7 @@
       {
         "from_id": 442,
         "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
-        "from_id": 442,
-        "relation_type": "CLOSE",
-        "to_id": 326
+        "to_id": 288
       },
       {
         "from_id": 445,
@@ -57813,22 +57798,12 @@
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 442
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 371
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
         "to_id": 443
       },
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 326
+        "to_id": 288
       },
       {
         "from_id": 268,
@@ -58856,16 +58831,6 @@
         "to_id": 265
       },
       {
-        "from_id": 442,
-        "relation_type": "INSIDE",
-        "to_id": 326
-      },
-      {
-        "from_id": 442,
-        "relation_type": "INSIDE",
-        "to_id": 335
-      },
-      {
         "from_id": 108,
         "relation_type": "INSIDE",
         "to_id": 73
@@ -59129,11 +59094,6 @@
         "from_id": 170,
         "relation_type": "INSIDE",
         "to_id": 73
-      },
-      {
-        "from_id": 1,
-        "relation_type": "HOLDS_RH",
-        "to_id": 326
       },
       {
         "from_id": 102,
@@ -59826,11 +59786,6 @@
         "to_id": 335
       },
       {
-        "from_id": 1,
-        "relation_type": "INSIDE",
-        "to_id": 335
-      },
-      {
         "from_id": 275,
         "relation_type": "INSIDE",
         "to_id": 205
@@ -59879,16 +59834,6 @@
         "from_id": 64,
         "relation_type": "ON",
         "to_id": 49
-      },
-      {
-        "from_id": 443,
-        "relation_type": "INSIDE",
-        "to_id": 326
-      },
-      {
-        "from_id": 443,
-        "relation_type": "INSIDE",
-        "to_id": 335
       },
       {
         "from_id": 54,
@@ -59954,6 +59899,51 @@
         "from_id": 178,
         "relation_type": "INSIDE",
         "to_id": 73
+      },
+      {
+        "from_id": 443,
+        "relation_type": "ON",
+        "to_id": 288
+      },
+      {
+        "from_id": 442,
+        "relation_type": "INSIDE",
+        "to_id": 205
+      },
+      {
+        "from_id": 315,
+        "relation_type": "ON",
+        "to_id": 288
+      },
+      {
+        "from_id": 326,
+        "relation_type": "ON",
+        "to_id": 238
+      },
+      {
+        "from_id": 1,
+        "relation_type": "INSIDE",
+        "to_id": 205
+      },
+      {
+        "from_id": 437,
+        "relation_type": "INSIDE",
+        "to_id": 205
+      },
+      {
+        "from_id": 443,
+        "relation_type": "INSIDE",
+        "to_id": 205
+      },
+      {
+        "from_id": 442,
+        "relation_type": "ON",
+        "to_id": 288
+      },
+      {
+        "from_id": 437,
+        "relation_type": "ON",
+        "to_id": 288
       }
     ]
   },

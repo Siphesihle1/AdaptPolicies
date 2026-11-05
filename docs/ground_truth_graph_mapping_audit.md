@@ -82,3 +82,9 @@ Reference index10: 7 removed edges and 7 added edges. Node metadata/states and u
 Use living-room bookshelf370's shelf with ON placement, replacing bathroom wallshelf43 and rejected INSIDE. All5 actions pass; native candle181 ends ON bookshelf370 INSIDE livingroom335. Correct only candle/actor room, support and task-related proximity; exclude unrelated reference-only orientation goals.
 
 Reference index4: 7 removed edges and 7 added edges. Node metadata/states and unrelated records are unchanged. Exact before/after edge audit and successful native evidence: `outputs/local/promoted_candle_living_bookshelf_candidates/`. Only task-related facts and separately identified incidental reference goals change; mappings and the original archive remain intact. Report the revised benchmark version when comparing systems.
+
+### Native repair: collect_4_fruits_such_as_apple,_banana,_etc_in_the_dishbowl
+
+Use stationary original bowl288, whose surface accepts allfour original fruit instances; bowl326/445/317 rejected the controlled placement. Preserve allfour fruit IDs. Each fruit is ON bowl288 in native final state (Unity's supported recipient relation), rather than carrying a loaded bowl. Restore unused bowl326 to its original counter. Add the missing apple/banana goals and correct allfour fruits' room/support, old held-bowl and task-related proximity facts. All17 actions and allfour native terminal placements pass.
+
+Reference index3: 17 removed edges and 15 added edges. Node metadata/states and unrelated records are unchanged. Exact before/after edge audit and successful native evidence: `outputs/local/promoted_fruit_bowl288_candidates/`. Only task-related facts and separately identified incidental reference goals change; mappings and the original archive remain intact. Report the revised benchmark version when comparing systems.
