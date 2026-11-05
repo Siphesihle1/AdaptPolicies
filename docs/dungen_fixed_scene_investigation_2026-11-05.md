@@ -40,5 +40,5 @@ Local evidence is under `outputs/local/dungen_fixed_scene_investigation/`: `cand
 
 1. Add a fixed-scene build mode that rejects procedural requests and requires explicit environment IDs. The current no-argument `environment` path can still load Scene_1; the prototype intentionally leaves it unchanged, so it is not ready for adoption.
 2. Exclude the procedural scene/settings and remove only identified procedural components from build copies of the fixed rooms. Preserve room objects, transforms, geometry, colliders and fixed prefab ordering. Do not delete doorway objects wholesale or remove every missing MonoBehaviour; that could affect other dependencies or node identities.
-3. Resolve Final IK and batch licensing independently, then produce a Linux baseline. DunGen exclusion does not replace Final IK or solve licensing.
+3. Resolve Final IK and produce a Linux baseline through the chosen interactive Editor workflow. Batch licensing remains unresolved but is no longer a prerequisite for this route. DunGen exclusion does not replace Final IK or solve licensing.
 4. Compare native environment IDs0,1,2 against official-v2.3.0 for node identity, geometry, structural relations and door/navigation behavior. Only after that comparison should the remaining native action repairs and final69-entry replay proceed.
