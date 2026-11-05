@@ -36,3 +36,9 @@ The agent validates complete dataset mappings before simulator construction and 
 Radio playback uses switchon on the stationary radio176; the rejected grab is removed. Reference6 removes only the unsupported character HOLDS_RH radio176 edge. Its ON goal, all node metadata, and every other relation/record are preserved. Three actions passed both engines in the unchanged scene.
 
 Evidence: `outputs/local/candidate_native_repairs_20261105T132712Z/radio_stationary/test_seen/listen_to_radio/`. This revises the benchmark reference; rescore compared systems consistently. The original-data archive and all mapping indices are unchanged.
+
+### Native repair: read_book_under_table_lamp
+
+Reading uses native read on held book434 without the unsupported open action. Reference25 keeps that book CLOSED and corrects its carried room from livingroom335 to bedroom73, where tablelamp103 is located. All other metadata/relations/records are preserved. Five actions, including native read under the lamp, passed both engines in the unchanged scene.
+
+Evidence: `outputs/local/candidate_native_repairs_20261105T132712Z/read_book_directly/train/read_book_under_table_lamp/`. This revises the benchmark reference; rescore compared systems consistently. The original-data archive and all mapping indices are unchanged.

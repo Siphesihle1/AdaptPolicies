@@ -13,9 +13,7 @@
       "3: Sit down under the table lamp.": [
         "<char0> [find] <tablelamp> (103)"
       ],
-      "4: Open the book.": [
-        "<char0> [open] <book> (434)"
-      ],
+      "4: Open the book.": [],
       "5: Start reading.": [
         "<char0> [read] <book> (434)"
       ]
