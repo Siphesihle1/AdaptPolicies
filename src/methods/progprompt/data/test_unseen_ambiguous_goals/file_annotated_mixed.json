@@ -2,28 +2,33 @@
   {
     "make dinner": {
       "0: walk to kitchen": [
-        "<char0> [walk] <kitchen> (205)"
+        "<char0> [walk] <kitchen> (205)",
+        "<char0> [find] <plate> (285)",
+        "<char0> [grab] <plate> (285)",
+        "<char0> [find] <kitchentable> (231)",
+        "<char0> [putback] <plate> (285) <kitchentable> (231)"
       ],
       "1: find frying pan": [
         "<char0> [find] <fryingpan> (269)"
       ],
       "2: grab frying pan": [
-        "<char0> [grab] <fryingpan> (269)"
+        "<char0> [grab] <fryingpan> (269)",
+        "<char0> [find] <stove> (311)",
+        "<char0> [putback] <fryingpan> (269) <stove> (311)"
       ],
       "3: find salmon": [
         "<char0> [find] <salmon> (327)"
       ],
       "4: put salmon in frying pan": [
         "<char0> [grab] <salmon> (327)",
-        "<char0> [putin] <salmon> (327) <fryingpan> (269)"
+        "<char0> [find] <fryingpan> (269)",
+        "<char0> [putback] <salmon> (327) <fryingpan> (269)"
       ],
       "5: turn on stove": [
         "<char0> [find] <stove> (311)",
         "<char0> [switchon] <stove> (311)"
       ],
-      "6: cook salmon": [
-        "<char0> [putback] <fryingpan> (269) <stove> (311)"
-      ],
+      "6: cook salmon": [],
       "7: find plate": [
         "<char0> [find] <plate> (314)"
       ],
@@ -34,59 +39,60 @@
         "<char0> [find] <plate> (199)",
         "<char0> [find] <plate> (314)",
         "<char0> [find] <plate> (285)",
-        "<char0> [grab] <plate> (285)",
         "<char0> [find] <salmon> (327)",
         "<char0> [grab] <salmon> (327)",
-        "<char0> [putin] <salmon> (327) <plate> (285)"
+        "<char0> [find] <plate> (285)",
+        "<char0> [putback] <salmon> (327) <plate> (285)"
       ],
       "9: find table": [
         "<char0> [find] <kitchentable> (231)"
       ],
-      "10: put plate on table": [
-        "<char0> [putback] <plate> (285) <kitchentable> (231)"
-      ],
+      "10: put plate on table": [],
       "11: Done": []
     }
   },
   {
     "make breakfast": {
       "0: walk to kitchen": [
-        "<char0> [walk] <kitchen> (205)"
+        "<char0> [walk] <kitchen> (205)",
+        "<char0> [find] <plate> (278)",
+        "<char0> [grab] <plate> (278)",
+        "<char0> [find] <kitchentable> (231)",
+        "<char0> [putback] <plate> (278) <kitchentable> (231)"
       ],
       "1: find frying pan": [
         "<char0> [find] <fryingpan> (269)"
       ],
       "2: grab frying pan": [
-        "<char0> [grab] <fryingpan> (269)"
+        "<char0> [grab] <fryingpan> (269)",
+        "<char0> [find] <stove> (311)",
+        "<char0> [putback] <fryingpan> (269) <stove> (311)"
       ],
       "3: find food": [
         "<char0> [find] <breadslice> (310)"
       ],
       "4: put food in frying pan": [
         "<char0> [grab] <breadslice> (310)",
-        "<char0> [putin] <breadslice> (310) <fryingpan> (269)"
+        "<char0> [find] <fryingpan> (269)",
+        "<char0> [putback] <breadslice> (310) <fryingpan> (269)"
       ],
       "5: turn on stove": [
         "<char0> [find] <stove> (311)",
         "<char0> [switchon] <stove> (311)"
       ],
-      "6: cook food": [
-        "<char0> [putback] <fryingpan> (269) <stove> (311)"
-      ],
+      "6: cook food": [],
       "7: put food on plate": [
         "<char0> [find] <breadslice> (310)",
         "<char0> [grab] <breadslice> (310)",
         "<char0> [find] <plate> (61)",
         "<char0> [find] <plate> (278)",
-        "<char0> [putin] <breadslice> (310) <plate> (278)"
+        "<char0> [find] <plate> (278)",
+        "<char0> [putback] <breadslice> (310) <plate> (278)"
       ],
       "8: find table": [
-        "<char0> [grab] <plate> (278)",
         "<char0> [find] <kitchentable> (231)"
       ],
-      "9: put plate on table": [
-        "<char0> [putback] <plate> (278) <kitchentable> (231)"
-      ],
+      "9: put plate on table": [],
       "10: Done": []
     }
   },

@@ -52,3 +52,9 @@ Evidence: `outputs/local/candidate_native_repairs_20261105T132712Z/read_book_dir
 - `env2/make_coffee_in_coffeemaker` (index8): Only newly introduced actor CLOSE edges absent from symbolic replay are removed. Proximity to neighboring props is an incidental historical capture detail, not heating salmon or operating the coffeemaker. Intended appliance proximity, appliance/food states, placements, initial proximity conditions and every other relation remain unchanged. Native proximity may be broader than symbolic Find; evaluator formulas are unchanged. Removed 28 edges; added 0.
 
 Evidence and exact edge audit: `outputs/local/reference16_minimal_corrections/changes.json`, using complete native/symbolic trajectories from `outputs/local/full_unity_replay_20261105T094658Z/`. Node metadata/states, unaffected edge order, all other graphs, mappings, annotations, wash-mug10, cutlery1 and the original archive are preserved. These are reference-version corrections, not evidence of better LLM performance; rescore compared systems consistently.
+
+### Native food repair: cooking
+
+Dinner and breakfast stage the pan on the stove before loading food and stage the plate on the kitchen table before serving. This avoids held-container placement rejection and native detachment when grabbing loaded plates. Both full trajectories pass; native final food ON plate ON table and derived HEATED are verified. References0/1 gain the missing salmon327 ON plate285 / bread310 ON plate278 and each food's replay-derived HEATED. Breakfast bread's stale bathroom11 room is corrected to kitchen205. No other node metadata or relations change.
+
+Evidence and exact reference changes: `outputs/local/promoted_cooking_candidates/changes.json`; successful replay paths are recorded there. No mapping indices or original-archive files changed. Revised goal conditions and augmentation require consistent benchmark-version reporting and rescoring.

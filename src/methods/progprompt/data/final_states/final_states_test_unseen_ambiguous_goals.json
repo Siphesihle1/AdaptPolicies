@@ -7455,7 +7455,9 @@
           "MOVABLE",
           "GRABBABLE"
         ],
-        "states": [],
+        "states": [
+          "HEATED"
+        ],
         "prefab_name": "SMGP_PRE_Salmon_1024",
         "bounding_box": {
           "center": [
@@ -14967,6 +14969,11 @@
         "from_id": 178,
         "relation_type": "INSIDE",
         "to_id": 73
+      },
+      {
+        "from_id": 327,
+        "to_id": 285,
+        "relation_type": "ON"
       }
     ]
   },
@@ -22044,7 +22051,9 @@
           "EATABLE",
           "CUTTABLE"
         ],
-        "states": [],
+        "states": [
+          "HEATED"
+        ],
         "prefab_name": "Bread_slice_1",
         "bounding_box": {
           "center": [
@@ -26287,7 +26296,7 @@
       {
         "from_id": 310,
         "relation_type": "INSIDE",
-        "to_id": 11
+        "to_id": 205
       },
       {
         "from_id": 56,
@@ -29958,6 +29967,11 @@
         "from_id": 178,
         "relation_type": "INSIDE",
         "to_id": 73
+      },
+      {
+        "from_id": 310,
+        "to_id": 278,
+        "relation_type": "ON"
       }
     ]
   },
