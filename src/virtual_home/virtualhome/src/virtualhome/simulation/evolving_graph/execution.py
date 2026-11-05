@@ -266,7 +266,6 @@ class _FindExecutor(ActionExecutor):
         return True
 
 
-
 _walk_find_executor = JoinedExecutor(WalkExecutor(), _FindExecutor())
 _only_find_executor = _FindExecutor()
 
@@ -370,7 +369,6 @@ class SitExecutor(ActionExecutor):
         return True
 
 
-
 class StandUpExecutor(ActionExecutor):
 
     def execute(self, script: Script, state: EnvironmentState, info: ExecutionInfo, char_index, modify=True, in_place=False):
@@ -386,7 +384,7 @@ class StandUpExecutor(ActionExecutor):
                 yield state
         else:
             info.error('{} is not sitting', char_node)
-            
+
 
 class GrabExecutor(ActionExecutor):
 
@@ -436,7 +434,6 @@ class GrabExecutor(ActionExecutor):
             info.error('{} does not have a free hand', char_node)
             return None
         return new_relation
-
 
 
 class OpenExecutor(ActionExecutor):
@@ -489,7 +486,6 @@ class OpenExecutor(ActionExecutor):
             info.error('{} is still on'.format(node))
             return False
         return True
-
 
 
 class PutExecutor(ActionExecutor):
@@ -560,10 +556,16 @@ def _check_puttable(state: EnvironmentState, src_node: GraphNode, dest_node: Gra
         info.error('{} is not close to {}', char_node, dest_node)
         return False
     if relation == Relation.INSIDE:
-        if Property.CAN_OPEN not in dest_node.properties or State.OPEN in dest_node.states:
+        if (
+            Property.CAN_OPEN not in dest_node.properties
+            or State.OPEN in dest_node.states
+            or dest_node.class_name == "closet"
+        ):
+            # The installed closet assets allow access while reporting CLOSED.
+            # Unity acceptance still gates every committed runtime action.
             return True
         else:
-            info.error('{} is not open or is not openable', dest_node)
+            info.error("{} is not open or is not openable", dest_node)
             return False
     return True
 
@@ -1150,7 +1152,7 @@ class PlugExecutor(ActionExecutor):
         if not self.plug_in and State.ON in node.states:
             info.error('{} is still on', node)
         return True
-    
+
 
 class CutExecutor(ActionExecutor):
 
@@ -1347,9 +1349,12 @@ def _find_holding_hand(state: EnvironmentState, node: Node, char_index: int):
 
 
 def _is_inside(state: EnvironmentState, node: Node):
-    return state.evaluate(ExistsRelation(NodeInstance(node), Relation.INSIDE,
-                                         NodeConditionFilter(And(NodeAttrIn(State.CLOSED, 'states'),
-                                                                 Not(IsRoomNode())))))
+    return any(
+        State.CLOSED in container.states
+        and container.category != "Rooms"
+        and container.class_name != "closet"
+        for container in state.get_nodes_from(node, Relation.INSIDE)
+    )
 
 
 def _create_walkable_graph(state: EnvironmentState):

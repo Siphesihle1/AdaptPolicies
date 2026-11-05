@@ -75,6 +75,16 @@ itself. Off appliances, unrelated surfaces and inedible objects do not qualify.
 Repeated observations retain one HEATED state. Benchmark versions that add these
 conditions require consistent rescoring or rerunning of compared systems.
 
+The installed closet assets report CLOSED while accepting native grabs from
+their interiors and PutIn placements without an Open action. Reset-separated
+controls cover all three scene-0 closets. Symbolic access therefore treats
+closets as accessible while retaining their reported CLOSED state. Closed
+fridges, cabinets and washing machines retain their access checks. This narrow
+affordance correction does not bypass native execution: Unity must still accept
+every action before its candidate symbolic state is committed. Evidence is in
+`outputs/local/native_closet_controls_20261105T150907Z/` and the complete clothes
+placement replay in `outputs/local/candidate_closet_repairs_20261105T151245Z/`.
+
 All CLI options are mandatory except that scenes 1 and 2 may omit `--test-set`
 to select env1 and env2, respectively. Explicit `--test-set env1 --env-id 1`
 and `--test-set env2 --env-id 2` are also supported. Scene 0 requires an explicit
