@@ -86326,11 +86326,6 @@
         "to_id": 264
       },
       {
-        "from_id": 270,
-        "relation_type": "FACING",
-        "to_id": 265
-      },
-      {
         "from_id": 437,
         "relation_type": "INSIDE",
         "to_id": 335
@@ -87711,11 +87706,6 @@
         "to_id": 264
       },
       {
-        "from_id": 268,
-        "relation_type": "FACING",
-        "to_id": 265
-      },
-      {
         "from_id": 175,
         "relation_type": "INSIDE",
         "to_id": 73
@@ -88296,11 +88286,6 @@
         "to_id": 264
       },
       {
-        "from_id": 272,
-        "relation_type": "FACING",
-        "to_id": 265
-      },
-      {
         "from_id": 378,
         "relation_type": "ON",
         "to_id": 393
@@ -88741,11 +88726,6 @@
         "to_id": 264
       },
       {
-        "from_id": 273,
-        "relation_type": "FACING",
-        "to_id": 265
-      },
-      {
         "from_id": 442,
         "relation_type": "INSIDE",
         "to_id": 335
@@ -89119,11 +89099,6 @@
         "from_id": 274,
         "relation_type": "FACING",
         "to_id": 264
-      },
-      {
-        "from_id": 274,
-        "relation_type": "FACING",
-        "to_id": 265
       },
       {
         "from_id": 376,
@@ -145684,11 +145659,6 @@
         "to_id": 265
       },
       {
-        "from_id": 310,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 30,
         "relation_type": "INSIDE",
         "to_id": 11
@@ -145912,11 +145882,6 @@
         "from_id": 106,
         "relation_type": "INSIDE",
         "to_id": 73
-      },
-      {
-        "from_id": 237,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 414,
@@ -146369,11 +146334,6 @@
         "to_id": 205
       },
       {
-        "from_id": 238,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 270,
         "relation_type": "FACING",
         "to_id": 264
@@ -146499,19 +146459,9 @@
         "to_id": 253
       },
       {
-        "from_id": 325,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 242,
         "relation_type": "INSIDE",
         "to_id": 205
-      },
-      {
-        "from_id": 320,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 14,
@@ -146522,11 +146472,6 @@
         "from_id": 362,
         "relation_type": "INSIDE",
         "to_id": 335
-      },
-      {
-        "from_id": 309,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 38,
@@ -146654,11 +146599,6 @@
         "to_id": 264
       },
       {
-        "from_id": 235,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 370,
         "relation_type": "ON",
         "to_id": 336
@@ -146672,11 +146612,6 @@
         "from_id": 333,
         "relation_type": "INSIDE",
         "to_id": 205
-      },
-      {
-        "from_id": 244,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 285,
@@ -146897,11 +146832,6 @@
         "from_id": 102,
         "relation_type": "ON",
         "to_id": 104
-      },
-      {
-        "from_id": 265,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 336,
@@ -147319,11 +147249,6 @@
         "to_id": 205
       },
       {
-        "from_id": 323,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 63,
         "relation_type": "INSIDE",
         "to_id": 11
@@ -147429,11 +147354,6 @@
         "to_id": 77
       },
       {
-        "from_id": 326,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 22,
         "relation_type": "INSIDE",
         "to_id": 11
@@ -147457,11 +147377,6 @@
         "from_id": 260,
         "relation_type": "ON",
         "to_id": 230
-      },
-      {
-        "from_id": 263,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 424,
@@ -147502,11 +147417,6 @@
         "from_id": 368,
         "relation_type": "ON",
         "to_id": 417
-      },
-      {
-        "from_id": 308,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 291,
@@ -147801,36 +147711,6 @@
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 256
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 261
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 262
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 263
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 265
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 268
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
         "to_id": 270
       },
       {
@@ -147911,27 +147791,7 @@
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 308
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 309
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 310
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
         "to_id": 313
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 314
       },
       {
         "from_id": 1,
@@ -147946,47 +147806,7 @@
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 320
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 321
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 322
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 323
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 324
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 325
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 326
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
         "to_id": 327
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 229
       },
       {
         "from_id": 1,
@@ -148001,77 +147821,12 @@
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 233
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 235
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 236
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 237
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 238
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 239
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 240
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 244
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 245
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 246
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 247
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
         "to_id": 252
       },
       {
         "from_id": 1,
         "relation_type": "CLOSE",
         "to_id": 253
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 254
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 255
       },
       {
         "from_id": 268,
@@ -148112,11 +147867,6 @@
         "from_id": 211,
         "relation_type": "INSIDE",
         "to_id": 205
-      },
-      {
-        "from_id": 262,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 272,
@@ -148284,11 +148034,6 @@
         "to_id": 264
       },
       {
-        "from_id": 233,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 229,
         "relation_type": "INSIDE",
         "to_id": 205
@@ -148419,16 +148164,6 @@
         "to_id": 335
       },
       {
-        "from_id": 322,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
-        "from_id": 254,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 318,
         "relation_type": "FACING",
         "to_id": 264
@@ -148452,11 +148187,6 @@
         "from_id": 42,
         "relation_type": "INSIDE",
         "to_id": 11
-      },
-      {
-        "from_id": 268,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 66,
@@ -148584,11 +148314,6 @@
         "to_id": 335
       },
       {
-        "from_id": 255,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 438,
         "relation_type": "ON",
         "to_id": 371
@@ -148632,11 +148357,6 @@
         "from_id": 275,
         "relation_type": "ON",
         "to_id": 231
-      },
-      {
-        "from_id": 239,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 282,
@@ -148849,11 +148569,6 @@
         "to_id": 127
       },
       {
-        "from_id": 321,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 319,
         "relation_type": "FACING",
         "to_id": 264
@@ -148999,11 +148714,6 @@
         "to_id": 73
       },
       {
-        "from_id": 236,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 433,
         "relation_type": "INSIDE",
         "to_id": 335
@@ -149089,11 +148799,6 @@
         "to_id": 127
       },
       {
-        "from_id": 261,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 276,
         "relation_type": "ON",
         "to_id": 231
@@ -149132,11 +148837,6 @@
         "from_id": 298,
         "relation_type": "INSIDE",
         "to_id": 205
-      },
-      {
-        "from_id": 245,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 257,
@@ -149619,11 +149319,6 @@
         "to_id": 205
       },
       {
-        "from_id": 324,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 332,
         "relation_type": "ON",
         "to_id": 251
@@ -149634,11 +149329,6 @@
         "to_id": 73
       },
       {
-        "from_id": 240,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 306,
         "relation_type": "ON",
         "to_id": 243
@@ -149647,11 +149337,6 @@
         "from_id": 306,
         "relation_type": "ON",
         "to_id": 238
-      },
-      {
-        "from_id": 229,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 307,
@@ -149747,11 +149432,6 @@
         "from_id": 196,
         "relation_type": "INSIDE",
         "to_id": 73
-      },
-      {
-        "from_id": 256,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 112,
@@ -150074,11 +149754,6 @@
         "to_id": 11
       },
       {
-        "from_id": 314,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 426,
         "relation_type": "INSIDE",
         "to_id": 335
@@ -150112,11 +149787,6 @@
         "from_id": 358,
         "relation_type": "INSIDE",
         "to_id": 335
-      },
-      {
-        "from_id": 246,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 295,
@@ -150282,11 +149952,6 @@
         "from_id": 50,
         "relation_type": "ON",
         "to_id": 49
-      },
-      {
-        "from_id": 247,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 282,

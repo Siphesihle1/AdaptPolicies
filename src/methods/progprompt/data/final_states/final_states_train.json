@@ -460786,11 +460786,6 @@
         "to_id": 264
       },
       {
-        "from_id": 270,
-        "relation_type": "FACING",
-        "to_id": 265
-      },
-      {
         "from_id": 437,
         "relation_type": "INSIDE",
         "to_id": 335
@@ -461374,11 +461369,6 @@
         "from_id": 277,
         "relation_type": "FACING",
         "to_id": 264
-      },
-      {
-        "from_id": 277,
-        "relation_type": "FACING",
-        "to_id": 265
       },
       {
         "from_id": 380,
@@ -462171,11 +462161,6 @@
         "to_id": 264
       },
       {
-        "from_id": 268,
-        "relation_type": "FACING",
-        "to_id": 265
-      },
-      {
         "from_id": 175,
         "relation_type": "INSIDE",
         "to_id": 73
@@ -462751,11 +462736,6 @@
         "to_id": 264
       },
       {
-        "from_id": 272,
-        "relation_type": "FACING",
-        "to_id": 265
-      },
-      {
         "from_id": 378,
         "relation_type": "ON",
         "to_id": 393
@@ -462774,11 +462754,6 @@
         "from_id": 276,
         "relation_type": "FACING",
         "to_id": 264
-      },
-      {
-        "from_id": 276,
-        "relation_type": "FACING",
-        "to_id": 265
       },
       {
         "from_id": 319,
@@ -463201,11 +463176,6 @@
         "to_id": 264
       },
       {
-        "from_id": 273,
-        "relation_type": "FACING",
-        "to_id": 265
-      },
-      {
         "from_id": 442,
         "relation_type": "INSIDE",
         "to_id": 335
@@ -463574,11 +463544,6 @@
         "from_id": 274,
         "relation_type": "FACING",
         "to_id": 264
-      },
-      {
-        "from_id": 274,
-        "relation_type": "FACING",
-        "to_id": 265
       },
       {
         "from_id": 376,
