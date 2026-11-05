@@ -833,6 +833,24 @@ class ReadExecutor(ActionExecutor):
         return True
 
 
+class TalkExecutor(ActionExecutor):
+
+    def execute(self, script, state, info, char_index, modify=True, in_place=False):
+        current_line = script[0]
+        info.set_current_line(current_line)
+        node = state.get_state_node(current_line.object())
+        if node is None:
+            info.object_found_error()
+        elif node.class_name not in ("cellphone", "wallphone"):
+            info.error("{} is not a phone", node)
+        elif _find_holding_hand(state, node, char_index) is None:
+            info.error(
+                "{} is not holding {}", _get_character_node(state, char_index), node
+            )
+        else:
+            yield state.change_state([], in_place=in_place) if modify else state
+
+
 class TouchExecutor(ActionExecutor):
 
     def execute(self, script: Script, state: EnvironmentState, info: ExecutionInfo, char_index, modify=True, in_place=False):
@@ -1452,7 +1470,8 @@ class ScriptExecutor(object):
         Action.PUTOFF: PutOffExecutor(), 
         Action.GREET: GreetExecutor(), 
         Action.DROP: DropExecutor(), 
-        Action.READ: ReadExecutor(), 
+        Action.READ: ReadExecutor(),
+        Action.TALK: TalkExecutor(),
         Action.POINTAT: PointAtExecutor(), 
         Action.TOUCH: TouchExecutor(), 
         Action.LIE: LieExecutor(),

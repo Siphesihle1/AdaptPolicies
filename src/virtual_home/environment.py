@@ -8,7 +8,11 @@ from .graph_query import N, E
 from .task import VHTask
 from virtualhome.simulation.unity_simulator import UnityCommunication
 from virtualhome.simulation.evolving_graph import utils
-from virtualhome.simulation.evolving_graph.scripts import parse_script_line, Script
+from virtualhome.simulation.evolving_graph.scripts import (
+    Action as ScriptAction,
+    parse_script_line,
+    Script,
+)
 from virtualhome.simulation.evolving_graph.execution import ScriptExecutor
 from virtualhome.simulation.evolving_graph.environment import (
     EnvironmentGraph,
@@ -206,6 +210,13 @@ class VHEnvironment:
             self.obj_ids_for_adding_states,
             self.nodes_with_additonal_states,
         )
+
+        if script.action == ScriptAction.TALK:
+            phone = N(self.partial_graph).id(script.object().instance).get_first()
+            if phone is not None:
+                if "USED" not in phone["states"]:
+                    phone["states"].append("USED")
+                self.nodes_with_additonal_states[phone["id"]] = phone
 
         return True
 

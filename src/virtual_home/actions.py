@@ -165,6 +165,34 @@ class LookAt(Open):
         self.action_name = "lookat"
 
 
+class Talk(Open):
+    def __init__(self, env: VHEnvironment, task: VHTask):
+        super().__init__(env, task)
+        self.action_name = "talk"
+
+    def action(self, *objs: str):
+        (obj,) = objs
+        self.env.last_action = (self.action_name, obj)
+        held_ids = [
+            identifier
+            for identifier in self.env.find_obj(obj)
+            if identifier in self.env.obj_ids_in_hand
+        ]
+        if not held_ids:
+            self.env.log_file.write(f"Object {obj} not in hand\n")
+            return False
+        identifier = (
+            self.env.found_id if self.env.found_id in held_ids else choice(held_ids)
+        )
+        return self.env.execute(f"<char0> [{self.action_name}] <{obj}> ({identifier})")
+
+
+class Read(Talk):
+    def __init__(self, env: VHEnvironment, task: VHTask):
+        super().__init__(env, task)
+        self.action_name = "read"
+
+
 class SwitchOff(Open):
     def __init__(self, env: VHEnvironment, task: VHTask):
         super().__init__(env, task)

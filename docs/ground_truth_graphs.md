@@ -85,6 +85,14 @@ every action before its candidate symbolic state is committed. Evidence is in
 `outputs/local/native_closet_controls_20261105T150907Z/` and the complete clothes
 placement replay in `outputs/local/candidate_closet_repairs_20261105T151245Z/`.
 
+Native phone Talk is available to generated plans as `talk("cellphone")`.
+It requires a held phone; it does not switch its power or release it. Only a
+confirmed native Talk derives USED for that visible phone. Rejected calls never
+derive USED. Generated plans also expose `read("book")`; both actions choose a
+held instance rather than an unrelated instance of the same class. The repaired
+call-a-friend annotation returns the phone to its original coffee table after
+talking. Its goal reference uses this replay-derived phone-use state.
+
 All CLI options are mandatory except that scenes 1 and 2 may omit `--test-set`
 to select env1 and env2, respectively. Explicit `--test-set env1 --env-id 1`
 and `--test-set env2 --env-id 2` are also supported. Scene 0 requires an explicit

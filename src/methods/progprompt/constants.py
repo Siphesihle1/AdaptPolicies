@@ -56,6 +56,8 @@ from virtual_home.actions import (
     Close,
     Drink,
     Grab,
+    Read,
+    Talk,
     LookAt,
     SwitchOff,
     SwitchOn,
@@ -96,6 +98,8 @@ run = Run(env, task)
 close = Close(env, task)
 drink = Drink(env, task)
 grab = Grab(env, task)
+read = Read(env, task)
+talk = Talk(env, task)
 lookat = LookAt(env, task)
 switchoff = SwitchOff(env, task)
 switchon = SwitchOn(env, task)
@@ -121,6 +125,8 @@ __all__ = [
     "close",
     "drink",
     "grab",
+    "read",
+    "talk",
     "lookat",
     "switchoff",
     "switchon",
@@ -138,7 +144,7 @@ def exec_task():
     return task.finish(env)
 """
 
-TASK_PROMPT_ACTION_IMPORTS = "from actions import walk <obj>, run <obj>, grab <obj>, switchon <obj>, switchoff <obj>, open <obj>, close <obj>, lookat <obj>, sit <obj>, standup, find <obj>, turnto <obj>, drink <obj>, pointat <obj>, watch <obj>, putin <obj> <obj>, putback <obj> <obj>"
+TASK_PROMPT_ACTION_IMPORTS = "from actions import walk <obj>, run <obj>, grab <obj>, read <obj>, talk <obj>, switchon <obj>, switchoff <obj>, open <obj>, close <obj>, lookat <obj>, sit <obj>, standup, find <obj>, turnto <obj>, drink <obj>, pointat <obj>, watch <obj>, putin <obj> <obj>, putback <obj> <obj>"
 
 DEFAULT_EXAMPLES = [
     "refrigerate_the_salmon",

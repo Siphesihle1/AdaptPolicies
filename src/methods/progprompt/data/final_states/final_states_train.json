@@ -79196,7 +79196,8 @@
           "HAS_PLUG"
         ],
         "states": [
-          "OFF"
+          "OFF",
+          "USED"
         ],
         "prefab_name": "Cellphone_6",
         "bounding_box": {
@@ -87549,11 +87550,6 @@
         "to_id": 231
       },
       {
-        "from_id": 263,
-        "relation_type": "CLOSE",
-        "to_id": 1
-      },
-      {
         "from_id": 260,
         "relation_type": "ON",
         "to_id": 230
@@ -87877,11 +87873,6 @@
         "from_id": 67,
         "relation_type": "INSIDE",
         "to_id": 11
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
-        "to_id": 263
       },
       {
         "from_id": 268,
@@ -89879,11 +89870,6 @@
         "to_id": 335
       },
       {
-        "from_id": 1,
-        "relation_type": "INSIDE",
-        "to_id": 205
-      },
-      {
         "from_id": 275,
         "relation_type": "INSIDE",
         "to_id": 205
@@ -90002,6 +89988,31 @@
         "from_id": 178,
         "relation_type": "INSIDE",
         "to_id": 73
+      },
+      {
+        "from_id": 111,
+        "relation_type": "CLOSE",
+        "to_id": 1
+      },
+      {
+        "from_id": 188,
+        "relation_type": "CLOSE",
+        "to_id": 1
+      },
+      {
+        "from_id": 1,
+        "relation_type": "INSIDE",
+        "to_id": 73
+      },
+      {
+        "from_id": 1,
+        "relation_type": "CLOSE",
+        "to_id": 188
+      },
+      {
+        "from_id": 1,
+        "relation_type": "CLOSE",
+        "to_id": 111
       }
     ]
   },

@@ -1,19 +1,22 @@
 [
   {
     "call a friend": {
-      "0: walk to living room": [
-        "<char0> [walk] <livingroom> (335)"
+      "0: walk to bedroom": [
+        "<char0> [walk] <bedroom> (73)"
       ],
-      "1: find wall phone": [
-        "<char0> [find] <wallphone> (263)"
+      "1: find cellphone": [
+        "<char0> [find] <cellphone> (188)"
       ],
       "2: pick up receiver": [
-        "<char0> [switchon] <wallphone> (263)"
+        "<char0> [grab] <cellphone> (188)"
       ],
       "3: dial friend's number": [],
-      "4: talk to friend": [],
+      "4: talk to friend": [
+        "<char0> [talk] <cellphone> (188)"
+      ],
       "5: hang up receiver": [
-        "<char0> [switchoff] <wallphone> (263)"
+        "<char0> [find] <coffeetable> (111)",
+        "<char0> [putback] <cellphone> (188) <coffeetable> (111)"
       ],
       "6: Done": []
     }

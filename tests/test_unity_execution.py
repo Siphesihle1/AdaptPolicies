@@ -85,3 +85,25 @@ class UnityExecutionTests(unittest.TestCase):
             skip_animation=True,
             find_solution=False,
         )
+
+    def test_only_confirmed_phone_talk_derives_used(self):
+        for native_success in (True, False):
+            with self.subTest(native_success=native_success):
+                env = self.environment((native_success, {"0": {"message": "Success"}}))
+                env.partial_graph["nodes"] = [
+                    {
+                        "id": 3,
+                        "class_name": "cellphone",
+                        "category": "Props",
+                        "states": ["OFF"],
+                    }
+                ]
+                with patch("virtual_home.environment.weave.thread"):
+                    self.assertEqual(
+                        env.execute("<char0> [talk] <cellphone> (3)"), native_success
+                    )
+                self.assertEqual(3 in env.nodes_with_additonal_states, native_success)
+                if native_success:
+                    self.assertEqual(
+                        env.nodes_with_additonal_states[3]["states"], ["OFF", "USED"]
+                    )

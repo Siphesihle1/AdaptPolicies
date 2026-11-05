@@ -22,8 +22,8 @@ class Action(Enum):
     OPEN = ("Open", 1, [['CAN_OPEN']])
     POINTAT = ("Point at", 1, [[]])
     PUTBACK = ("Put", 2, [['GRABBABLE'], []])
-    #PUT = ("Put", 2)
-    #PUTBACK = PUT
+    # PUT = ("Put", 2)
+    # PUTBACK = PUT
     PUTIN = ("Put in", 2, [['GRABBABLE'], ['CAN_OPEN']])
     PUTOBJBACK = ("Put back", 1, [[]])
     RUN = ("Run", 1, [[]])
@@ -39,7 +39,8 @@ class Action(Enum):
     PUTOFF = ("PutOff", 1, [['CLOHES']])
     GREET = ("Greet", 1, [['PERSON']])
     DROP = ("Drop", 1, [[]])
-    READ = ("Read", 1, [['READABLE']])
+    READ = ("Read", 1, [["READABLE"]])
+    TALK = ("Talk", 1, [[]])
     LIE = ("Lie", 1, [['LIEABLE']])
     POUR = ("Pour", 2, [['POURABLE', 'DRINKABLE'], ['RECIPIENT']])
     TYPE = ("Type", 1, [['HAS_SWITCH']])
@@ -57,7 +58,7 @@ class Action(Enum):
     SLEEP = ("Sleep", 0) 
     WAKEUP = ("WakeUp", 0)
     RELEASE = ("Release", 1, [[]])
-    
+
 
 class ScriptObject(object):
 
