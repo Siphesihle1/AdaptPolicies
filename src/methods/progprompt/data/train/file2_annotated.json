@@ -88,13 +88,10 @@
         "<char0> [find] <clothespile> (409)",
         "<char0> [find] <clothespile> (401)",
         "<char0> [find] <closet> (127)",
-        "<char0> [open] <closet> (127)",
         "<char0> [find] <clothespile> (148)",
         "<char0> [grab] <clothespile> (148)",
         "<char0> [find] <closet> (112)",
-        "<char0> [open] <closet> (112)",
-        "<char0> [putin] <clothespile> (148) <closet> (112)",
-        "<char0> [close] <closet> (112)"
+        "<char0> [putin] <clothespile> (148) <closet> (112)"
       ],
       "4: Done": []
     }

@@ -44998,7 +44998,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "OPEN"
+          "CLOSED"
         ],
         "prefab_name": "PRE_FUR_Closet_02_03_01",
         "bounding_box": {
