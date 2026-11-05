@@ -26,6 +26,11 @@ try {
     $capture = $helper.MainModule.GetType('AdaptPolicies.NativeDiagnostics.SceneAssetDiagnostics').Methods | Where-Object Name -eq 'Capture'
     $captureReference = $original.MainModule.ImportReference($capture)
     $processor = $create[0].Body.GetILProcessor()
+    $curtain = $helper.MainModule.GetType('AdaptPolicies.NativeRepairs.WindowCurtainRepair')
+    $prepare = $original.MainModule.ImportReference(($curtain.Methods | Where-Object Name -eq 'Prepare'))
+    $createStart = $create[0].Body.Instructions[0]
+    $processor.InsertBefore($createStart,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_1))
+    $processor.InsertBefore($createStart,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$prepare))
     $returns = @($create[0].Body.Instructions | Where-Object { $_.OpCode.Code -eq [Mono.Cecil.Cil.Code]::Ret })
     if ($returns.Count -ne 1) { throw 'Unexpected graph creation return structure.' }
     $returnInstruction = $returns[0]
@@ -50,15 +55,57 @@ try {
     $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Brfalse,$first))
     $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$getPose))
     $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ret))
+
+    $character = @($original.MainModule.Types | Where-Object Name -eq 'CharacterControl')
+    if ($character.Count -ne 1) { throw 'Expected one character controller.' }
+    $interaction = @($character[0].Methods | Where-Object Name -eq 'StartInteraction')
+    if ($interaction.Count -ne 1 -or $interaction[0].Parameters.Count -ne 3 -or $interaction[0].Parameters[0].ParameterType.FullName -ne 'UnityEngine.GameObject') { throw 'Unexpected native interaction signature.' }
+    $awaitInteraction = $original.MainModule.ImportReference(($curtain.Methods | Where-Object Name -eq 'AwaitInteraction'))
+    $processor = $interaction[0].Body.GetILProcessor()
+    foreach ($instruction in @($interaction[0].Body.Instructions | Where-Object { $_.OpCode.Code -eq [Mono.Cecil.Cil.Code]::Ret })) {
+        $instruction.OpCode = [Mono.Cecil.Cil.OpCodes]::Ldarg_1
+        $instruction.Operand = $null
+        $call = $processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$awaitInteraction)
+        $return = $processor.Create([Mono.Cecil.Cil.OpCodes]::Ret)
+        $processor.InsertAfter($instruction,$call)
+        $processor.InsertAfter($call,$return)
+    }
+
+    $front = @($original.MainModule.Types | ForEach-Object { $_.Methods } | Where-Object Name -eq 'GetObjectFrontVec')
+    if ($front.Count -ne 1 -or $front[0].Parameters.Count -ne 1 -or !$front[0].IsStatic) { throw 'Unexpected front-direction method signature.' }
+    $isCurtain = $original.MainModule.ImportReference(($curtain.Methods | Where-Object Name -eq 'IsWindowCurtain'))
+    $getFront = $original.MainModule.ImportReference(($curtain.Methods | Where-Object Name -eq 'GetFront'))
+    $processor = $front[0].Body.GetILProcessor()
+    $first = $front[0].Body.Instructions[0]
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_0))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$isCurtain))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Brfalse,$first))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_0))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$getFront))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ret))
+
+    $updates = @($creator[0].Methods | Where-Object Name -eq 'UpdateGraph')
+    if ($updates.Count -ne 1 -or $updates[0].Parameters.Count -eq 0 -or $updates[0].Parameters[0].ParameterType.FullName -ne 'UnityEngine.Transform') { throw 'Unexpected graph-update signature.' }
+    $processor = $updates[0].Body.GetILProcessor()
+    foreach ($instruction in @($updates[0].Body.Instructions | Where-Object { $_.OpCode.Code -eq [Mono.Cecil.Cil.Code]::Ret })) {
+        $instruction.OpCode = [Mono.Cecil.Cil.OpCodes]::Dup
+        $instruction.Operand = $null
+        $argument = $processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_1)
+        $call = $processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$captureReference)
+        $return = $processor.Create([Mono.Cecil.Cil.OpCodes]::Ret)
+        $processor.InsertAfter($instruction,$argument)
+        $processor.InsertAfter($argument,$call)
+        $processor.InsertAfter($call,$return)
+    }
     $original.Write($OutputAssembly)
     $manifest = [ordered]@{
         base = 'Official VirtualHome Linux v2.3.0 (Unity 2021.2.14f1)'
-        patch = 'adaptpolicies-shirt-grab-v1'
+        patch = 'adaptpolicies-native-repairs-v2'
         originalSha256 = $actualHash
         helperSha256 = (Get-FileHash -LiteralPath $HelperAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
         patchedSha256 = (Get-FileHash -LiteralPath $OutputAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
-        modifiedMethods = @($create[0].FullName,$grab[0].FullName)
-        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab'
+        modifiedMethods = @($create[0].FullName,$updates[0].FullName,$grab[0].FullName,$front[0].FullName,$interaction[0].FullName)
+        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains'
         assetsModified = $false
         originalInstallationModified = $false
         nativeReplayVerified = $false

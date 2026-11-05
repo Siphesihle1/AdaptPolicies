@@ -9,7 +9,7 @@ namespace AdaptPolicies.NativeRepairs
     {
         public static bool HasMeshOnlyShirt(GameObject gameObject)
         {
-            if (Environment.GetEnvironmentVariable("ADAPTPOLICIES_NATIVE_REPAIRS") != "shirt-grab" ||
+            if (!NativeRepairFeatures.Enabled("shirt-grab") ||
                 gameObject == null || !gameObject.name.StartsWith("MOD_PRO_Shirt_", StringComparison.Ordinal) ||
                 GameObjectUtils.GetCollider(gameObject) != null) return false;
             var filter = gameObject.GetComponent<MeshFilter>();

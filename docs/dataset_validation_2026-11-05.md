@@ -143,3 +143,30 @@ files remain unchanged. Source and usage:
 This resolves one previously failing task on the custom candidate. The last
 complete stock replay remains55/69; no combined56/69 replay is claimed. Thirteen
 other native task failures remain, and the final full all69 replay is still pending.
+
+## 2026-11-06: native window-curtain opening
+
+The `adaptpolicies-native-repairs-v2` candidate adds native Open switches to the
+existing window-curtain objects, with real reversible panel scale/position
+transitions and a room-facing approach. The train curtain31 and env2 curtain128
+annotations both pass their original actions and unchanged evaluator references:
+PSR=1, SR=1, Precision=1, Exec=1. Their annotation/graph files are unchanged.
+
+Physical controls use live Unity transforms and renderer bounds. The legacy graph
+API caches some child transforms and bounds; its response alone cannot establish
+panel movement. Each target passes three Open/Close cycles: panels gather to20%
+width on Open, report OPEN, and restore original positions/scales plus CLOSED on
+Close. Repeated controls exposed a native timing race between IK completion and
+the final physics tick. A curtain-only coroutine wrapper now waits for the real
+switch transitions to finish, with a bounded failure if they do not complete.
+
+A fresh build from the main sources passes all three initial scene-equivalence
+checks, all six physical control cases, both curtain annotations and the full
+nine-action shirt-task regression. Evidence:
+`outputs/local/curtain_main_wait_validation_v2/`. Five of3356 original managed
+methods have narrow hooks/wrappers; the other3351 are unchanged. All player asset
+files and the original simulator installation remain unchanged.
+
+This resolves two additional prior native failures on the custom candidate.
+Eleven remain. The last complete stock replay is still55/69; the final all69
+replay on the declared custom runtime remains pending.

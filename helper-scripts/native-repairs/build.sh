@@ -8,6 +8,10 @@ managed=$(cygpath -u "$1")
 editor=$(cygpath -u "$2")
 output=$(cygpath -u "$3")
 source_dir=${0:A:h}
+if [[ "${output:A}/" == "${managed:A}/"* ]]; then
+    print -u2 'Output must be outside the original Managed directory.'
+    exit 2
+fi
 test -f "$managed/Assembly-CSharp.dll"
 test -f "$editor/Data/DotNetSdkRoslyn/csc.dll"
 mkdir -p "$output"
@@ -24,7 +28,9 @@ mkdir -p "$output"
     -r:"$(cygpath -m "$managed/Assembly-CSharp.dll")" \
     -r:"$(cygpath -m "$managed/Assembly-CSharp-firstpass.dll")" \
     "$(cygpath -m "$source_dir/SceneAssetDiagnostics.cs")" \
-    "$(cygpath -m "$source_dir/ShirtGrabRepair.cs")"
+    "$(cygpath -m "$source_dir/ShirtGrabRepair.cs")" \
+    "$(cygpath -m "$source_dir/NativeRepairFeatures.cs")" \
+    "$(cygpath -m "$source_dir/WindowCurtainRepair.cs")"
 pwsh.exe -NoProfile -File "$(cygpath -m "$source_dir/patch-player.ps1")" \
     -ManagedDirectory "$(cygpath -m "$managed")" \
     -HelperAssembly "$(cygpath -m "$output/AdaptPolicies.NativeRepairs.dll")" \

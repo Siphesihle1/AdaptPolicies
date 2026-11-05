@@ -37,6 +37,10 @@ namespace AdaptPolicies.NativeDiagnostics
             public string hierarchy;
             public float[] position;
             public string[] components;
+            public float[] localScale;
+            public float[] worldScale;
+            public float[] rendererBoundsCenter;
+            public float[] rendererBoundsSize;
             public bool handInteraction;
             public List<Switch> switches = new List<Switch>();
             public List<Mesh> meshes = new List<Mesh>();
@@ -74,6 +78,13 @@ namespace AdaptPolicies.NativeDiagnostics
                     if (!Classes.Contains(className)) continue;
                     var transform = (Transform)Value(node, "transform");
                     var item = new Item { id = (int)Value(node, "id"), className = className, name = transform.name, position = Coordinates(transform.position), hierarchy = transform.name };
+                    item.localScale = Coordinates(transform.localScale);
+                    item.worldScale = Coordinates(transform.lossyScale);
+                    var liveRenderer = transform.GetComponent<Renderer>();
+                    if (liveRenderer != null) {
+                        item.rendererBoundsCenter = Coordinates(liveRenderer.bounds.center);
+                        item.rendererBoundsSize = Coordinates(liveRenderer.bounds.size);
+                    }
                     for (var parent = transform.parent; parent != null; parent = parent.parent) item.hierarchy = parent.name + "/" + item.hierarchy;
                     var components = transform.GetComponents<Component>();
                     item.components = new string[components.Length];
