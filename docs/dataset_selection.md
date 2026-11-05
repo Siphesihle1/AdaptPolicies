@@ -24,6 +24,12 @@ manifests. Each dataset therefore identifies both its tasks and its references.
 Use the full ambiguous-goal name `test_unseen_ambiguous_goals`; the former CLI
 spelling `test_unseen_ambiguous` is rejected.
 
+`--env-id` selects the Unity scene to reset for prompt construction and again
+for each task execution. Task execution captures its own runtime initial graph
+after adding the character; saved `initial_states_env1/2.json` files are not
+loaded. See [initial-state provenance](ground_truth_graphs.md#initial-state-provenance)
+for the evaluation baseline and how to compare historical snapshots.
+
 ## WSL examples
 
 From the repository root in the existing configured environment, with the

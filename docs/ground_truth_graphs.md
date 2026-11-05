@@ -66,6 +66,38 @@ choice is `test_unseen_ambiguous_goals`, matching its directory.
 See [dataset selection](dataset_selection.md) for supported commands and cluster
 launcher behavior. The scene ID is always required.
 
+## Initial-state provenance
+
+Prompt construction and task execution capture runtime graphs separately:
+
+- [Prompt initialization](../src/methods/progprompt/prompt.py) resets the scene
+  selected by `--env-id` and reads `environment_graph()` for prompt objects.
+- Each generated task constructs a new
+  [VHEnvironment](../src/virtual_home/environment.py), which resets that same
+  scene, adds `Chars/Male2` in the configured initial room (`kitchen`), and reads
+  a new graph from Unity. The environment retains that graph as `initial_state`
+  and initializes its symbolic executor from it.
+- [Task completion](../src/virtual_home/task.py) returns copies of that task's
+  initial and final states. The agent uses this task-specific initial state
+  when calculating changed goal conditions and preservation conditions.
+
+The prompt graph is therefore not the task's evaluation baseline. The files
+`data/final_states/initial_states_env1.json` and `initial_states_env2.json` are
+saved historical dataset snapshots, retained for offline inspection. Neither
+path above loads them, and the ground-truth loader reads mapped final-state
+references rather than these initial snapshots. Their location beside final
+states does not make them active initialization inputs.
+
+The saved snapshots do not establish the exact starting state of the currently
+installed simulator build. To compare them, capture a runtime graph before any
+task action using the same scene, character, and initial room. Record the
+simulator build, code/dataset revisions, and capture stage. Check object IDs,
+classes, states, and relations; report geometry/property-order differences
+separately from task-relevant facts. Establish snapshot/task identity before
+pairing records rather than assuming matching array positions. Loading a saved
+snapshot into Unity would change initialization behavior and requires a separate
+review; this documentation introduces no snapshot loading.
+
 ## Validated repairs and reference versions
 
 Test_seen wash_mug uses graph 10 from the successful replay of the current
