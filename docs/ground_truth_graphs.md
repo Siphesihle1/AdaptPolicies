@@ -178,9 +178,10 @@ substitutions and those two replay-derived WASHED states. Plate 193 is restored
 to its original desk placement rather than renamed or removed. See the
 mapping audit for provenance and benchmark-version implications.
 
-The original frying-pan placement failure, incomplete ambiguous-goal references, and
-the candle annotation's bathroom shelf remain unresolved. Their mappings do not
-repair those goals. Details and evidence are in the mapping audit.
+The ambiguous-goal references and candle destination now have native-validated
+corrections, detailed in the mapping audit. The original frying-pan placement
+and other native failures remain unresolved. Mapping coverage alone does not
+establish that all 69 entries are executable or satisfy their goals.
 
 Regression checks cover all six manifests, order independence, single-task
 evaluation, earlier failures, and validation before simulator construction.
