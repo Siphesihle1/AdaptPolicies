@@ -105,10 +105,10 @@
         "<char0> [grab] <candle> (181)"
       ],
       "3: find shelf": [
-        "<char0> [find] <wallshelf> (43)"
+        "<char0> [find] <bookshelf> (370)"
       ],
       "4: put candle on shelf": [
-        "<char0> [putin] <candle> (181) <wallshelf> (43)"
+        "<char0> [putback] <candle> (181) <bookshelf> (370)"
       ],
       "5: Done": []
     }
