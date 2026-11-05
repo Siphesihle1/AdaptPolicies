@@ -67,6 +67,14 @@ have partially moved the character before reporting failure, so the retained
 symbolic graph represents the last confirmed action, not a validated final native
 state. Failed trajectories must not be reported as successful dataset replays.
 
+Heating augmentation includes Unity's edible Props (such as bread slices) as
+well as Food-category objects. Food ON a frying pan on an active stove, or
+ON/INSIDE an active toaster, acquires HEATED through the supplied partial graph.
+This is a derived runtime state, like sink WASHED; Unity does not report HEATED
+itself. Off appliances, unrelated surfaces and inedible objects do not qualify.
+Repeated observations retain one HEATED state. Benchmark versions that add these
+conditions require consistent rescoring or rerunning of compared systems.
+
 All CLI options are mandatory except that scenes 1 and 2 may omit `--test-set`
 to select env1 and env2, respectively. Explicit `--test-set env1 --env-id 1`
 and `--test-set env2 --env-id 2` are also supported. Scene 0 requires an explicit

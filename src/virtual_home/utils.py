@@ -17,7 +17,6 @@ def get_obj_ids_for_adding_states(graph: Dict[str, Any]) -> Tuple[List[int]]:
         "washingmachine",
         "sink",
         "faucet",
-        # "toaster",  ## toaster condition - TODO ##
     ]
 
     return tuple(
@@ -83,14 +82,29 @@ def add_stove_states(
             food_in_fryingpan: List[int] = (
                 E(state).to_in(*fryingpan_on_stove).relation("ON").select("from_id")
             )  # type: ignore
-            food_in_fryingpan_cond = (
-                N(state).id_in(*food_in_fryingpan).category("Food").get_all()
-            )
+            food_in_fryingpan_cond = N(state).id_in(*food_in_fryingpan).get_all()
 
             for n in food_in_fryingpan_cond:
-                # print("food in pan")
-                n["states"].append("HEATED")
+                if not _is_food(n):
+                    continue
+                if "HEATED" not in n["states"]:
+                    n["states"].append("HEATED")
                 nodes_with_additional_states[n["id"]] = n
+
+
+def _is_food(node):
+    # Unity categorizes bread slices as Props while marking them EATABLE.
+    return node["category"] == "Food" or "EATABLE" in node.get("properties", [])
+
+
+def add_toaster_states(state, nodes_with_additional_states):
+    active = N(state).class_name("toaster").state("ON").select("id")
+    food_ids = E(state).to_in(*active).relation_in("ON", "INSIDE").select("from_id")
+    for node in N(state).id_in(*food_ids).get_all():
+        if _is_food(node):
+            if "HEATED" not in node["states"]:
+                node["states"].append("HEATED")
+            nodes_with_additional_states[node["id"]] = node
 
 
 def add_washingmachine_states(
@@ -212,5 +226,6 @@ def add_additional_obj_states(
     add_stove_states(state, stove_ids, fryingpan_ids, nodes_with_additional_states)
     add_washingmachine_states(state, washingmachine_ids, nodes_with_additional_states)
     add_sink_states(state, faucet_ids, sink_ids, nodes_with_additional_states)
+    add_toaster_states(state, nodes_with_additional_states)
 
     return nodes_with_additional_states
