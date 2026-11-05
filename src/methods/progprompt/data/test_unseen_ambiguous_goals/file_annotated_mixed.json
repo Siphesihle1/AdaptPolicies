@@ -108,14 +108,17 @@
         "<char0> [find] <plate> (278)"
       ],
       "2: grab the plate": [
-        "<char0> [grab] <plate> (278)"
+        "<char0> [grab] <plate> (278)",
+        "<char0> [find] <coffeetable> (111)",
+        "<char0> [putback] <plate> (278) <coffeetable> (111)"
       ],
       "3: find some cereal": [
         "<char0> [find] <cereal> (334)"
       ],
       "4: pour the cereal into the plate": [
         "<char0> [grab] <cereal> (334)",
-        "<char0> [putin] <cereal> (334) <plate> (278)"
+        "<char0> [find] <plate> (278)",
+        "<char0> [putback] <cereal> (334) <plate> (278)"
       ],
       "5: find a spoon": [
         "<char0> [find] <cutleryfork> (279)"
@@ -126,9 +129,7 @@
       "7: find the coffeetable": [
         "<char0> [find] <coffeetable> (111)"
       ],
-      "8: put the plate of cereal on the coffeetable 1": [
-        "<char0> [putback] <plate> (278) <coffeetable> (111)"
-      ],
+      "8: put the plate of cereal on the coffeetable 1": [],
       "9: Done": []
     }
   },

@@ -40520,11 +40520,6 @@
         "to_id": 238
       },
       {
-        "from_id": 279,
-        "relation_type": "INSIDE",
-        "to_id": 205
-      },
-      {
         "from_id": 291,
         "relation_type": "INSIDE",
         "to_id": 249
@@ -42807,11 +42802,6 @@
       {
         "from_id": 1,
         "relation_type": "CLOSE",
-        "to_id": 278
-      },
-      {
-        "from_id": 1,
-        "relation_type": "CLOSE",
         "to_id": 279
       },
       {
@@ -42993,11 +42983,6 @@
         "from_id": 12,
         "relation_type": "INSIDE",
         "to_id": 11
-      },
-      {
-        "from_id": 278,
-        "relation_type": "INSIDE",
-        "to_id": 205
       },
       {
         "from_id": 437,
@@ -43423,11 +43408,6 @@
         "from_id": 307,
         "relation_type": "ON",
         "to_id": 238
-      },
-      {
-        "from_id": 334,
-        "relation_type": "INSIDE",
-        "to_id": 205
       },
       {
         "from_id": 276,
@@ -44070,11 +44050,6 @@
         "to_id": 11
       },
       {
-        "from_id": 1,
-        "relation_type": "HOLDS_LH",
-        "to_id": 279
-      },
-      {
         "from_id": 413,
         "relation_type": "INSIDE",
         "to_id": 374
@@ -44183,11 +44158,6 @@
         "from_id": 272,
         "relation_type": "INSIDE",
         "to_id": 205
-      },
-      {
-        "from_id": 278,
-        "relation_type": "CLOSE",
-        "to_id": 1
       },
       {
         "from_id": 278,
@@ -44953,6 +44923,31 @@
         "from_id": 178,
         "relation_type": "INSIDE",
         "to_id": 73
+      },
+      {
+        "from_id": 334,
+        "relation_type": "INSIDE",
+        "to_id": 73
+      },
+      {
+        "from_id": 278,
+        "relation_type": "INSIDE",
+        "to_id": 73
+      },
+      {
+        "from_id": 279,
+        "relation_type": "INSIDE",
+        "to_id": 73
+      },
+      {
+        "from_id": 334,
+        "relation_type": "ON",
+        "to_id": 278
+      },
+      {
+        "from_id": 1,
+        "relation_type": "HOLDS_RH",
+        "to_id": 279
       }
     ]
   },
