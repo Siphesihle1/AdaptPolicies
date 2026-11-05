@@ -107,3 +107,39 @@ Controls reject Open on all nine scene0 curtain panels, all three windows, all t
 | `6b607874` | Remove unrelated reset-context goals from eight affected references |
 | `3bb36842` | Preserve unrelated orientations outside the reset-sensitive families |
 | `03d4400c` | Correct four additional untouched clock and TV goal artifacts |
+# Native follow-up: mesh-only hanging shirts
+
+The source-player rebuild and original-player diagnostics are documented in
+[`finalik_alternatives_2026-11-05.md`](finalik_alternatives_2026-11-05.md). The public
+source can compile and build, but missing model assets make that player unsuitable
+for these annotations. It has not replaced the installed official player.
+
+A separate official-player copy with the `adaptpolicies-shirt-grab-v1` repair
+preserves all initial static scene metadata, IDs, transforms, bounding boxes and
+structural edges in scenes0/1/2. The native repair uses a renderer-backed hand-pose
+fallback for the original mesh-only hanging shirts; all interaction execution
+continues through the original native implementation. An attempted collider
+variant was rejected when equivalence checking detected six extra ON edges.
+
+The updated “get my pants and shirt and place on the bed” annotation passes9/9
+native and symbolic actions. A fresh replay using the main-source patch and main
+data yields PSR=1, SR=1, Precision=1, Exec=1. Native final relations place shirt376
+and pants386 ON bed109. Existing unit tests:77 passed.
+
+Only the unsupported Open closet374 action is removed. Reference train graph20
+changes only closet374 OPEN→CLOSED, matching its unchanged initial state and
+removing an incidental target from the clothes-placement goal. On the first
+successful trace, the old reference scored15/16 conditions; the corrected
+reference has15/15. This reference effect is separate from the native grab repair
+and does not establish improved LLM performance. Evaluation formulas are unchanged.
+
+Evidence: `outputs/local/shirt_grab_repair_v1/` (old reference retained),
+`outputs/local/shirt_grab_repair_main_v1/` (fresh main-data replay), and
+`outputs/local/official_diagnostic_scene_comparison/`. Build provenance records the
+original assembly hash and the custom patch; the original simulator and all asset
+files remain unchanged. Source and usage:
+[`helper-scripts/native-repairs/`](../helper-scripts/native-repairs/README.md).
+
+This resolves one previously failing task on the custom candidate. The last
+complete stock replay remains55/69; no combined56/69 replay is claimed. Thirteen
+other native task failures remain, and the final full all69 replay is still pending.

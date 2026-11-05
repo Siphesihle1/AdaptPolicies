@@ -1,6 +1,6 @@
 # Final IK alternatives investigation — 2026-11-05
 
-A replacement appears technically possible, but there is no verified drop-in alternative for VirtualHome's Final IK integration. The most useful first experiment is a narrow grasp/release implementation using Unity's built-in humanoid IK, with a separate interaction coordinator. FastIK is an MIT-licensed solver candidate that passes a source compatibility compilation against the installed Unity2021.3.10f1 references. Neither approach has been integrated or runtime-validated. This work does not fix any remaining dataset entries.
+A replacement appears technically possible, but there is no verified drop-in alternative for VirtualHome's Final IK integration. The built-in IK experiment now passes an isolated grasp/release trajectory with the original Male2 rig. A separate source-player build also succeeds using the installed player's compiled IK code, but missing model packs make its scenes incompatible with the dataset. Current native repairs therefore use a separate copy of the official player with its original IK and assets intact; see the follow-up below.
 
 ## What VirtualHome requires
 
@@ -30,6 +30,54 @@ First prove one real grasp/hold/release trajectory using the existing Male2 rig,
 Then test switch activation, hand-pose transitions, two-hand occupancy, sitting and door navigation. A compiling solver alone is insufficient. Before adopting any replacement, compare native scene identities/geometry and replay previously passing annotations as well as all69 entries. A replacement changes the simulator implementation and requires its own version/provenance; equivalence with official-v2.3.0 must not be assumed.
 
 Local evidence: `outputs/local/finalik_alternative_investigation/compatibility-inputs.json`, `fastik-compiler.log`, and the isolated compatibility DLL. The clone, response file and diagnostics scripts remain under the external AdaptPolicies temporary directory. No project package installation, native asset/source patch, dependency version change, Editor launch, task replay or simulator replacement was performed in this investigation.
+
+## Follow-up: working build and scene-preserving repair route
+
+The separate built-in IK prototype validates the original Male2 Avatar as valid
+and Humanoid, rejects an unreachable target, and completes reach/carry/release
+with a primitive cube. It records480 IK callbacks. It does not validate legacy
+interaction callbacks or any VirtualHome annotation. Exact C# sources and
+sanitized logs are in `outputs/local/ik_grasp_prototype/`.
+
+Read-only inspection of official v2.3.0's `Assembly-CSharp-firstpass.dll` found
+the original RootMotion/FinalIK runtime classes. A local compatibility candidate
+renames the assembly, removes duplicate non-RootMotion types, and retains all2110
+methods and2246 fields unchanged, verified by a separate instruction/field audit.
+Five inherited components restore original prefab script GUIDs. The existing
+Editor PID22700 recompiles, exits Safe Mode, and validates Male2 plus all28
+hand-pose prefabs. No additional Editor window was launched in this follow-up.
+
+The fixed-scene source player builds successfully using that candidate: zero
+errors,44 warnings,456.5s. Known DunGen tile/doorway components are removed from
+external build-copy prefabs while retaining game objects and geometry; originals
+are backed up. This is a local binary reuse experiment, not an open-source
+replacement implementation. No binary is committed or redistributed.
+
+Native comparison rejects that source player: scenes0/1/2 contain258/240/298
+non-character nodes versus443/319/400 in the installed player, with different IDs
+and structural edges. Editor inspection finds missing meshes in135 of142 targeted
+entries. Their GUIDs have no asset mapping in the checkout. Its `.gitignore`
+excludes Complete_Home_Interior_Pack and ModernHouseInteriorProps in addition to
+RootMotion and DunGen. The source player is not adopted or used to remap datasets.
+Evidence: `outputs/local/local_runtime_build/` and
+`outputs/local/local_runtime_scene_comparison/`.
+
+Instead, a separately copied official player receives a read-only managed graph
+diagnostic hook. All three scenes match the original static metadata, IDs,
+transforms, bounding boxes and structural edges exactly at four decimal places
+(character nodes and transient CLOSE/FACING edges excluded). Its assets and IK
+remain intact. Diagnostics establish that hanging scene0 shirts lack colliders;
+window/curtain/folder/bin/washer objects lack native opening switches. This is
+direct component evidence, beyond graph affordance metadata.
+
+The first accepted native repair supplies the existing horizontal grab pose for
+mesh-only hanging shirts while preserving the original method for other objects.
+An earlier collider candidate was rejected because it added six incorrect
+hanger-to-shirt ON edges. The accepted repair preserves initial scenes and passes
+the nine-action clothes-to-bed annotation and evaluator. Reproducible source,
+explicit activation and scoring implications are documented in
+[`helper-scripts/native-repairs/README.md`](../helper-scripts/native-repairs/README.md).
+The original player installation, packages and Python versions remain unchanged.
 
 ## Exact headless failure
 

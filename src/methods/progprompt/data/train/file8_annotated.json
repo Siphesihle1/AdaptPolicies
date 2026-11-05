@@ -7,7 +7,6 @@
       "1: Find the pants and shirt.": [
         "<char0> [find] <clothespants> (382)",
         "<char0> [find] <clothespants> (386)",
-        "<char0> [open] <closet> (374)",
         "<char0> [grab] <clothespants> (386)",
         "<char0> [find] <clothesshirt> (376)",
         "<char0> [grab] <clothesshirt> (376)"
