@@ -26,4 +26,4 @@ Known issues requiring separate review:
 
 Evidence is under `outputs/local/ground_truth_graph_mapping_audit/` and `outputs/local/ground_truth_graph_candidates/sink_goal_repair_20261103T011347Z/`. Only cutlery was successfully replayed in that repair batch; no full replay claim is made for all mapped tasks.
 
-The agent now validates complete dataset mappings before simulator construction and selects ground-truth graphs by task name. CLI selection of env1/env2 remains a separate backlog item; adding their maps does not enable that CLI path.
+The agent validates complete dataset mappings before simulator construction and selects ground-truth graphs by task name. All CLI options are mandatory except that scenes 1 and 2 may omit `--test-set` to select env1 and env2. Explicit `--test-set env1` / `env2` selections require `--env-id 1` / `2`, respectively; scene 0 requires an explicit train/test split. See [dataset selection](dataset_selection.md) for supported commands.

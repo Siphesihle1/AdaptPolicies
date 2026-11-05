@@ -11,4 +11,5 @@ python "$PROGPROMPT_PREFIX/run_eval.py" \
   --env-id 0 \
   --test-set "train" \
   --examples-type "random" \
-  --examples-num 3
+  --examples-num 3 \
+  --num-tasks all

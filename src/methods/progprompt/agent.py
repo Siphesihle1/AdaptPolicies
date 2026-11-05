@@ -15,8 +15,8 @@ from .constants import (
     TASK_PROMPT_ACTION_IMPORTS,
 )
 from .ground_truth import load_ground_truth_graphs
+from .datasets import Dataset, validate_dataset
 from .prompt import (
-    Env0TestSet,
     ExamplesType,
     PromptBuilder,
     load_tasks_from_dir,
@@ -50,18 +50,19 @@ class ProgPromptAgent:
     def __init__(
         self,
         env_id: int,
+        test_set: Dataset,
         examples_type: ExamplesType = "default",
         examples_num=3,
-        test_set: Optional[Env0TestSet] = None,
         num_tasks: Optional[int] = None,
     ):
+        validate_dataset(env_id, test_set)
         self.env_id = env_id
         self.test_set = test_set
-        self.dataset = test_set if test_set else f"env{env_id}"
+        self.dataset = test_set
         dataset_dir = Path(os.environ["PROGPROMPT_DATASET_DIR"])
         task_names = (
             load_tasks_from_dir(str(dataset_dir / test_set))
-            if test_set
+            if env_id == 0
             else load_tasks_from_file(
                 str(dataset_dir / "new_env" / f"env{env_id}_annotated.json")
             )

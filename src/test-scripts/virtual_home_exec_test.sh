@@ -23,7 +23,8 @@ cp -r $PROGPROMPT_PREFIX/data/* $PROGPROMPT_DATASET_DIR/
 
 # Run test script
 echo "--- Running VirtualHome Test Script ---"
-python $PROGPROMPT_PREFIX/run_eval.py
+# Supply all required run_eval options when invoking this script.
+python "$PROGPROMPT_PREFIX/run_eval.py" "$@"
 
 # Kill the servers
 echo "--- Stopping VirtualHome Simulator ---"

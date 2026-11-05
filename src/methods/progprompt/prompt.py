@@ -8,9 +8,9 @@ from virtual_home.graph_query import N
 from virtualhome.simulation.unity_simulator import UnityCommunication
 
 from .constants import DEFAULT_EXAMPLES
+from .datasets import Dataset, validate_dataset
 from .ground_truth import normalize_task_name
 
-Env0TestSet = Literal["test_unseen", "test_seen", "test_unseen_ambiguous_goals"]
 ExamplesType = Literal["default", "random"]
 
 
@@ -89,12 +89,13 @@ class PromptBuilder:
 
     def with_tasks(
         self,
-        test_set: Optional[Env0TestSet] = None,
+        test_set: Dataset,
         num_tasks: Optional[int] = None,
     ):
+        validate_dataset(self.env_id, test_set)
         tasks: List[str] = []
 
-        if test_set is not None:
+        if self.env_id == 0:
             dir_path = f"{os.getenv('PROGPROMPT_DATASET_DIR')}/{test_set}"
             tasks = load_tasks_from_dir(dir_path)
         else:

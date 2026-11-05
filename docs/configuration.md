@@ -2,8 +2,8 @@
 
 Task evaluation uses an audited [task-to-ground_truth_graph mapping](ground_truth_graphs.md)
 and validates the full dataset before simulator construction. All six current
-datasets have mappings; reference-content limitations and the pending env1/env2
-CLI selection fix are documented there.
+datasets have mappings; reference-content limitations are documented there.
+See [dataset selection](dataset_selection.md) for scene-specific commands.
 
 The default configuration is `config/dev.yml`: LM Studio, with Weave disabled.
 The cluster workflow selects `config/live.yml`: Ollama, with Weave enabled.
@@ -122,7 +122,9 @@ already set for the project and bundled VirtualHome):
 export ADAPT_CONFIG=dev
 export PROGPROMPT_DATASET_DIR="$PWD/src/methods/progprompt/data"
 export JOB_OUTPUT_DIR="$PWD/outputs/local"
-python -m methods.progprompt.run_eval --env-id 0 --test-set test_seen --num-tasks 1
+python -m methods.progprompt.run_eval \
+  --expt-name local_test_seen --env-id 0 --test-set test_seen \
+  --num-tasks 1 --examples-type default --examples-num 3
 ```
 
 Offline configuration/adapter checks do not need a simulator or credentials:

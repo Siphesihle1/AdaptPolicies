@@ -58,11 +58,13 @@ are unchanged. The evaluator compares class-name relation/state sets rather
 than object IDs, bounding boxes, or node properties. Mapping validation is
 structural and does not prove goal completeness or simulator feasibility.
 
-Env1/env2 manifests are available to the loader, but the CLI selection fix is
-still pending. Currently `--test-set` defaults to `test_unseen`, so `--env-id 1`
-alone selects those tasks in scene 1 rather than the env1 task collection.
-The CLI's ambiguous-goal choice also differs from the dataset directory name.
-Do not interpret mapping availability as a repaired CLI selection path.
+All CLI options are mandatory except that scenes 1 and 2 may omit `--test-set`
+to select env1 and env2, respectively. Explicit `--test-set env1 --env-id 1`
+and `--test-set env2 --env-id 2` are also supported. Scene 0 requires an explicit
+train/test split. The ambiguous-goal
+choice is `test_unseen_ambiguous_goals`, matching its directory.
+See [dataset selection](dataset_selection.md) for supported commands and cluster
+launcher behavior. The scene ID is always required.
 
 ## Validated repairs and reference versions
 
