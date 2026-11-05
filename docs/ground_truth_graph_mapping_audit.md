@@ -64,3 +64,9 @@ Evidence and exact reference changes: `outputs/local/promoted_cooking_candidates
 Allthree make_toast annotations use supported ON-toaster placement instead of rejected INSIDE. Each full trajectory passes and target bread gains runtime HEATED. References gain target-bread HEATED; env1/2 also gain bread ON toaster, while unseen toast ends held as annotated. Env2 removes only newly introduced actor CLOSE conditions absent from the symbolic trajectory, following the same incidental-proximity rationale as change16. Other metadata/states/relations and all unrelated records are preserved.
 
 Evidence and exact reference changes: `outputs/local/promoted_toast_candidates/changes.json`; successful replay paths are recorded there. No mapping indices or original-archive files changed. Revised goal conditions and augmentation require consistent benchmark-version reporting and rescoring.
+
+### Native food repair: salmon
+
+Env2 heat_salmon_on_the_stove uses supported salmon181 ON fryingpan62 instead of rejected INSIDE. All7 actions pass, including heating and final pickup; runtime salmon HEATED is verified. The existing reference already gives strictSR1 and is unchanged.
+
+Evidence and exact reference changes: `outputs/local/promoted_salmon_candidates/changes.json`; successful replay paths are recorded there. No mapping indices or original-archive files changed. Revised goal conditions and augmentation require consistent benchmark-version reporting and rescoring.

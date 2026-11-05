@@ -105,7 +105,7 @@
         "<char0> [find] <salmon> (181)",
         "<char0> [grab] <salmon> (181)",
         "<char0> [find] <fryingpan> (62)",
-        "<char0> [putin] <salmon> (181) <fryingpan> (62)",
+        "<char0> [putback] <salmon> (181) <fryingpan> (62)",
         "<char0> [switchon] <stove> (163)",
         "<char0> [switchoff] <stove> (163)",
         "<char0> [grab] <salmon> (181)"
