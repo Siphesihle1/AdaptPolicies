@@ -21,7 +21,11 @@ class Action(ABC):
             for action in self.env.actions_to_omit
         )
 
-        if self.task.terminate_current_subtask or omit_action:
+        if (
+            self.env.execution_failed
+            or self.task.terminate_current_subtask
+            or omit_action
+        ):
             return None
 
         return self.action(*objs)
@@ -40,7 +44,7 @@ class PutIn(Action):
         super().run(obj, receptable)
 
     def action(self, *objs: str):
-        (obj, receptacle) = objs
+        obj, receptacle = objs
         self.env.last_action = (self.action_name, *objs)
         obj_ids = [
             id for id in self.env.find_obj(obj) if id in self.env.obj_ids_in_hand

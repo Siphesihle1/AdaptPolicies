@@ -58,6 +58,15 @@ are unchanged. The evaluator compares class-name relation/state sets rather
 than object IDs, bounding boxes, or node properties. Mapping validation is
 structural and does not prove goal completeness or simulator feasibility.
 
+Action execution parses and checks symbolic preconditions before contacting
+Unity. Only a successful native response, including each character's execution
+message, commits the candidate symbolic state and increments executable steps.
+A native rejection or communication exception blocks subsequent actions in that
+environment; start a fresh task environment before further execution. Unity may
+have partially moved the character before reporting failure, so the retained
+symbolic graph represents the last confirmed action, not a validated final native
+state. Failed trajectories must not be reported as successful dataset replays.
+
 All CLI options are mandatory except that scenes 1 and 2 may omit `--test-set`
 to select env1 and env2, respectively. Explicit `--test-set env1 --env-id 1`
 and `--test-set env2 --env-id 2` are also supported. Scene 0 requires an explicit

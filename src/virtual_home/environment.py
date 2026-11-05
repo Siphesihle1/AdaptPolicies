@@ -35,6 +35,7 @@ class VHEnvironment:
         self.log_file = log_file
         self.found_id: Optional[int] = None
         self.last_action: Tuple[str, ...] = tuple()
+        self.execution_failed = False
 
         self.comm.reset(self.env_id)
         self.comm.add_character("Chars/Male2", initial_room=initial_room)
@@ -146,19 +147,19 @@ class VHEnvironment:
 
     def execute(self, script_instruction: str):
         # Adapted from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_execute.py#L224
+        if self.execution_failed:
+            self.log_file.write(
+                "act_success: False, message: Task stopped after Unity failure\n"
+            )
+            return False
+
         self.log_file.write(f"{script_instruction}\n")
-        self.comm.render_script(
-            [script_instruction],
-            recording=False,
-            skip_animation=True,
-            find_solution=False,
-        )
         script = script_instruction[7:]
         self.task.step += 1
 
         try:
             script = parse_script_line(script, 0)
-        except:
+        except Exception:
             self.log_file.write(
                 f"act_success: False, message: Failed to parse script line {script}\n"
             )
@@ -169,6 +170,25 @@ class VHEnvironment:
         if not success:
             self.log_file.write(
                 f"act_success: False, message: {self.executor.info.get_error_string()}\n"
+            )
+            return False
+
+        try:
+            response = self.comm.render_script(
+                [script_instruction],
+                recording=False,
+                skip_animation=True,
+                find_solution=False,
+            )
+        except Exception:
+            # Unity may have partially executed the request before losing contact.
+            self.execution_failed = True
+            raise
+
+        if not unity_execution_succeeded(response):
+            self.execution_failed = True
+            self.log_file.write(
+                f"act_success: False, message: Unity rejected action: {response!r}\n"
             )
             return False
 
@@ -188,3 +208,23 @@ class VHEnvironment:
         )
 
         return True
+
+
+def unity_execution_succeeded(response):
+    """Require transport success and successful character execution messages."""
+    if not isinstance(response, (tuple, list)) or len(response) != 2:
+        return False
+    success, messages = response
+    if success is not True:
+        return False
+
+    def successful_message(message):
+        if isinstance(message, str):
+            return message.strip().lower() == "success"
+        if isinstance(message, dict):
+            return bool(message) and all(
+                successful_message(value) for value in message.values()
+            )
+        return False
+
+    return successful_message(messages)
