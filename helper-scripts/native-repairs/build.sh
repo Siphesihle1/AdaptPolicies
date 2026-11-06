@@ -42,6 +42,7 @@ mkdir -p "$output"
     "$(cygpath -m "$source_dir/WasherContainmentRepair.cs")" \
     "$(cygpath -m "$source_dir/WasherOpeningRepair.cs")" \
     "$(cygpath -m "$source_dir/BinCarryRepair.cs")" \
+    "$(cygpath -m "$source_dir/FacingCompleteness.cs")" \
     "$(cygpath -m "$source_dir/ToolActions.cs")" \
     "$(cygpath -m "$source_dir/ToothpasteOpeningRepair.cs")" \
     "$(cygpath -m "$source_dir/ExtendedActions.cs")" \

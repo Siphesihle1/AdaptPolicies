@@ -1,6 +1,6 @@
 # Local native simulator repairs
 
-This tool builds the `adaptpolicies-native-repairs-v10` patch for a **separate copy** of
+This tool builds the `adaptpolicies-native-repairs-v11` patch for a **separate copy** of
 the official VirtualHome Linux v2.3.0 player (Unity 2021.2.14f1). It preserves that
 player's assets and original IK implementation. It does not rebuild the incomplete
 public Unity asset project. No simulator binaries are distributed here.
@@ -102,7 +102,7 @@ manifest. Copy the two DLLs into the `Managed` directory of a separately copied
 official player, retaining all other player files. Keep the original installation
 unchanged. Set `VIRTUALHOME_SIM_ROOT` to the copied player's directory when using
 the existing simulator launcher, and explicitly export
-`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening,manipulation-actions,tool-manipulation` in the simulator process environment.
+`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening,manipulation-actions,tool-manipulation,facing-completeness` in the simulator process environment.
 Record the manifest with every replay; this is a custom runtime, not stock v2.3.0.
 
 Optional `ADAPTPOLICIES_NATIVE_DIAGNOSTICS` names a directory for read-only scene
@@ -479,11 +479,43 @@ protected train graph1/10, mapping manifest or original archive changes.
 `moved-reference-corrections.json` records exact record IDs and physical evidence.
 These are explicit benchmark-reference corrections with scoring effects.
 
-Fresh-player probes of the exact clothes/lime tasks that missed static FACING
-in the shared player score all four metrics1. A bounded diagnostic found no
-avatar-occlusion explanation; the underlying reset/cache cause remains unproven.
-Final validation therefore starts a fresh native player for each annotation.
-Treat this process-isolation protocol, runtime flags, patch manifest and dataset
-revision as part of the reported configuration. Reusing a player across tasks
-is not covered by a claim of stable reference metrics. Final isolated all69
-validation remains pending at this point.
+Fresh-player probes of the exact clothes/lime tasks initially scored all four
+metrics1, but the subsequent complete isolated replay still has nine scoring
+differences despite69/69 successful action trajectories. Process isolation alone
+is rejected as a fix. Both complete runs and their manifests are retained.
+
+## Static FACING initialization
+
+The explicit `facing-completeness` feature computes static-object FACING at scene
+initialization and once after character addition. It keeps the native eligible
+classes and squared5m range and calls the original native Facing method, retaining
+its LOOKABLE, visibility, angle and chair rules. Only the avatar's own enabled
+body colliders are temporarily excluded during these static-pair queries. Scene
+colliders and semantic objects attached to hands are retained. A finally block
+restores the body colliders and synchronizes physics immediately. Character
+FACING, other relations, navigation and subsequent physical interactions retain
+their original collision behavior. Weak graph-lifecycle tracking avoids repeating
+this initialization after task actions or retaining discarded scenes.
+
+A scene0 capture has98 static FACING edges before the character is added and
+sometimes97 afterward. Reconstructing without the body exclusion still fails.
+The body-excluded pass restores98 in the same case. Earlier restricted diagnostics
+did not capture this initialization case; their zero counterfactual differences
+were insufficient to rule it out. The broader evidence is in
+`facing_complete_candidate_v2/Player.log`. No KD-tree defect is claimed.
+
+All six focused scene0 annotations (pie, trash, clothes, lime, four fruits, wall
+frame) and the two scene1/2 annotations pass all four metrics1. All three initial
+metadata/structural comparisons remain compatible. Evidence:
+`outputs/local/facing_complete_candidate_v2/` and `facing_complete_scenes_v1/`.
+The installed main build is version11, `final-main-build-v1`; the patched original
+assembly still changes only the same twelve methods. Python99 tests pass.
+
+This makes static orientation relations independent of transient avatar-body
+occlusion and must be reported as part of the custom runtime's graph semantics.
+No static FACING reference goal or scoring formula is removed. The apparent plate
+preservation issue in the isolated breakfast trace is also caused by missing
+static-instance FACING: the evaluator collapses object IDs to class names. The
+reference contains the untouched plates273/277 facing the clock, not moved
+plate278. Its guard rejected an attempted extra correction; no plate reference
+was changed. The final all69 replay on version11 remains required.

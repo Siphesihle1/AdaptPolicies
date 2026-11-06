@@ -70,6 +70,7 @@ namespace AdaptPolicies.NativeRepairs
         public static void CaptureEffects(object value, Transform root, EnvironmentGraphCreator creator)
         {
             var graph = (EnvironmentGraph)value;
+            FacingCompleteness.Refresh(graph,creator);
             RefreshGraph(graph);
             foreach (var node in graph.nodes)
             {
