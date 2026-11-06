@@ -98,8 +98,8 @@ def _is_food(node):
 
 
 def add_toaster_states(state, nodes_with_additional_states):
-    active = N(state).class_name("toaster").state("ON").select("id")
-    food_ids = E(state).to_in(*active).relation_in("ON", "INSIDE").select("from_id")
+    active: List[int] = N(state).class_name("toaster").state("ON").select("id")  # type: ignore
+    food_ids: List[int] = E(state).to_in(*active).relation_in("ON", "INSIDE").select("from_id")  # type: ignore
     for node in N(state).id_in(*food_ids).get_all():
         if _is_food(node):
             if "HEATED" not in node["states"]:
