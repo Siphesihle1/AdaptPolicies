@@ -113,7 +113,7 @@ def add_washingmachine_states(
     nodes_with_additional_states: Dict[int, Any],
 ):
     washingmachine_cond: List[int] = (
-        N(state).id_in(*washingmachine_ids).state("ON").select("id")
+        N(state).id_in(*washingmachine_ids).state("ON").state("CLOSED").select("id")
     )  # type: ignore
 
     if len(washingmachine_cond) > 0:
@@ -125,7 +125,8 @@ def add_washingmachine_states(
         )
 
         for n in cloth_in_washingmachine_cond:
-            n["states"].append("WASHED")
+            if "WASHED" not in n["states"]:
+                n["states"].append("WASHED")
             nodes_with_additional_states[n["id"]] = n
 
 

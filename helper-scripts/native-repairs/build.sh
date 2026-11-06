@@ -37,6 +37,8 @@ mkdir -p "$output"
     "$(cygpath -m "$source_dir/FolderOpeningRepair.cs")" \
     "$(cygpath -m "$source_dir/FolderPaperRepair.cs")" \
     "$(cygpath -m "$source_dir/SinkReleaseRepair.cs")" \
+    "$(cygpath -m "$source_dir/WasherContainmentRepair.cs")" \
+    "$(cygpath -m "$source_dir/WasherOpeningRepair.cs")" \
     "$(cygpath -m "$source_dir/BinCarryRepair.cs")"
 pwsh.exe -NoProfile -File "$(cygpath -m "$source_dir/patch-player.ps1")" \
     -ManagedDirectory "$(cygpath -m "$managed")" \

@@ -1,6 +1,6 @@
 # Local native simulator repairs
 
-This tool builds the `adaptpolicies-native-repairs-v7` patch for a **separate copy** of
+This tool builds the `adaptpolicies-native-repairs-v8` patch for a **separate copy** of
 the official VirtualHome Linux v2.3.0 player (Unity 2021.2.14f1). It preserves that
 player's assets and original IK implementation. It does not rebuild the incomplete
 public Unity asset project. No simulator binaries are distributed here.
@@ -102,7 +102,7 @@ manifest. Copy the two DLLs into the `Managed` directory of a separately copied
 official player, retaining all other player files. Keep the original installation
 unchanged. Set `VIRTUALHOME_SIM_ROOT` to the copied player's directory when using
 the existing simulator launcher, and explicitly export
-`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose` in the simulator process environment.
+`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening` in the simulator process environment.
 Record the manifest with every replay; this is a custom runtime, not stock v2.3.0.
 
 Optional `ADAPTPOLICIES_NATIVE_DIAGNOSTICS` names a directory for read-only scene
@@ -273,3 +273,50 @@ Three original native failures remain: clothes washing, rug washing and brushing
 teeth. The variable clock/TV FACING goals and the earlier held-bin door-Close
 failure remain separate backlog items. Final all69 replay and runtime adoption
 are still required; targeted tests are not an aggregate69-entry result.
+
+## Washer repair validation
+
+The `washer-opening` feature partitions the original textured front surface into
+a fixed housing and a100-degree hinged door, interpolating the original UVs and
+normals. Their combined surface area equals the original. An inner door backing
+and physical cylindrical drum complete the cavity. Original player asset files
+remain unchanged; these meshes are constructed in the separate runtime. Native
+Open/Close switches drive the hinge. A native power switch toggles an indicator
+and drives drum rotation while powered; switching off stops it.
+
+Only the verified clothes-pile prefab is admitted to the new drum placement.
+The planner checks every visible vertex, actual radial/depth limits, other
+obstacles and an open door. Native held-object checks, IK and release remain.
+The release rotation accounts for the original parent transform, matching the
+native release implementation's local-rotation assignment. Closed-door, unheld
+and oversized unfolded-rug insertions reject. No payload scale is changed.
+
+The clothes annotation omits only unsupported Open closet374, retaining all
+subtask keys and nineteen other actions. Only train reference graph0 changes:
+closet374 retains its original CLOSED state, and clothes407 must be WASHED.
+Washing inference now requires a closed, powered machine and adds WASHED only
+once across repeated state updates. Its tests cover open/unpowered machines,
+surface contact and unrelated machine IDs.
+
+Evidence: `outputs/local/washer_main_validation_v2/`. Three full physical cycles
+keep all266 visible clothes vertices inside through closing, power cycling and
+reopening, with less than3mm radial clearance and original scale. Native
+containment persists, retrieval succeeds, the drum moves during the powered
+interval and remains stationary after switching off. An eleven-action batch
+cycle and Open/Close/power controls in all three scenes also pass. Initial scenes
+remain equivalent. Python89 tests pass. Only the two declared DLLs differ from
+the original player; eleven original methods are hooked and3345 unchanged.
+
+The fresh clothes replay passes19/19 native/symbolic actions and all four metrics1,
+with a single WASHED state. All sixteen targeted annotations execute completely
+with Exec/Precision1. Eleven score all four metrics1. Five have missing unrelated
+FACING reference goals, including clock/TV and table objects facing the clock;
+the exact tasks, scores and missing conditions are retained in validation-summary.
+This evaluation-consistency issue remains unresolved. No FACING goals or scoring
+formulas were changed. Protected graphs1/10, every other annotation/reference
+record, mapping manifests and the original archive remain preserved.
+
+Rug washing and brushing teeth remain unsupported. Explicit folding actions are
+approved for further work, with their planning-interface impact to be documented.
+The user declined toothbrushing-specific actions. No new vocabulary actions have
+been added. Full all69 replay and final runtime adoption remain pending.

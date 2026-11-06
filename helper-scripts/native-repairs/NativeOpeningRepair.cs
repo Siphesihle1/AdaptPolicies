@@ -13,7 +13,7 @@ namespace AdaptPolicies.NativeRepairs
 
         public static bool IsRepairedInteraction(GameObject target)
         {
-            return WindowCurtainRepair.IsWindowCurtain(target) || WindowOpeningRepair.IsWindow(target) || FolderOpeningRepair.IsFolder(target);
+            return WasherOpeningRepair.IsWasher(target) || WindowCurtainRepair.IsWindowCurtain(target) || WindowOpeningRepair.IsWindow(target) || FolderOpeningRepair.IsFolder(target);
         }
         public static bool HasFrontOverride(GameObject target)
         {
@@ -21,12 +21,14 @@ namespace AdaptPolicies.NativeRepairs
         }
         public static Vector3 GetFront(GameObject target)
         {
+            if (WasherOpeningRepair.IsWasher(target)) return WasherOpeningRepair.GetFront(target);
             if (BinCarryRepair.IsDoorway(target)) return BinCarryRepair.DoorwayFront(target);
             if (FolderOpeningRepair.IsFolder(target)) return FolderOpeningRepair.GetFront(target);
             return WindowOpeningRepair.IsWindow(target) ? WindowOpeningRepair.GetFront(target) : WindowCurtainRepair.GetFront(target);
         }
         public static void Prepare(Transform home)
         {
+            WasherOpeningRepair.Prepare(home);
             LidlessBinRepair.Prepare(home);
             FolderOpeningRepair.Prepare(home);
             WindowCurtainRepair.Prepare(home);

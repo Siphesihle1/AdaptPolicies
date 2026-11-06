@@ -90,6 +90,8 @@ namespace AdaptPolicies.NativeRepairs
         public static List<Vector3> Positions(Vector3 interactionPosition, GameObject payload, GameObject destination,
             bool inside, bool unused, Vector2? explicitPosition, float y, State current, PutAction action)
         {
+            var washerPositions = WasherContainmentRepair.Positions(interactionPosition, payload, destination, inside, unused, explicitPosition, y, current, action);
+            if (washerPositions != null) return washerPositions;
             if (!FolderOpeningRepair.IsFolder(destination))
                 return SinkReleaseRepair.Positions(interactionPosition, payload, destination, inside, unused, explicitPosition, y);
             var result = new List<Vector3>();
@@ -107,6 +109,7 @@ namespace AdaptPolicies.NativeRepairs
         }
         public static void PreparePut(State state)
         {
+            WasherContainmentRepair.PreparePut(state);
             SinkReleaseRepair.PreparePut(state);
             var action = state.Action as PutAction;
             if (action == null) return;
