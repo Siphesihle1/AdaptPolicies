@@ -142,6 +142,7 @@ namespace AdaptPolicies.NativeRepairs
             foreach (var node in graph.nodes)
             {
                 ToolActions.UpdateNode(node);
+                DoorClosureRepair.UpdateNode(node);
                 var fold = node.transform == null ? null : node.transform.GetComponent<RugFold>();
                 if (fold == null || !fold.Completed)
                     continue;

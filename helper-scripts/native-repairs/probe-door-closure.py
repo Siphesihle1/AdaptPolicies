@@ -44,7 +44,7 @@ def main():
 
     def run(action, expected=True, animated=False):
         response = comm.render_script(
-            ["<char0> " + action],
+            ["<char0> " + action] if isinstance(action, str) else action,
             recording=False,
             skip_animation=not animated,
             find_solution=False,
@@ -101,6 +101,26 @@ def main():
 
     assert comm.reset(0)
     assert comm.add_character("Chars/Male2", initial_room="kitchen")
+    run(
+        [
+            "<char0> [walk] <kitchen> (205)",
+            "<char0> [find] <garbagecan> (229)",
+            "<char0> [grab] <garbagecan> (229)",
+            "<char0> [walk] <door> (224)",
+            "<char0> [close] <door> (224)",
+        ]
+    )
+    batch = graph()
+    assert "CLOSED" in node(batch, 224)["states"] and angle(batch) < 5
+    assert any(
+        e["from_id"] == 1
+        and e["to_id"] == 229
+        and e["relation_type"].startswith("HOLDS")
+        for e in batch["edges"]
+    )
+
+    assert comm.reset(0)
+    assert comm.add_character("Chars/Male2", initial_room="kitchen")
     for action in (
         "[find] <apple> (438)",
         "[grab] <apple> (438)",
@@ -127,6 +147,7 @@ def main():
             {
                 "cycles": results,
                 "full_hands_rejected": True,
+                "five_action_batch_closed_angle": angle(batch),
                 "animation": args.animation,
             },
             indent=2,

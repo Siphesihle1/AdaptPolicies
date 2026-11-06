@@ -2,8 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using StoryGenerator.CharInteraction;
 using StoryGenerator.DoorProperties;
+using StoryGenerator.Utilities;
 using UnityEngine;
 
 namespace AdaptPolicies.NativeRepairs
@@ -11,6 +13,22 @@ namespace AdaptPolicies.NativeRepairs
     public static class DoorClosureRepair
     {
         static readonly FieldInfo Duration = typeof(HandInteraction.TransitionBase).GetField("duration", BindingFlags.Instance | BindingFlags.NonPublic);
+        static readonly ConditionalWeakTable<GameObject, object> Completed = new ConditionalWeakTable<GameObject, object>();
+
+        public static void UpdateNode(EnvironmentObject node)
+        {
+            if (node.transform == null || !Handles(node.transform.gameObject, true)) return;
+            var target = node.transform.gameObject;
+            object completed;
+            if (!Completed.TryGetValue(target, out completed)) return;
+            var closedYaw = target.GetComponent<Properties_door>().yRotClose;
+            if (Mathf.Abs(Mathf.DeltaAngle(target.transform.eulerAngles.y, closedYaw)) >= 5f) return;
+            // A multi-action native update can retain the earlier Walk snapshot.
+            // Refresh only a completed closure whose live hinge is still closed.
+            node.obj_transform = new ObjectTransform(node.transform);
+            node.states.Remove(ObjectState.OPEN);
+            node.states.Add(ObjectState.CLOSED);
+        }
 
         public static IEnumerator Await(IEnumerator original, GameObject target)
         {
@@ -50,6 +68,7 @@ namespace AdaptPolicies.NativeRepairs
                 {
                     body.angularVelocity = Vector3.zero;
                     body.isKinematic = true;
+                    Completed.GetValue(target, _ => new object());
                 }
             }
             finally

@@ -565,8 +565,15 @@ retains the native stopper and existing actor/payload collision rules, and limit
 the existing hinge to the arc between its current pose and native closed yaw.
 It waits for the native transition and latches the body only after its measured
 yaw is within5degrees of closed. A finally block restores the original collision
-pairs and hinge settings. No transform is assigned and no graph relation, state
-or success response is supplied by the repair.
+pairs and hinge settings. No transform is assigned and no success response is
+supplied by the repair.
+
+A native multi-action graph update can retain the earlier Walk snapshot of the
+door even after the leaf has closed. After a completed, physically verified
+closure, the repair refreshes that node's transform and CLOSED state from the
+live hinge pose. The marker is scoped to the scene object's lifetime and the
+refresh requires its actual yaw to remain within5degrees of closed. This derives
+the graph from the physical result; it does not substitute for executing Close.
 
 Close uses the same native0.4m kitchen-side doorway stance as Walk. The additional
 `IsOpenablePosition` hook keeps the Close planner consistent with that stance;
@@ -607,3 +614,13 @@ and symbolic action and all four metrics1, including the unchanged trash task.
 Initial scene0/1/2 comparisons pass. Python99 tests passed; actual IL audit
 confirms13 modified and3343 unchanged methods. Full69 replay on this exact build
 is the final pending check before local runtime adoption.
+
+
+The whole-script extension of the probe exposed the stale native Walk snapshot
+after an otherwise completed physical closure. The final `door-main-build-v3`
+helper refreshes that snapshot from the verified live result. Its eight pose
+controls, two whole-script batches and two full-hands negatives pass in
+`door_closure_main_v3`; the native13-method inventory is unchanged. The earlier
+partial `full_unity_door_v12` replay was deliberately stopped when this cache
+issue was found. It is not a full validation result. The final all69 replay is
+restarted from the clean batch-fix commit in `full_unity_door_v12_final`.
