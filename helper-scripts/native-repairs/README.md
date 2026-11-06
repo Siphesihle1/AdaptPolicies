@@ -1,6 +1,6 @@
 # Local native simulator repairs
 
-This tool builds the `adaptpolicies-native-repairs-v5` patch for a **separate copy** of
+This tool builds the `adaptpolicies-native-repairs-v6` patch for a **separate copy** of
 the official VirtualHome Linux v2.3.0 player (Unity 2021.2.14f1). It preserves that
 player's assets and original IK implementation. It does not rebuild the incomplete
 public Unity asset project. No simulator binaries are distributed here.
@@ -52,6 +52,22 @@ the asset's offset collision bounds. Graph edges and action success are produced
 by the native simulator. No INSIDE relation or success response is supplied by
 the repair.
 
+The `bin-carry` feature permits the known small `Garbage_can_8` asset through the
+native class pickup gate without changing class properties or scene metadata.
+Its original mesh, dimensions, IK pickup and hand attachment are retained.
+The geometry guard requires the expected1320-vertex mesh, bounded dimensions and
+an empty interior. A second planner guard also applies to existing interactions,
+rejects repeat grabs and checks reach. Original free-hand and navigation checks
+still run. Other prefabs retain the original pickup rules. Symbolic pickup has
+the corresponding narrow exception for an empty MOVABLE bin of this prefab;
+proximity, enclosure and free-hand checks remain required.
+
+The kitchen door's native open-handle position is displaced from its fixed
+doorway. For this one door prefab in the kitchen, the approach uses the midpoint
+of its original doorway endpoints, the normal toward the kitchen and a0.4m
+standoff. The original path search, collision checks and walking execute the
+approach. The door leaf, interaction handle and scene metadata are unchanged.
+
 ## Build
 
 Run commands through the required `%USERPROFILE%\scripts\zsh-run.cmd` wrapper.
@@ -75,7 +91,7 @@ manifest. Copy the two DLLs into the `Managed` directory of a separately copied
 official player, retaining all other player files. Keep the original installation
 unchanged. Set `VIRTUALHOME_SIM_ROOT` to the copied player's directory when using
 the existing simulator launcher, and explicitly export
-`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening` in the simulator process environment.
+`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry` in the simulator process environment.
 Record the manifest with every replay; this is a custom runtime, not stock v2.3.0.
 
 Optional `ADAPTPOLICIES_NATIVE_DIAGNOSTICS` names a directory for read-only scene
@@ -178,3 +194,35 @@ edges or scoring formulas were changed to hide it. Python tests:81 passed.
 Eight of3356 original methods have narrow hooks;3348 are unchanged.
 Five original native-action failures remain, alongside this scoring issue.
 The required final all69 replay and runtime adoption are still pending.
+
+## Empty-bin carry validation
+
+The user clarified “take out the trash” as carrying the empty bin to the kitchen
+doorway. Its annotation now walks to kitchen205, finds bin229, grabs it and walks
+to door224. All nine original subtask keys remain. Only train reference graph11
+changes: the bin is held and near the character, while door224 and the lidless
+bin retain their initial OPEN and CLOSED metadata respectively. The old goals
+for opening the bin and closing the door do not describe this clarified task.
+Scoring formulas are unchanged; the reference correction is separate from the
+new physical pickup capability.
+
+Evidence: `outputs/local/bin_carry_main_validation_v9/` and
+`outputs/local/bin_carry_main_validation_v10/`. Three repeated carries retain
+native hand attachment and original scale, move the visible bin more than1m,
+and end with the character in the kitchen0.4m from the fixed doorway. Filled,
+unsupported-prefab, full-hands and duplicate-grab controls reject pickup.
+All three initial scenes remain equivalent. Nine other task regressions pass
+every native/symbolic action and all four metrics; the fresh corrected-reference
+trash replay is recorded separately. The older trash trace requiring an OPEN
+bin is preserved, with PSR5/6, SR0, Precision/Exec1.
+
+Python tests:86 passed. Eleven of3356 original methods have narrow hooks and
+3345 are unchanged. Only the two declared managed DLLs differ from the original
+player. All other annotation/reference records, protected graphs1/10, mapping
+manifests and original archive are preserved. Four original native task failures
+remain: clothes washing, pan washing, rug washing and brushing teeth. The varying
+clock/TV FACING goals remain an evaluation-consistency backlog item even though
+the latest paper regression passes. Native Close door224 while holding the bin
+also failed during an earlier probe; the clarified task does not require Close.
+No fix is claimed for that separate action. The final all69 replay and default
+runtime adoption remain pending.

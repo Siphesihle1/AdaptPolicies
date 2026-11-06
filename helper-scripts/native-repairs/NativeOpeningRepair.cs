@@ -15,8 +15,13 @@ namespace AdaptPolicies.NativeRepairs
         {
             return WindowCurtainRepair.IsWindowCurtain(target) || WindowOpeningRepair.IsWindow(target) || FolderOpeningRepair.IsFolder(target);
         }
+        public static bool HasFrontOverride(GameObject target)
+        {
+            return IsRepairedInteraction(target) || BinCarryRepair.IsDoorway(target);
+        }
         public static Vector3 GetFront(GameObject target)
         {
+            if (BinCarryRepair.IsDoorway(target)) return BinCarryRepair.DoorwayFront(target);
             if (FolderOpeningRepair.IsFolder(target)) return FolderOpeningRepair.GetFront(target);
             return WindowOpeningRepair.IsWindow(target) ? WindowOpeningRepair.GetFront(target) : WindowCurtainRepair.GetFront(target);
         }

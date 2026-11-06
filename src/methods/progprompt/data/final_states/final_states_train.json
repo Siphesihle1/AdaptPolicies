@@ -164883,7 +164883,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "PRE_DOO_Door_01_03",
         "bounding_box": {
@@ -164909,7 +164909,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "OPEN"
+          "CLOSED"
         ],
         "prefab_name": "Garbage_can_8",
         "bounding_box": {
@@ -179831,6 +179831,21 @@
         "from_id": 178,
         "relation_type": "INSIDE",
         "to_id": 73
+      },
+      {
+        "from_id": 1,
+        "relation_type": "HOLDS_RH",
+        "to_id": 229
+      },
+      {
+        "from_id": 1,
+        "relation_type": "CLOSE",
+        "to_id": 229
+      },
+      {
+        "from_id": 229,
+        "relation_type": "CLOSE",
+        "to_id": 1
       }
     ]
   },

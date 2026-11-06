@@ -413,7 +413,11 @@ class GrabExecutor(ActionExecutor):
                     yield state
 
     def check_grabbable(self, state: EnvironmentState, node: GraphNode, info: ExecutionInfo, char_index) -> Optional[Relation]:
-        if Property.GRABBABLE not in node.properties and node.class_name not in ['water', 'child']:
+        if (
+            Property.GRABBABLE not in node.properties
+            and node.class_name not in ["water", "child"]
+            and not _can_carry_empty_bin(state, node)
+        ):
             info.error('{} is not grabbable', node)
             return None
 
@@ -1377,6 +1381,22 @@ def _find_holding_hand(state: EnvironmentState, node: Node, char_index: int):
     if state.evaluate(ExistsRelation(CharacterNode(char_index), Relation.HOLDS_LH, NodeInstanceFilter(node))):
         return Relation.HOLDS_LH
     return None
+
+
+def _can_carry_empty_bin(state, node):
+    if (
+        node.class_name != "garbagecan"
+        or node.prefab_name != "Garbage_can_8"
+        or Property.MOVABLE not in node.properties
+    ):
+        return False
+    for other in state.get_nodes():
+        for relation in (Relation.INSIDE, Relation.HOLDS_RH, Relation.HOLDS_LH):
+            if any(
+                target.id == node.id for target in state.get_nodes_from(other, relation)
+            ):
+                return False
+    return True
 
 
 def _is_inside(state: EnvironmentState, node: Node):

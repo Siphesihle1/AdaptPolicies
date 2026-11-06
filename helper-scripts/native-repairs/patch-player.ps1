@@ -73,7 +73,7 @@ try {
 
     $front = @($original.MainModule.Types | ForEach-Object { $_.Methods } | Where-Object Name -eq 'GetObjectFrontVec')
     if ($front.Count -ne 1 -or $front[0].Parameters.Count -ne 1 -or !$front[0].IsStatic) { throw 'Unexpected front-direction method signature.' }
-    $isCurtain = $original.MainModule.ImportReference(($curtain.Methods | Where-Object Name -eq 'IsRepairedInteraction'))
+    $isCurtain = $original.MainModule.ImportReference(($curtain.Methods | Where-Object Name -eq 'HasFrontOverride'))
     $getFront = $original.MainModule.ImportReference(($curtain.Methods | Where-Object Name -eq 'GetFront'))
     $processor = $front[0].Body.GetILProcessor()
     $first = $front[0].Body.Instructions[0]
@@ -138,15 +138,58 @@ try {
         $processor.InsertAfter($call,$return)
     }
 
+    $carry = $helper.MainModule.GetType('AdaptPolicies.NativeRepairs.BinCarryRepair')
+    $processGrab = @($executor.Methods | Where-Object Name -eq 'ProcessGrab')
+    if ($processGrab.Count -ne 1 -or $processGrab[0].Parameters.Count -ne 2) { throw 'Unexpected native grab capability planner.' }
+    $gate = @($processGrab[0].Body.Instructions | Where-Object { $_.OpCode.Code -eq [Mono.Cecil.Cil.Code]::Callvirt -and $_.Operand.Name -eq 'Contains' -and $_.Previous.Operand -eq 'GRABBABLE' })
+    if ($gate.Count -ne 1) { throw 'Expected one native GRABBABLE property gate.' }
+    $processor = $processGrab[0].Body.GetILProcessor()
+    $processor.InsertBefore($gate[0],$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_1))
+    $processor.InsertBefore($gate[0],$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_2))
+    $gate[0].OpCode = [Mono.Cecil.Cil.OpCodes]::Call
+    $gate[0].Operand = $original.MainModule.ImportReference(($carry.Methods | Where-Object Name -eq 'AllowsGrab'))
+    $grabPlanner = @($executor.Methods | Where-Object Name -eq 'ProcessGrabAction')
+    if ($grabPlanner.Count -ne 1 -or $grabPlanner[0].Parameters.Count -ne 2) { throw 'Unexpected native grab planner signature.' }
+    $filterGrab = $original.MainModule.ImportReference(($carry.Methods | Where-Object Name -eq 'FilterGrab'))
+    $processor = $grabPlanner[0].Body.GetILProcessor()
+    foreach ($instruction in @($grabPlanner[0].Body.Instructions | Where-Object { $_.OpCode.Code -eq [Mono.Cecil.Cil.Code]::Ret })) {
+        $instruction.OpCode = [Mono.Cecil.Cil.OpCodes]::Ldarg_1
+        $instruction.Operand = $null
+        $state = $processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_2)
+        $call = $processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$filterGrab)
+        $return = $processor.Create([Mono.Cecil.Cil.OpCodes]::Ret)
+        $processor.InsertAfter($instruction,$state)
+        $processor.InsertAfter($state,$call)
+        $processor.InsertAfter($call,$return)
+    }
+
+    $pointFinder = @($executor.Methods | Where-Object Name -eq 'FindInteractionPoint')
+    if ($pointFinder.Count -ne 1 -or $pointFinder[0].IsStatic -or $pointFinder[0].Parameters.Count -ne 11) { throw 'Unexpected interaction point signature.' }
+    $anchor = $original.MainModule.ImportReference(($carry.Methods | Where-Object Name -eq 'DoorwayAnchor'))
+    $distance = $original.MainModule.ImportReference(($carry.Methods | Where-Object Name -eq 'ApproachDistance'))
+    $processor = $pointFinder[0].Body.GetILProcessor()
+    $anchors = @($pointFinder[0].Body.Instructions | Where-Object { $_.OpCode.Code -eq [Mono.Cecil.Cil.Code]::Ldfld -and $_.Operand.Name -eq 'originalPosition' })
+    $offsets = @($pointFinder[0].Body.Instructions | Where-Object { $_.OpCode.Code -eq [Mono.Cecil.Cil.Code]::Ldc_R4 -and $_.Operand -eq [single]0.75 })
+    if ($anchors.Count -ne 1 -or $offsets.Count -ne 3) { throw 'Unexpected native opening approach structure.' }
+    $target = $processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_2)
+    $call = $processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$anchor)
+    $processor.InsertAfter($anchors[0],$target)
+    $processor.InsertAfter($target,$call)
+    foreach ($offset in $offsets) {
+        $offset.OpCode = [Mono.Cecil.Cil.OpCodes]::Ldarg_2
+        $offset.Operand = $null
+        $processor.InsertAfter($offset,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$distance))
+    }
+
     $original.Write($OutputAssembly)
     $manifest = [ordered]@{
         base = 'Official VirtualHome Linux v2.3.0 (Unity 2021.2.14f1)'
-        patch = 'adaptpolicies-native-repairs-v5'
+        patch = 'adaptpolicies-native-repairs-v6'
         originalSha256 = $actualHash
         helperSha256 = (Get-FileHash -LiteralPath $HelperAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
         patchedSha256 = (Get-FileHash -LiteralPath $OutputAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
-        modifiedMethods = @($create[0].FullName,$updates[0].FullName,$grab[0].FullName,$front[0].FullName,$interaction[0].FullName,$put[0].FullName,$move.FullName,$getIO[0].FullName)
-        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening'
+        modifiedMethods = @($create[0].FullName,$updates[0].FullName,$grab[0].FullName,$front[0].FullName,$interaction[0].FullName,$put[0].FullName,$move.FullName,$getIO[0].FullName,$processGrab[0].FullName,$grabPlanner[0].FullName,$pointFinder[0].FullName)
+        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry'
         assetsModified = $false
         originalInstallationModified = $false
         nativeReplayVerified = $false

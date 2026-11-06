@@ -28,21 +28,16 @@
         "<char0> [find] <garbagecan> (229)"
       ],
       "2: pick up garbage can": [
-        "<char0> [open] <garbagecan> (229)"
+        "<char0> [grab] <garbagecan> (229)"
       ],
       "3: walk to door": [
-        "<char0> [walk] <door> (51)",
-        "<char0> [walk] <door> (224)",
-        "<char0> [walk] <door> (224)",
         "<char0> [walk] <door> (224)"
       ],
       "4: open door": [],
       "5: walk outside": [],
       "6: put garbage can down": [],
       "7: walk back inside": [],
-      "8: Done": [
-        "<char0> [close] <door> (224)"
-      ]
+      "8: Done": []
     }
   },
   {
