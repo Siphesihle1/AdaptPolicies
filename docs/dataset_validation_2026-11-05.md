@@ -170,3 +170,37 @@ files and the original simulator installation remain unchanged.
 This resolves two additional prior native failures on the custom candidate.
 Eleven remain. The last complete stock replay is still55/69; the final all69
 replay on the declared custom runtime remains pending.
+
+## 2026-11-06: native hinged window opening
+
+The explicit `window-opening` feature in `adaptpolicies-native-repairs-v3`
+separates the original readable window meshes into a fixed outer frame and an
+inner sash/glass assembly. All original triangles, material slots and vertex
+attributes are retained. The native Open switch rotates the sash70 degrees
+toward the room, and Close reverses that transition. A reachable contact point
+allows closing the wider window after opening. Generated sash children are
+excluded from prefab matching. Shared opening logic waits for actual native
+transitions; it does not fabricate native success or graph states.
+
+The unchanged test_seen/open_window annotation passes4/4 native and symbolic
+actions with PSR=1, SR=1, Precision=1, Exec=1. Both accepted curtain annotations
+and the9-action clothes-to-bed task also pass on the same final build. Scenes0/1/2
+retain all initial static metadata and structural edges. Nine fresh-instance
+window Open/Close controls pass across IDs70/91/364, with a stationary frame,
+70-degree sash rotation, OPEN/CLOSED and restoration. Nine further controls
+perform three successive Open/Close cycles on each same instance, confirming
+that transitions rearm after Close. All six curtain controls still pass.
+
+Evidence: `outputs/local/window_final_validation_v3/` and
+`outputs/local/window_reopen_controls_v3/`. Earlier candidate evidence retains
+the rejected far-edge contact point, which opened the wide window but made
+Close unreachable. The final method audit still has3351/3356 original methods
+unchanged and no original methods added or removed. Only the patched original
+managed assembly and our separate helper DLL differ from the official player;
+all original assets/IK and the original installation remain intact.
+
+No dataset, archive, mapping, reference or evaluator changes. This resolves one
+additional original task failure on the declared custom runtime;10 remain.
+The last complete stock replay remains55/69. The final all69 replay is pending
+the remaining container, approach and placement repairs; no aggregate result
+is inferred from separate targeted runs.

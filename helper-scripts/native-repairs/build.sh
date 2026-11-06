@@ -30,7 +30,9 @@ mkdir -p "$output"
     "$(cygpath -m "$source_dir/SceneAssetDiagnostics.cs")" \
     "$(cygpath -m "$source_dir/ShirtGrabRepair.cs")" \
     "$(cygpath -m "$source_dir/NativeRepairFeatures.cs")" \
-    "$(cygpath -m "$source_dir/WindowCurtainRepair.cs")"
+    "$(cygpath -m "$source_dir/WindowCurtainRepair.cs")" \
+    "$(cygpath -m "$source_dir/WindowOpeningRepair.cs")" \
+    "$(cygpath -m "$source_dir/NativeOpeningRepair.cs")"
 pwsh.exe -NoProfile -File "$(cygpath -m "$source_dir/patch-player.ps1")" \
     -ManagedDirectory "$(cygpath -m "$managed")" \
     -HelperAssembly "$(cygpath -m "$output/AdaptPolicies.NativeRepairs.dll")" \

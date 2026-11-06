@@ -28,6 +28,8 @@ namespace AdaptPolicies.NativeDiagnostics
             public string name;
             public int vertices;
             public int subMeshes;
+            public float[] position;
+            public float[] rotation;
         }
         [Serializable] class Item
         {
@@ -102,7 +104,7 @@ namespace AdaptPolicies.NativeDiagnostics
                     foreach (var filter in transform.GetComponentsInChildren<MeshFilter>(true))
                     {
                         var mesh = filter.sharedMesh;
-                        item.meshes.Add(new Mesh { objectName = filter.name, name = mesh == null ? null : mesh.name, vertices = mesh == null ? 0 : mesh.vertexCount, subMeshes = mesh == null ? 0 : mesh.subMeshCount });
+                        item.meshes.Add(new Mesh { objectName = filter.name, name = mesh == null ? null : mesh.name, vertices = mesh == null ? 0 : mesh.vertexCount, subMeshes = mesh == null ? 0 : mesh.subMeshCount, position = Coordinates(filter.transform.position), rotation = Coordinates(filter.transform.localEulerAngles) });
                     }
                     report.items.Add(item);
                 }

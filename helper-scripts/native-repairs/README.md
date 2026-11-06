@@ -1,6 +1,6 @@
 # Local native simulator repairs
 
-This tool builds the `adaptpolicies-native-repairs-v2` patch for a **separate copy** of
+This tool builds the `adaptpolicies-native-repairs-v3` patch for a **separate copy** of
 the official VirtualHome Linux v2.3.0 player (Unity 2021.2.14f1). It preserves that
 player's assets and original IK implementation. It does not rebuild the incomplete
 public Unity asset project. No simulator binaries are distributed here.
@@ -15,10 +15,17 @@ native implementation. Without that feature, the original grab-pose implementati
 The `window-curtains` feature installs native Open switches and reversible
 scale/position transitions for the existing window-curtain panels. Open gathers
 each panel to20% width at the outer edge; Close restores its original transforms.
-The native approach direction faces the room. A curtain-only coroutine wrapper
+The native approach direction faces the room. A repaired-opening coroutine wrapper
 waits for the real switch transitions to finish before interaction completion,
 including accelerated execution. Shower curtains retain their existing behavior.
-The two features can be enabled together with a comma-separated setting.
+The `window-opening` feature partitions the two original readable window meshes
+into a stationary outer frame and a hinged inner sash with its original glass.
+Every original triangle stays in exactly one part, retaining its material and
+vertex attributes. Native Open rotates the sash70 degrees into the room; Close
+restores it. The contact point stays close enough to the hinge for both actions.
+Only original `PRE_Window_*` roots receive interactions; generated sash children
+are excluded. No source asset files are replaced. The three features can be
+enabled together with a comma-separated setting.
 
 ## Build
 
@@ -43,7 +50,7 @@ manifest. Copy the two DLLs into the `Managed` directory of a separately copied
 official player, retaining all other player files. Keep the original installation
 unchanged. Set `VIRTUALHOME_SIM_ROOT` to the copied player's directory when using
 the existing simulator launcher, and explicitly export
-`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains` in the simulator process environment.
+`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening` in the simulator process environment.
 Record the manifest with every replay; this is a custom runtime, not stock v2.3.0.
 
 Optional `ADAPTPOLICIES_NATIVE_DIAGNOSTICS` names a directory for read-only scene
@@ -78,6 +85,14 @@ with both features enabled. Initial scenes0/1/2 remain equivalent.
 
 Evidence: `outputs/local/shirt_grab_repair_main_v1/`,
 `outputs/local/official_diagnostic_scene_comparison/`, and
-`outputs/local/curtain_main_wait_validation_v2/`. The last complete stock replay
+`outputs/local/curtain_main_wait_validation_v2/`, and
+`outputs/local/window_final_validation_v3/`. The unchanged four-action test_seen
+window annotation passes native and symbolic execution with all four metrics1.
+Windows70/91/364 each pass three physical Open/Close cycles, with70-degree sash
+rotation, a stationary outer frame, and restoration on Close. Both curtain tasks,
+the shirt task, six curtain motion cycles, and all three initial scene comparisons
+also pass on the same build.
+
+The last complete stock replay
 remains55/69. These targeted tests do not replace the required final all69-entry
-replay or resolve the other11 native failures.
+replay or resolve the other10 native failures.

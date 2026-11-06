@@ -26,7 +26,7 @@ try {
     $capture = $helper.MainModule.GetType('AdaptPolicies.NativeDiagnostics.SceneAssetDiagnostics').Methods | Where-Object Name -eq 'Capture'
     $captureReference = $original.MainModule.ImportReference($capture)
     $processor = $create[0].Body.GetILProcessor()
-    $curtain = $helper.MainModule.GetType('AdaptPolicies.NativeRepairs.WindowCurtainRepair')
+    $curtain = $helper.MainModule.GetType('AdaptPolicies.NativeRepairs.NativeOpeningRepair')
     $prepare = $original.MainModule.ImportReference(($curtain.Methods | Where-Object Name -eq 'Prepare'))
     $createStart = $create[0].Body.Instructions[0]
     $processor.InsertBefore($createStart,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_1))
@@ -73,7 +73,7 @@ try {
 
     $front = @($original.MainModule.Types | ForEach-Object { $_.Methods } | Where-Object Name -eq 'GetObjectFrontVec')
     if ($front.Count -ne 1 -or $front[0].Parameters.Count -ne 1 -or !$front[0].IsStatic) { throw 'Unexpected front-direction method signature.' }
-    $isCurtain = $original.MainModule.ImportReference(($curtain.Methods | Where-Object Name -eq 'IsWindowCurtain'))
+    $isCurtain = $original.MainModule.ImportReference(($curtain.Methods | Where-Object Name -eq 'IsRepairedInteraction'))
     $getFront = $original.MainModule.ImportReference(($curtain.Methods | Where-Object Name -eq 'GetFront'))
     $processor = $front[0].Body.GetILProcessor()
     $first = $front[0].Body.Instructions[0]
@@ -100,12 +100,12 @@ try {
     $original.Write($OutputAssembly)
     $manifest = [ordered]@{
         base = 'Official VirtualHome Linux v2.3.0 (Unity 2021.2.14f1)'
-        patch = 'adaptpolicies-native-repairs-v2'
+        patch = 'adaptpolicies-native-repairs-v3'
         originalSha256 = $actualHash
         helperSha256 = (Get-FileHash -LiteralPath $HelperAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
         patchedSha256 = (Get-FileHash -LiteralPath $OutputAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
         modifiedMethods = @($create[0].FullName,$updates[0].FullName,$grab[0].FullName,$front[0].FullName,$interaction[0].FullName)
-        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains'
+        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening'
         assetsModified = $false
         originalInstallationModified = $false
         nativeReplayVerified = $false

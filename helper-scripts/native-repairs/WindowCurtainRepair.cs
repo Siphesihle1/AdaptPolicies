@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using StoryGenerator.CharInteraction;
 using StoryGenerator.SceneState;
 using StoryGenerator.Utilities;
@@ -14,35 +12,6 @@ namespace AdaptPolicies.NativeRepairs
 {
     public static class WindowCurtainRepair
     {
-        static readonly FieldInfo InTransition = typeof(HandInteraction.TransitionBase).GetField(
-            "inTransition", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-        public static IEnumerator AwaitInteraction(IEnumerator original, GameObject target)
-        {
-            return IsWindowCurtain(target) ? AwaitCurtain(original, target) : original;
-        }
-
-        static IEnumerator AwaitCurtain(IEnumerator original, GameObject target)
-        {
-            yield return original;
-            // Legacy IK can finish between physics ticks while a switch transition is pending.
-            yield return new WaitForFixedUpdate();
-            if (InTransition == null) throw new InvalidOperationException("Native transition completion field is unavailable.");
-            var interaction = target.GetComponent<HandInteraction>();
-            var deadline = Time.realtimeSinceStartup + 5f;
-            while (true)
-            {
-                var pending = false;
-                foreach (var control in interaction.switches)
-                    if (control.transitionSequences != null)
-                        foreach (var sequence in control.transitionSequences)
-                            foreach (var transition in sequence.transitions)
-                                pending |= (bool)InTransition.GetValue(transition);
-                if (!pending) yield break;
-                if (Time.realtimeSinceStartup > deadline) throw new InvalidOperationException("Native curtain transition did not finish.");
-                yield return new WaitForFixedUpdate();
-            }
-        }
         static bool IsPanel(MeshFilter filter)
         {
             return filter.sharedMesh != null && filter.name.StartsWith("PRE_DEC_Curtains_", StringComparison.Ordinal);
