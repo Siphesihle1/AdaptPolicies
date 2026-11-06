@@ -5582,7 +5582,10 @@
           "SITTABLE",
           "GRABBABLE"
         ],
-        "states": [],
+        "states": [
+          "WASHED",
+          "UNFOLDED"
+        ],
         "prefab_name": "PRE_DEC_Rug_03_08",
         "bounding_box": {
           "center": [
@@ -13906,7 +13909,7 @@
       {
         "from_id": 252,
         "relation_type": "INSIDE",
-        "to_id": 11
+        "to_id": 205
       },
       {
         "from_id": 262,

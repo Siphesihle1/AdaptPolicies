@@ -33,6 +33,7 @@ namespace AdaptPolicies.NativeDiagnostics
             public float[] worldRotation;
             public float[] worldScale;
             public float[][] worldVertices;
+            public int[] triangles;
         }
         [Serializable] class Item
         {
@@ -116,13 +117,13 @@ namespace AdaptPolicies.NativeDiagnostics
                         var mesh = filter.sharedMesh;
                         var rotation = filter.transform.rotation;
                         float[][] worldVertices = null;
-                        if ((className == "paper" || className == "fryingpan" || className == "dishwashingliquid" || className == "washingmachine" || className == "clothespile") && mesh != null && mesh.isReadable)
+                        if ((className == "rug" || className == "toothpaste" || className == "toothbrush" || className == "paper" || className == "fryingpan" || className == "dishwashingliquid" || className == "washingmachine" || className == "clothespile") && mesh != null && mesh.isReadable)
                         {
                             var vertices = mesh.vertices;
                             worldVertices = new float[vertices.Length][];
                             for (var i = 0; i < vertices.Length; i++) worldVertices[i] = Coordinates(filter.transform.TransformPoint(vertices[i]));
                         }
-                        item.meshes.Add(new Mesh { objectName = filter.name, name = mesh == null ? null : mesh.name, vertices = mesh == null ? 0 : mesh.vertexCount, subMeshes = mesh == null ? 0 : mesh.subMeshCount, position = Coordinates(filter.transform.position), rotation = Coordinates(filter.transform.localEulerAngles), worldRotation = new[] { rotation.x, rotation.y, rotation.z, rotation.w }, worldScale = Coordinates(filter.transform.lossyScale), worldVertices = worldVertices });
+                        item.meshes.Add(new Mesh { objectName = filter.name, name = mesh == null ? null : mesh.name, vertices = mesh == null ? 0 : mesh.vertexCount, subMeshes = mesh == null ? 0 : mesh.subMeshCount, position = Coordinates(filter.transform.position), rotation = Coordinates(filter.transform.localEulerAngles), worldRotation = new[] { rotation.x, rotation.y, rotation.z, rotation.w }, worldScale = Coordinates(filter.transform.lossyScale), worldVertices = worldVertices, triangles = className == "rug" && mesh != null && mesh.isReadable ? mesh.triangles : null });
                     }
                     report.items.Add(item);
                 }

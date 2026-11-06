@@ -1087,9 +1087,50 @@ class MoveExecutor(ActionExecutor):
         return new_relation
 
 
+class FoldExecutor(ActionExecutor):
+    def __init__(self, fold):
+        self.fold = fold
+
+    def execute(self, script, state, info, char_index, modify=True, in_place=False):
+        line = script[0]
+        info.set_current_line(line)
+        node = state.get_state_node(line.object())
+        if node is None:
+            info.object_found_error()
+            return
+        if node.class_name != "rug" or node.prefab_name != "PRE_DEC_Rug_03_08":
+            info.error("{} has no supported physical folding behavior", node)
+            return
+        if _find_holding_hand(state, node, char_index) is None:
+            info.error("{} must be held before folding or unfolding", node)
+            return
+        if _find_free_hand(state, char_index) is None:
+            info.error("Folding or unfolding requires a free hand")
+            return
+        if (State.FOLDED in node.states) == self.fold:
+            info.error("{} already has the requested fold state", node)
+            return
+        changed = node.copy()
+        changed.states.discard(State.UNFOLDED if self.fold else State.FOLDED)
+        changed.states.add(State.FOLDED if self.fold else State.UNFOLDED)
+        yield (
+            state.change_state([ChangeNode(changed)], in_place=in_place)
+            if modify
+            else state
+        )
+
+
 class WashExecutor(ActionExecutor):
 
-    def execute(self, script: Script, state: EnvironmentState, info: ExecutionInfo, char_index, modify=True, in_place=False):
+    def execute(
+        self,
+        script: Script,
+        state: EnvironmentState,
+        info: ExecutionInfo,
+        char_index,
+        modify=True,
+        in_place=False,
+    ):
         current_line = script[0]
         info.set_current_line(current_line)
         node = state.get_state_node(current_line.object())
@@ -1105,7 +1146,7 @@ class WashExecutor(ActionExecutor):
                 yield state
 
     def check_washable(self, state: EnvironmentState, node: GraphNode, info: ExecutionInfo, char_index):
-        
+
         if not _is_character_close_to(state, node, char_index):
             info.error('{} is not close to {}', _get_character_node(state, char_index), node)
             return False
@@ -1488,6 +1529,8 @@ class ScriptExecutor(object):
         Action.SIT: SitExecutor(),
         Action.STANDUP: StandUpExecutor(),
         Action.GRAB: GrabExecutor(),
+        Action.FOLD: FoldExecutor(True),
+        Action.UNFOLD: FoldExecutor(False),
         Action.OPEN: OpenExecutor(False),
         Action.CLOSE: OpenExecutor(True),
         Action.PUTBACK: PutExecutor(Relation.ON),

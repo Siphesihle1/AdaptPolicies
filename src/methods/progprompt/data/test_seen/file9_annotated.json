@@ -5,8 +5,9 @@
         "<char0> [find] <washingmachine> (72)"
       ],
       "1: Place the rug in the washing machine.": [
-        "<char0> [find] <rug> (252)",
+        "<char0> [find] <kitchentable> (231)",
         "<char0> [grab] <rug> (252)",
+        "<char0> [fold] <rug> (252)",
         "<char0> [find] <washingmachine> (72)",
         "<char0> [open] <washingmachine> (72)",
         "<char0> [putin] <rug> (252) <washingmachine> (72)",
@@ -24,6 +25,7 @@
         "<char0> [close] <washingmachine> (72)"
       ],
       "6: Hang the rug to dry.": [
+        "<char0> [unfold] <rug> (252)",
         "<char0> [find] <floor> (209)",
         "<char0> [putback] <rug> (252) <floor> (209)"
       ]

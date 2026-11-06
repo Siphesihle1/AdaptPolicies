@@ -4,7 +4,6 @@ from typing import List, TYPE_CHECKING
 import copy
 from uuid_utils import uuid7
 
-
 if TYPE_CHECKING:
     from .environment import VHEnvironment
 
@@ -51,11 +50,14 @@ class VHTask:
         nodes_with_additional_states = env.nodes_with_additonal_states
 
         # augment state with additional state info
-        for idx in range(len(final_state["nodes"])):
-            if final_state["nodes"][idx]["id"] in nodes_with_additional_states.keys():
-                final_state["nodes"][idx] = nodes_with_additional_states[
-                    final_state["nodes"][idx]["id"]
-                ]
+        for node in final_state["nodes"]:
+            cached = nodes_with_additional_states.get(node["id"], {})
+            for state in cached.get("states", []):
+                if (
+                    state in {"WASHED", "HEATED", "USED"}
+                    and state not in node["states"]
+                ):
+                    node["states"].append(state)
 
         env.log_file.close()
 

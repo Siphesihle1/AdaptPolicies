@@ -10,14 +10,21 @@ namespace AdaptPolicies.NativeRepairs
     public static class WasherContainmentRepair
     {
         static readonly FieldInfo OriginalParent = typeof(HandInteraction).GetField("m_tsfm_parent", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        static bool TryPose(GameObject payload, GameObject washer, out Vector3 position, out Quaternion rotation)
+        static bool TryPose(GameObject payload, GameObject washer, out Vector3 position, out Quaternion rotation, bool? plannedFold = null)
         {
             position = Vector3.zero;
             rotation = Quaternion.identity;
-            if (payload.name != "MOD_PRO_Clothes_pile_05")
+            var rug = RugFold.Supports(payload);
+            if (payload.name != "MOD_PRO_Clothes_pile_05" && !rug)
                 return false;
             var points = new List<Vector3>();
-            foreach (var filter in payload.GetComponentsInChildren<MeshFilter>())
+            if (rug)
+            {
+                var folding = payload.GetComponent<RugFold>() ?? payload.AddComponent<RugFold>();
+                if (!(plannedFold ?? folding.Folded)) return false;
+                points.AddRange(folding.PlannedPoints(true));
+            }
+            else foreach (var filter in payload.GetComponentsInChildren<MeshFilter>())
             {
                 var mesh = filter.sharedMesh;
                 if (mesh == null || !mesh.isReadable)
@@ -31,7 +38,7 @@ namespace AdaptPolicies.NativeRepairs
                 return false;
             var frame = washer.transform;
             const float radius = .233f, center = .37f, front = -.245f, back = .19f;
-            for (var yaw = 0; yaw < 360; yaw += 90)
+            for (var yaw = 0; yaw < 360; yaw += 45)
             {
                 var candidate = frame.rotation * Quaternion.Euler(0, yaw, 0);
                 var local = new List<Vector3>();
@@ -101,7 +108,7 @@ namespace AdaptPolicies.NativeRepairs
                 return result;
             Vector3 position;
             Quaternion rotation;
-            if (TryPose(payload, destination, out position, out rotation))
+            if (TryPose(payload, destination, out position, out rotation, current.GetObject("AP_FOLDED_" + payload.GetInstanceID()) as bool?))
                 result.Add(position);
             return result;
         }

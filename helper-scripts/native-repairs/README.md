@@ -320,3 +320,74 @@ Rug washing and brushing teeth remain unsupported. Explicit folding actions are
 approved for further work, with their planning-interface impact to be documented.
 The user declined toothbrushing-specific actions. No new vocabulary actions have
 been added. Full all69 replay and final runtime adoption remain pending.
+
+
+## Rug folding and washing validation
+
+The explicit `manipulation-actions` feature adds native Fold and Unfold, their
+symbolic preconditions/effects, and the matching planner imports and wrappers.
+Both require the verified scene0 rug held in one hand and another hand free;
+unsupported prefabs, unheld objects and repeated state transitions reject.
+Apply/Use are approved for subsequent work and are not implemented in this build.
+
+The original20-vertex rug is tessellated along sixteen accordion panels and
+fifteen5mm-radius bends. Neutral-line lengths, original material/UV coverage and
+object scale are retained. The15354-vertex folded representation fits diagonally
+inside the washer, with every vertex checked against the drum's actual radial
+and depth limits. Native navigation, grab, IK and release remain responsible for
+handling. Unfold restores the original mesh and collider, rather than a resized
+replacement. This is deterministic geometry deformation, not a cloth-dynamics
+or water simulation. Curved-surface tessellation differs from original surface
+area by approximately0.37%; the restored original has no lasting area change.
+
+The rug must be unfolded before floor placement. Placement checks the complete
+flat footprint and native surface/obstacle queries, uses the original-parent
+release rotation, and leaves approximately1mm floor clearance. This corrects a
+candidate that returned native ON despite floating66cm above the floor. Native
+graph bounds are refreshed after deformation, and the original native On test is
+reapplied only after physical floor contact is verified. This also covers batch
+execution, where the initial graph cache otherwise omitted the final ON edge.
+
+The annotation replaces failed Find rug252 with Find table231 and adds explicit
+Fold/Unfold, increasing14 actions to16 while retaining its subtask keys. The
+pre-existing "Hang the rug to dry" subtask continues to use floor placement;
+this repair does not claim a hanging or drying simulation. Only test_seen
+reference graph0 changes: rug252 must be WASHED and UNFOLDED, and its room relation
+matches kitchen floor209 (room205 rather than11). Every other annotation/reference
+record, protected train graphs1/10, six mapping manifests and the original
+dataset archive are preserved.
+
+Washing exposed an additional-state cache bug: finalization replaced the entire
+current rug node with its earlier folded washing snapshot. Finalization now
+merges only derived WASHED/HEATED/USED effects, retaining current folding, switch
+and opening states and geometry. Tests cover preservation and de-duplication.
+
+Physical evidence: `outputs/local/fold_main_validation_v4/` contains one serial
+cycle, three complete batch cycles, full15354-vertex drum checks, original mesh
+restoration and floor-contact checks, plus unsupported/unheld/repeated/full-hand
+negative controls. All three initial scenes remain compatible. The separate
+`outputs/local/fold_reference_validation_v1/` replays ten complete annotations
+through both Unity and the symbolic executor, including the16-action rug task,
+clothes, pan, bin, binder, clothing, curtain, fruit, heating and phone placement.
+Python94 tests pass. Twelve of3356 original methods are hooked;3344 are unchanged.
+The only original-player file difference is the patched managed assembly, plus
+the added helper DLL. The original runtime is untouched.
+
+All ten annotations execute every action with Precision/Exec1. Seven score all
+four metrics1. Three retain unrelated FACING failures: rug PSR7/8 (crackers facing
+TV), curtain PSR4/5 and cellphone placement PSR10/11; all have SR0. Exact conditions
+are retained in validation-summary.json. The same frozen rug trace satisfies
+5/6 old-reference goals versus7/8 strengthened-reference goals, with412/412
+preservation under both. Scoring formulas and FACING goals are unchanged.
+
+Evaluation impact: Fold/Unfold expand the stock native and planner vocabulary;
+the new rug annotation and stronger completion conditions are a custom benchmark
+variant. Report the runtime patch, vocabulary, annotation and reference revision
+alongside results. Stock-runtime scores and previously generated plans are not
+directly comparable. No model-performance result or full69-entry validity claim
+is made by these targeted replays.
+
+Current candidate: `adaptpolicies-native-repairs-v9`, separate runtime
+`adaptpolicies-fold-main-v1`, build evidence `fold-main-build-v4`. Brushing via
+generic Apply/Use, FACING consistency, the earlier held-bin door-Close probe,
+final all69 replay and final runtime adoption remain pending.

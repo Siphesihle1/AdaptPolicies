@@ -39,7 +39,10 @@ mkdir -p "$output"
     "$(cygpath -m "$source_dir/SinkReleaseRepair.cs")" \
     "$(cygpath -m "$source_dir/WasherContainmentRepair.cs")" \
     "$(cygpath -m "$source_dir/WasherOpeningRepair.cs")" \
-    "$(cygpath -m "$source_dir/BinCarryRepair.cs")"
+    "$(cygpath -m "$source_dir/BinCarryRepair.cs")" \
+    "$(cygpath -m "$source_dir/ExtendedActions.cs")" \
+    "$(cygpath -m "$source_dir/RugFold.cs")" \
+    "$(cygpath -m "$source_dir/RugReleaseRepair.cs")"
 pwsh.exe -NoProfile -File "$(cygpath -m "$source_dir/patch-player.ps1")" \
     -ManagedDirectory "$(cygpath -m "$managed")" \
     -HelperAssembly "$(cygpath -m "$output/AdaptPolicies.NativeRepairs.dll")" \

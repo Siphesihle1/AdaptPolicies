@@ -23,7 +23,7 @@ try {
     if ($creator.Count -ne 1) { throw 'Expected one graph creator.' }
     $create = @($creator[0].Methods | Where-Object Name -eq 'CreateGraph')
     if ($create.Count -ne 1 -or $create[0].Parameters.Count -ne 1 -or $create[0].Parameters[0].ParameterType.FullName -ne 'UnityEngine.Transform') { throw 'Unexpected graph creation signature.' }
-    $capture = $helper.MainModule.GetType('AdaptPolicies.NativeDiagnostics.SceneAssetDiagnostics').Methods | Where-Object Name -eq 'Capture'
+    $capture = $helper.MainModule.GetType('AdaptPolicies.NativeRepairs.ExtendedActions').Methods | Where-Object Name -eq 'CaptureEffects'
     $captureReference = $original.MainModule.ImportReference($capture)
     $processor = $create[0].Body.GetILProcessor()
     $curtain = $helper.MainModule.GetType('AdaptPolicies.NativeRepairs.NativeOpeningRepair')
@@ -181,15 +181,49 @@ try {
         $processor.InsertAfter($offset,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$distance))
     }
 
+    $extensions = $helper.MainModule.GetType('AdaptPolicies.NativeRepairs.ExtendedActions')
+    $reader = $original.MainModule.Types | Where-Object FullName -eq 'StoryGenerator.Utilities.ScriptReader'
+    $dispatch = @($reader.Methods | Where-Object Name -eq 'ScriptLineToAction')
+    if ($dispatch.Count -ne 1 -or $dispatch[0].Parameters.Count -ne 3 -or !$dispatch[0].IsStatic) { throw 'Unexpected native script dispatch signature.' }
+    $processor = $dispatch[0].Body.GetILProcessor()
+    $first = $dispatch[0].Body.Instructions[0]
+    foreach ($opcode in @([Mono.Cecil.Cil.OpCodes]::Ldarg_0,[Mono.Cecil.Cil.OpCodes]::Ldarg_1,[Mono.Cecil.Cil.OpCodes]::Ldarg_2)) { $processor.InsertBefore($first,$processor.Create($opcode)) }
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$original.MainModule.ImportReference(($extensions.Methods | Where-Object Name -eq 'TryAdd'))))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Brfalse,$first))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ret))
+    foreach ($entry in @(@('InteractionType','FOLD',32),@('InteractionType','UNFOLD',33),@('ObjectState','FOLDED',10),@('ObjectState','UNFOLDED',11))) {
+        $type = $original.MainModule.Types | Where-Object FullName -eq ('StoryGenerator.Utilities.' + $entry[0])
+        if ($type.Fields | Where-Object { $_.Name -eq $entry[1] -or ($_.HasConstant -and $_.Constant -eq $entry[2]) }) { throw 'Manipulation enum conflicts with native values.' }
+        $field = [Mono.Cecil.FieldDefinition]::new($entry[1],([Mono.Cecil.FieldAttributes]::Public -bor [Mono.Cecil.FieldAttributes]::Static -bor [Mono.Cecil.FieldAttributes]::Literal -bor [Mono.Cecil.FieldAttributes]::HasDefault),$type)
+        $field.Constant = [int]$entry[2]
+        $type.Fields.Add($field)
+    }
+
+    $edgeUpdates = @($updates[0].Body.Instructions | Where-Object { $_.OpCode.Code -in @([Mono.Cecil.Cil.Code]::Call,[Mono.Cecil.Cil.Code]::Callvirt) -and $_.Operand.Name -eq 'UpdateGraphEdges' })
+    if ($edgeUpdates.Count -ne 3) { throw 'Unexpected native graph edge update dispatch.' }
+    $processor = $updates[0].Body.GetILProcessor()
+    $refresh = $original.MainModule.ImportReference(($extensions.Methods | Where-Object Name -eq 'RefreshBeforeEdges'))
+    foreach ($instruction in $edgeUpdates) {
+        $processor.InsertBefore($instruction,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_0))
+        $processor.InsertBefore($instruction,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$refresh))
+    }
+
+    foreach ($method in @($create[0],$updates[0])) {
+        $processor = $method.Body.GetILProcessor()
+        foreach ($instruction in @($method.Body.Instructions | Where-Object { $_.OpCode.Code -eq [Mono.Cecil.Cil.Code]::Call -and $_.Operand.Name -eq 'CaptureEffects' })) {
+            $processor.InsertBefore($instruction,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_0))
+        }
+    }
+
     $original.Write($OutputAssembly)
     $manifest = [ordered]@{
         base = 'Official VirtualHome Linux v2.3.0 (Unity 2021.2.14f1)'
-        patch = 'adaptpolicies-native-repairs-v8'
+        patch = 'adaptpolicies-native-repairs-v9'
         originalSha256 = $actualHash
         helperSha256 = (Get-FileHash -LiteralPath $HelperAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
         patchedSha256 = (Get-FileHash -LiteralPath $OutputAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
-        modifiedMethods = @($create[0].FullName,$updates[0].FullName,$grab[0].FullName,$front[0].FullName,$interaction[0].FullName,$put[0].FullName,$move.FullName,$getIO[0].FullName,$processGrab[0].FullName,$grabPlanner[0].FullName,$pointFinder[0].FullName)
-        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening'
+        modifiedMethods = @($create[0].FullName,$updates[0].FullName,$grab[0].FullName,$front[0].FullName,$interaction[0].FullName,$put[0].FullName,$move.FullName,$getIO[0].FullName,$processGrab[0].FullName,$grabPlanner[0].FullName,$pointFinder[0].FullName,$dispatch[0].FullName)
+        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening,manipulation-actions'
         assetsModified = $false
         originalInstallationModified = $false
         nativeReplayVerified = $false

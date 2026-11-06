@@ -193,6 +193,18 @@ class Read(Talk):
         self.action_name = "read"
 
 
+class Fold(Talk):
+    def __init__(self, env, task):
+        super().__init__(env, task)
+        self.action_name = "fold"
+
+
+class Unfold(Fold):
+    def __init__(self, env, task):
+        super().__init__(env, task)
+        self.action_name = "unfold"
+
+
 class SwitchOff(Open):
     def __init__(self, env: VHEnvironment, task: VHTask):
         super().__init__(env, task)
