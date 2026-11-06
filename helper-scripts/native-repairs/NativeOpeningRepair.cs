@@ -38,6 +38,8 @@ namespace AdaptPolicies.NativeRepairs
         }
         public static IEnumerator AwaitInteraction(IEnumerator original, GameObject target)
         {
+            var door = DoorClosureRepair.RestoreDuration(target);
+            if (door) return DoorClosureRepair.Await(AwaitOpening(original, target), target);
             return IsRepairedInteraction(target) ? AwaitOpening(original, target) : original;
         }
         static IEnumerator AwaitOpening(IEnumerator original, GameObject target)

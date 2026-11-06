@@ -1,11 +1,11 @@
 # Local native simulator repairs
 
-This tool builds the `adaptpolicies-native-repairs-v11` patch for a **separate copy** of
+This tool builds the `adaptpolicies-native-repairs-v12` patch for a **separate copy** of
 the official VirtualHome Linux v2.3.0 player (Unity 2021.2.14f1). It preserves that
 player's assets and original IK implementation. It does not rebuild the incomplete
 public Unity asset project. No simulator binaries are distributed here.
 
-Final validation: all69 annotated entries across six datasets pass all534 native
+Version11 validation: all69 annotated entries across six datasets pass all534 native
 and symbolic actions, with PSR/SR/Precision/Exec1 for every entry. Python99 tests
 pass. Evidence and the cumulative change summary are in
 `outputs/local/full_unity_final_v1/REPORT.md` and `validation-summary.json`.
@@ -107,7 +107,7 @@ manifest. Copy the two DLLs into the `Managed` directory of a separately copied
 official player, retaining all other player files. Keep the original installation
 unchanged. Set `VIRTUALHOME_SIM_ROOT` to the copied player's directory when using
 the existing simulator launcher, and explicitly export
-`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening,manipulation-actions,tool-manipulation,facing-completeness` in the simulator process environment.
+`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening,manipulation-actions,tool-manipulation,facing-completeness,door-closing` in the simulator process environment.
 Record the manifest with every replay; this is a custom runtime, not stock v2.3.0.
 
 Optional `ADAPTPOLICIES_NATIVE_DIAGNOSTICS` names a directory for read-only scene
@@ -536,9 +536,9 @@ are identical within each scene0/1/2, and initial metadata/structural comparison
 pass in both lanes. Exact source/data hashes, native build metadata, all534 action
 responses and graph traces are retained in `full_unity_final_v1`.
 
-The local `.env` selects the separate
+At version11 completion, the local `.env` selected the separate
 `/home/siphesihle/.local/share/virtualhome/adaptpolicies-tools-main-v1` runtime and
-the complete explicit feature list above. Its deployed DLL hashes match the
+the explicit version11 features through `facing-completeness`. Its deployed DLL hashes matched the
 verified version11 build. The official player remains unchanged. Original
 archive, six mapping manifests, train graphs1/10 and all other protected records
 remain preserved. No Conda/Python package versions changed in this completion
@@ -549,3 +549,61 @@ No required annotation validation failures remain. The separate held-bin
 door224 Close probe stays deferred outside the agreed task. Physical fidelity
 limits remain as described above: deterministic rug deformation and floor
 drying proxy, calibrated mouth-contact animation and derived household effects.
+
+## Version12: kitchen door closure
+
+The explicit `door-closing` feature, together with `bin-carry`, repairs Close for
+the pinned kitchen `PRE_DOO_Door_01_03` asset. Version11 could report Success and
+CLOSED while the physical leaf remained at its initial125.38-degree angle.
+Fast execution reduces the native ApplyTorque interval to1e-5seconds. Restoring
+its original3seconds exposes persistent contact between the leaf and its fixed
+jamb, doorway wall and floor. Increasing torque does not fix that geometry.
+
+The repair retains the original hand IK, torque curve, mesh and colliders. During
+the real closing interaction it excludes contact only with nearby fixed housing,
+retains the native stopper and existing actor/payload collision rules, and limits
+the existing hinge to the arc between its current pose and native closed yaw.
+It waits for the native transition and latches the body only after its measured
+yaw is within5degrees of closed. A finally block restores the original collision
+pairs and hinge settings. No transform is assigned and no graph relation, state
+or success response is supplied by the repair.
+
+Close uses the same native0.4m kitchen-side doorway stance as Walk. The additional
+`IsOpenablePosition` hook keeps the Close planner consistent with that stance;
+an experimental1.2m retreat caused an animated navigation hang and was removed.
+Other objects and Open retain their original planning paths. Version12 changes
+13 of3356 original methods, leaving3343 unchanged; the manifest enumerates them.
+The new compiler reference is the already installed original UnityEngine.AIModule,
+needed to access the native doorway fixture. No dependency versions change.
+
+The reproducible probe requires all four options:
+
+```sh
+python helper-scripts/native-repairs/probe-door-closure.py \
+  --port 18081 --output /absolute/path/to/new-probe-output \
+  --cycles 3 --animation fast
+```
+
+Use `--animation animated` for animated Close interactions; setup actions use
+fast execution. The probe checks real leaf rotation and stability, hinge position,
+held-bin attachment when diagnostics are enabled, and rejection with both hands
+full. It fails against the old metadata-only closure. Set
+`ADAPTPOLICIES_NATIVE_DIAGNOSTICS` in the player environment for optional door
+pose, collider and contact diagnostics.
+
+Evaluation impact: this is a custom native physics/planning repair and must be
+reported as version12 with the explicit feature list. It adds no vocabulary or
+dataset/reference change. The approved trash annotation still ends at carrying
+the bin to the doorway; Close remains an additional probe outside its scoring.
+Fast-mode Open of this door does not physically reopen its leaf in the original
+player; this separate limitation is not a validated Open/Close cycle claim.
+
+
+Focused version12 validation (`door_closure_main_v2`): eight real closure controls
+(six fast and two animated Close interactions) all finish at0.2984degrees, with
+the bin retained in its native hand when carried. Both full-hands negatives
+reject and leave the door open. Seven annotation regressions pass every native
+and symbolic action and all four metrics1, including the unchanged trash task.
+Initial scene0/1/2 comparisons pass. Python99 tests passed; actual IL audit
+confirms13 modified and3343 unchanged methods. Full69 replay on this exact build
+is the final pending check before local runtime adoption.

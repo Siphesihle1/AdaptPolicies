@@ -14,7 +14,7 @@ namespace AdaptPolicies.NativeDiagnostics
         static int sequence;
         static readonly HashSet<string> Classes = new HashSet<string> {
             "character", "clothespile", "dishwashingliquid", "paper", "curtains", "window", "closet", "clothesshirt", "clothespants", "garbagecan",
-            "folder", "washingmachine", "fryingpan", "sink", "toothbrush", "toothpaste", "rug", "lime", "apple", "plum", "bananas"
+            "folder", "washingmachine", "fryingpan", "sink", "toothbrush", "toothpaste", "rug", "lime", "apple", "plum", "bananas", "door"
         };
         [Serializable] class Switch
         {
@@ -40,6 +40,7 @@ namespace AdaptPolicies.NativeDiagnostics
             public string[] materials;
         }
         [Serializable] class Bone { public string name; public float[] position; public float[] rotation; }
+        [Serializable] class CollisionShape { public string name, type; public float[] center, size; public bool trigger; }
         [Serializable] class Item
         {
             public int id;
@@ -56,6 +57,10 @@ namespace AdaptPolicies.NativeDiagnostics
             public List<Switch> switches = new List<Switch>();
             public List<Mesh> meshes = new List<Mesh>();
             public int colliders;
+            public float[] rotation;
+            public float? doorClosedYaw;
+            public bool? isKinematic;
+            public List<CollisionShape> collisionShapes = new List<CollisionShape>();
             public List<Bone> bones = new List<Bone>();
         }
         [Serializable] class Report
@@ -91,6 +96,13 @@ namespace AdaptPolicies.NativeDiagnostics
                     var transform = (Transform)Value(node, "transform");
                     var item = new Item { id = (int)Value(node, "id"), className = className, name = transform.name, position = Coordinates(transform.position), hierarchy = transform.name };
                     item.localScale = Coordinates(transform.localScale);
+                    item.rotation = Coordinates(transform.eulerAngles);
+                    var door = transform.GetComponent<StoryGenerator.DoorProperties.Properties_door>();
+                    if (door != null) item.doorClosedYaw = door.yRotClose;
+                    if (door != null && transform.name == "PRE_DOO_Door_01_03" && transform.GetComponent<DoorContactDiagnostics>() == null)
+                        transform.gameObject.AddComponent<DoorContactDiagnostics>();
+                    var body = transform.GetComponent<Rigidbody>();
+                    if (body != null) item.isKinematic = body.isKinematic;
                     var ik = transform.GetComponentInChildren<FullBodyBipedIK>();
                     if (className == "character" && ik != null) {
                         var refs = ik.references;
@@ -121,6 +133,8 @@ namespace AdaptPolicies.NativeDiagnostics
                     item.components = new string[components.Length];
                     for (var i = 0; i < components.Length; i++) item.components[i] = components[i] == null ? "Missing" : components[i].GetType().FullName;
                     item.colliders = transform.GetComponentsInChildren<Collider>(true).Length;
+                    if (door != null) foreach (var collider in transform.GetComponentsInChildren<Collider>(true))
+                        item.collisionShapes.Add(new CollisionShape { name = collider.name, type = collider.GetType().Name, center = Coordinates(collider.bounds.center), size = Coordinates(collider.bounds.size), trigger = collider.isTrigger });
                     var interaction = interactionType == null ? null : transform.GetComponent(interactionType);
                     item.handInteraction = interaction != null;
                     var switches = Value(interaction, "switches") as IEnumerable;
@@ -163,6 +177,22 @@ namespace AdaptPolicies.NativeDiagnostics
                 File.WriteAllText(Path.Combine(directory, "snapshot-" + (++sequence).ToString("D3") + ".json"), JsonConvert.SerializeObject(report, Formatting.Indented));
             }
             catch (Exception exception) { Debug.LogWarning("AdaptPolicies read-only diagnostic failed: " + exception); }
+        }
+    }
+
+    public class DoorContactDiagnostics : MonoBehaviour
+    {
+        readonly Dictionary<int, int> seen = new Dictionary<int, int>();
+        void OnCollisionStay(Collision collision)
+        {
+            var band = (int)(transform.eulerAngles.y / 5);
+            var id = collision.collider.GetInstanceID();
+            int previous;
+            if (seen.TryGetValue(id, out previous) && previous == band) return;
+            seen[id] = band;
+            var path = collision.collider.name;
+            for (var parent = collision.collider.transform.parent; parent != null; parent = parent.parent) path = parent.name + "/" + path;
+            Debug.Log("AP door contact: yaw=" + transform.eulerAngles.y + " other=" + path + " point=" + collision.contacts[0].point + " normal=" + collision.contacts[0].normal);
         }
     }
 }

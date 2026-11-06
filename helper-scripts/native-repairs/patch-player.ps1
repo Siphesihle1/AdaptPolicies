@@ -181,6 +181,19 @@ try {
         $processor.InsertAfter($offset,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$distance))
     }
 
+    $doorClosure = $helper.MainModule.GetType('AdaptPolicies.NativeRepairs.DoorClosureRepair')
+    $openable = @($executor.Methods | Where-Object Name -eq 'IsOpenablePosition')
+    if ($openable.Count -ne 1 -or $openable[0].Parameters.Count -ne 5) { throw 'Unexpected native opening position signature.' }
+    $processor = $openable[0].Body.GetILProcessor()
+    $first = $openable[0].Body.Instructions[0]
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_2))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg,$openable[0].Parameters[4]))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$original.MainModule.ImportReference(($doorClosure.Methods | Where-Object Name -eq 'Handles'))))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Brfalse,$first))
+    foreach ($parameter in $openable[0].Parameters) { $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg,$parameter)) }
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$original.MainModule.ImportReference(($doorClosure.Methods | Where-Object Name -eq 'Positions'))))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ret))
+
     $extensions = $helper.MainModule.GetType('AdaptPolicies.NativeRepairs.ExtendedActions')
     $reader = $original.MainModule.Types | Where-Object FullName -eq 'StoryGenerator.Utilities.ScriptReader'
     $dispatch = @($reader.Methods | Where-Object Name -eq 'ScriptLineToAction')
@@ -218,12 +231,12 @@ try {
     $original.Write($OutputAssembly)
     $manifest = [ordered]@{
         base = 'Official VirtualHome Linux v2.3.0 (Unity 2021.2.14f1)'
-        patch = 'adaptpolicies-native-repairs-v11'
+        patch = 'adaptpolicies-native-repairs-v12'
         originalSha256 = $actualHash
         helperSha256 = (Get-FileHash -LiteralPath $HelperAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
         patchedSha256 = (Get-FileHash -LiteralPath $OutputAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
-        modifiedMethods = @($create[0].FullName,$updates[0].FullName,$grab[0].FullName,$front[0].FullName,$interaction[0].FullName,$put[0].FullName,$move.FullName,$getIO[0].FullName,$processGrab[0].FullName,$grabPlanner[0].FullName,$pointFinder[0].FullName,$dispatch[0].FullName)
-        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening,manipulation-actions,tool-manipulation,facing-completeness'
+        modifiedMethods = @($create[0].FullName,$updates[0].FullName,$grab[0].FullName,$front[0].FullName,$interaction[0].FullName,$put[0].FullName,$move.FullName,$getIO[0].FullName,$processGrab[0].FullName,$grabPlanner[0].FullName,$pointFinder[0].FullName,$dispatch[0].FullName,$openable[0].FullName)
+        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening,manipulation-actions,tool-manipulation,facing-completeness,door-closing'
         assetsModified = $false
         originalInstallationModified = $false
         nativeReplayVerified = $false
