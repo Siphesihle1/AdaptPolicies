@@ -13,15 +13,17 @@ namespace AdaptPolicies.NativeRepairs
 
         public static bool IsRepairedInteraction(GameObject target)
         {
-            return WindowCurtainRepair.IsWindowCurtain(target) || WindowOpeningRepair.IsWindow(target);
+            return WindowCurtainRepair.IsWindowCurtain(target) || WindowOpeningRepair.IsWindow(target) || FolderOpeningRepair.IsFolder(target);
         }
         public static Vector3 GetFront(GameObject target)
         {
+            if (FolderOpeningRepair.IsFolder(target)) return FolderOpeningRepair.GetFront(target);
             return WindowOpeningRepair.IsWindow(target) ? WindowOpeningRepair.GetFront(target) : WindowCurtainRepair.GetFront(target);
         }
         public static void Prepare(Transform home)
         {
             LidlessBinRepair.Prepare(home);
+            FolderOpeningRepair.Prepare(home);
             WindowCurtainRepair.Prepare(home);
             WindowOpeningRepair.Prepare(home);
         }

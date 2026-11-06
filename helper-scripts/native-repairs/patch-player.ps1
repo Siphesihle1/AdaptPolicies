@@ -106,15 +106,47 @@ try {
     $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_1))
     $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$preparePut))
 
+    $folder = $helper.MainModule.GetType('AdaptPolicies.NativeRepairs.FolderPaperRepair')
+    $folderPrepare = $original.MainModule.ImportReference(($folder.Methods | Where-Object Name -eq 'PreparePut'))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_1))
+    $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$folderPrepare))
+    $executor = $original.MainModule.Types | Where-Object Name -eq 'ScriptExecutor'
+    $planner = $executor.NestedTypes | Where-Object Name -eq '<ProcessPutAction>d__85'
+    $move = $planner.Methods | Where-Object Name -eq 'MoveNext'
+    $calls = @($move.Body.Instructions | Where-Object { $_.OpCode.Code -eq [Mono.Cecil.Cil.Code]::Call -and $_.Operand.Name -eq 'CalculatePutPositions' })
+    if ($calls.Count -ne 1 -or $calls[0].Operand.Parameters.Count -ne 7) { throw 'Unexpected native put-position planner call.' }
+    $processor = $move.Body.GetILProcessor()
+    $currentField = $planner.Fields | Where-Object Name -eq 'current'
+    $actionField = $planner.Fields | Where-Object Name -eq 'a'
+    $processor.InsertBefore($calls[0],$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_0))
+    $processor.InsertBefore($calls[0],$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldfld,$currentField))
+    $processor.InsertBefore($calls[0],$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldarg_0))
+    $processor.InsertBefore($calls[0],$processor.Create([Mono.Cecil.Cil.OpCodes]::Ldfld,$actionField))
+    $calls[0].Operand = $original.MainModule.ImportReference(($folder.Methods | Where-Object Name -eq 'Positions'))
+
+    $hand = $original.MainModule.Types | Where-Object Name -eq 'HandInteraction'
+    $getIO = @($hand.Methods | Where-Object Name -eq 'Get_IO_grab')
+    if ($getIO.Count -ne 1 -or $getIO[0].Parameters.Count -ne 2) { throw 'Unexpected native grab interaction factory.' }
+    $restore = $original.MainModule.ImportReference(($folder.Methods | Where-Object Name -eq 'RestoreReleasePose'))
+    $processor = $getIO[0].Body.GetILProcessor()
+    foreach ($instruction in @($getIO[0].Body.Instructions | Where-Object { $_.OpCode.Code -eq [Mono.Cecil.Cil.Code]::Ret })) {
+        $instruction.OpCode = [Mono.Cecil.Cil.OpCodes]::Ldarg_0
+        $instruction.Operand = $null
+        $call = $processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$restore)
+        $return = $processor.Create([Mono.Cecil.Cil.OpCodes]::Ret)
+        $processor.InsertAfter($instruction,$call)
+        $processor.InsertAfter($call,$return)
+    }
+
     $original.Write($OutputAssembly)
     $manifest = [ordered]@{
         base = 'Official VirtualHome Linux v2.3.0 (Unity 2021.2.14f1)'
-        patch = 'adaptpolicies-native-repairs-v4'
+        patch = 'adaptpolicies-native-repairs-v5'
         originalSha256 = $actualHash
         helperSha256 = (Get-FileHash -LiteralPath $HelperAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
         patchedSha256 = (Get-FileHash -LiteralPath $OutputAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
-        modifiedMethods = @($create[0].FullName,$updates[0].FullName,$grab[0].FullName,$front[0].FullName,$interaction[0].FullName,$put[0].FullName)
-        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders'
+        modifiedMethods = @($create[0].FullName,$updates[0].FullName,$grab[0].FullName,$front[0].FullName,$interaction[0].FullName,$put[0].FullName,$move.FullName,$getIO[0].FullName)
+        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening'
         assetsModified = $false
         originalInstallationModified = $false
         nativeReplayVerified = $false

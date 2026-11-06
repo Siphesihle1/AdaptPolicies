@@ -12,7 +12,7 @@ namespace AdaptPolicies.NativeDiagnostics
     {
         static int sequence;
         static readonly HashSet<string> Classes = new HashSet<string> {
-            "curtains", "window", "closet", "clothesshirt", "clothespants", "garbagecan",
+            "paper", "curtains", "window", "closet", "clothesshirt", "clothespants", "garbagecan",
             "folder", "washingmachine", "fryingpan", "sink", "toothbrush", "toothpaste", "rug", "lime", "apple", "plum", "bananas"
         };
         [Serializable] class Switch
@@ -30,6 +30,9 @@ namespace AdaptPolicies.NativeDiagnostics
             public int subMeshes;
             public float[] position;
             public float[] rotation;
+            public float[] worldRotation;
+            public float[] worldScale;
+            public float[][] worldVertices;
         }
         [Serializable] class Item
         {
@@ -111,7 +114,15 @@ namespace AdaptPolicies.NativeDiagnostics
                     foreach (var filter in transform.GetComponentsInChildren<MeshFilter>(true))
                     {
                         var mesh = filter.sharedMesh;
-                        item.meshes.Add(new Mesh { objectName = filter.name, name = mesh == null ? null : mesh.name, vertices = mesh == null ? 0 : mesh.vertexCount, subMeshes = mesh == null ? 0 : mesh.subMeshCount, position = Coordinates(filter.transform.position), rotation = Coordinates(filter.transform.localEulerAngles) });
+                        var rotation = filter.transform.rotation;
+                        float[][] worldVertices = null;
+                        if (className == "paper" && mesh != null && mesh.isReadable)
+                        {
+                            var vertices = mesh.vertices;
+                            worldVertices = new float[vertices.Length][];
+                            for (var i = 0; i < vertices.Length; i++) worldVertices[i] = Coordinates(filter.transform.TransformPoint(vertices[i]));
+                        }
+                        item.meshes.Add(new Mesh { objectName = filter.name, name = mesh == null ? null : mesh.name, vertices = mesh == null ? 0 : mesh.vertexCount, subMeshes = mesh == null ? 0 : mesh.subMeshCount, position = Coordinates(filter.transform.position), rotation = Coordinates(filter.transform.localEulerAngles), worldRotation = new[] { rotation.x, rotation.y, rotation.z, rotation.w }, worldScale = Coordinates(filter.transform.lossyScale), worldVertices = worldVertices });
                     }
                     report.items.Add(item);
                 }

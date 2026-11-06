@@ -1,6 +1,6 @@
 # Local native simulator repairs
 
-This tool builds the `adaptpolicies-native-repairs-v4` patch for a **separate copy** of
+This tool builds the `adaptpolicies-native-repairs-v5` patch for a **separate copy** of
 the official VirtualHome Linux v2.3.0 player (Unity 2021.2.14f1). It preserves that
 player's assets and original IK implementation. It does not rebuild the incomplete
 public Unity asset project. No simulator binaries are distributed here.
@@ -35,6 +35,23 @@ A narrow native Put hook centers visible payload geometry, checks its vertices
 against the interior and actual floor, and selects a fitting target pose for
 the original IK release. Unsupported destinations retain their original behavior.
 
+The `folder-opening` feature separates the existing binder's accessible cover
+from its body: all 300 original triangles remain in exactly one part, with their
+original vertex attributes and materials. Native Open hinges the cover110 degrees;
+Close restores it. Mesh colliders follow the real cover and body, while the
+original volume box becomes a trigger. The initial semantic bounds stay unchanged.
+
+For paper insertion into these binders, the native planner checks that the cover
+is open and that the visible paper vertices fit between the covers. It also
+understands a planned Open before PutIn in a single script. Original held-object
+checks remain in place. The original hand interaction and release execute the
+placement. A registered release orientation survives the original interaction
+factory's yaw-only reset; unrelated hand interactions have no registered override.
+The filed paper's original box collider is aligned with its visible mesh, fixing
+the asset's offset collision bounds. Graph edges and action success are produced
+by the native simulator. No INSIDE relation or success response is supplied by
+the repair.
+
 ## Build
 
 Run commands through the required `%USERPROFILE%\scripts\zsh-run.cmd` wrapper.
@@ -58,11 +75,13 @@ manifest. Copy the two DLLs into the `Managed` directory of a separately copied
 official player, retaining all other player files. Keep the original installation
 unchanged. Set `VIRTUALHOME_SIM_ROOT` to the copied player's directory when using
 the existing simulator launcher, and explicitly export
-`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders` in the simulator process environment.
+`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening` in the simulator process environment.
 Record the manifest with every replay; this is a custom runtime, not stock v2.3.0.
 
 Optional `ADAPTPOLICIES_NATIVE_DIAGNOSTICS` names a directory for read-only scene
 snapshots at graph creation/update, including live transforms and renderer bounds.
+Paper diagnostics also include world vertices; mesh diagnostics include world
+rotation and scale for independent containment checks in the binder's local frame.
 The original graph API caches some child transforms after articulated movement;
 use these live snapshots for physical motion controls. Without the directory,
 the diagnostic hooks immediately return. The build
@@ -129,6 +148,33 @@ LLM-performance improvement. Old reference evidence remains frozen.
 Evidence: `outputs/local/lidless_main_validation_v4/`,
 `outputs/local/lidless_lime_reference_validation_v4/`,
 `outputs/local/lidless_bin_physical_v4/`, and
-`outputs/local/lidless_bin_negative_v4/`. Six of3356 original methods have narrow
-hooks;3350 are unchanged. Six original failures remain. The final all69 replay
-is still pending.
+`outputs/local/lidless_bin_negative_v4/`. At v4, six of3356 original methods had
+narrow hooks and3350 were unchanged; six original failures remained.
+The final all69 replay is still pending.
+
+## Binder repair validation
+
+The original seven paper-task actions and binder204 destination are unchanged.
+The task passes native and symbolic execution. Three repeated Open/Close cycles
+on each of binders203/204/453 verify110-degree motion and restoration. Both upright
+and flat binders accept a single native Open/PutIn/Close script, retain a native
+INSIDE relation after closing, contain all1057 visible paper vertices between
+the covers, and release the held paper. Closed-folder and unheld-paper attempts
+are rejected. All three original initial scenes remain equivalent.
+
+Only train reference graph4's stale paper450 INSIDE livingroom335 edge changes
+to bedroom73, following its unchanged receiving binder204. All annotations,
+other reference graphs, protected graphs1/10, mapping manifests and the original
+archive are preserved. This is a reference consistency correction, not an
+execution or model-performance improvement.
+
+Evidence: `outputs/local/folder_main_validation_v6/`. Nine targeted annotations
+pass every native and symbolic action. Eight task regressions score all four
+metrics1. The fresh paper replay has Exec/Precision1, PSR7/9 and SR0: its two
+unsatisfied reference goals are unrelated `clock FACING tv` and `tv FACING clock`.
+The physical filing goals are satisfied. Investigating these initial/goal relation
+differences remains a separate evaluation-consistency issue; no FACING reference
+edges or scoring formulas were changed to hide it. Python tests:81 passed.
+Eight of3356 original methods have narrow hooks;3348 are unchanged.
+Five original native-action failures remain, alongside this scoring issue.
+The required final all69 replay and runtime adoption are still pending.
