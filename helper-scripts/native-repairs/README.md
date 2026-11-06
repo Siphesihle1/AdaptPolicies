@@ -446,3 +446,16 @@ removed from this one reference record. Contact is required during Apply/Use,
 not as a final proximity constraint. The same frozen trace meets11/11 corrected
 goals; `reference-proximity-correction.json` records this separate scoring effect.
 The final full replay must verify the corrected reference afresh.
+
+## Native navigation room synchronization
+
+Find can approach a wall object from the room on its visible side while the
+object's root still belongs to the adjacent room. Successful Find/Walk/Run now
+read the actual native character INSIDE relation before committing the symbolic
+state. Other symbolic facts and object ownership are preserved. An unknown or
+ambiguous native destination stops execution instead of guessing. The unchanged
+three-action picture-frame annotation now finishes in livingroom335 in both
+graphs and scores all four metrics1; previously the symbolic character stayed
+in kitchen205. Evidence: `outputs/local/room_navigation_candidate_v1/`.
+Python99 tests pass. No annotation, reference or scoring formula changes are
+part of this synchronization fix.

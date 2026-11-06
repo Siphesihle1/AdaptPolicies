@@ -118,8 +118,10 @@ class VHEnvironment:
 
         return N(self.graph).class_name(class_name).select("id")  # type: ignore
 
-    def update_executor(self, state: EnvironmentState):
+    def update_executor(self, state: EnvironmentState, native_navigation=None):
         self.graph = state.to_dict()
+        if native_navigation is not None:
+            self.graph = reconcile_navigation_room(self.graph, native_navigation)
         env_graph = EnvironmentGraph(self.graph)
         name_equivalence = utils.load_name_equivalence()
         self.executor = ScriptExecutor(env_graph, name_equivalence)
@@ -196,9 +198,25 @@ class VHEnvironment:
             )
             return False
 
-        self.task.executable_steps += 1
+        native_navigation = None
+        if script.action in (ScriptAction.FIND, ScriptAction.WALK, ScriptAction.RUN):
+            graph_success, native_navigation = self.comm.environment_graph()
+            if not graph_success:
+                self.execution_failed = True
+                self.log_file.write(
+                    "Native navigation completed but its room could not be read\n"
+                )
+                return False
 
-        self.update_executor(final_state)
+        try:
+            if native_navigation is None:
+                self.update_executor(final_state)
+            else:
+                self.update_executor(final_state, native_navigation)
+        except Exception:
+            self.execution_failed = True
+            raise
+        self.task.executable_steps += 1
 
         with weave.thread(thread_id=self.task.thread_id):
             self.get_observation()
@@ -239,3 +257,39 @@ def unity_execution_succeeded(response):
         return False
 
     return successful_message(messages)
+
+
+def reconcile_navigation_room(graph, native_graph):
+    """Use the actual navigation destination for objects approached across a room boundary."""
+    characters = [
+        node["id"] for node in graph["nodes"] if node["class_name"] == "character"
+    ]
+    if len(characters) != 1:
+        raise ValueError("Navigation room synchronization requires one character")
+    character = characters[0]
+    nodes = {node["id"]: node for node in graph["nodes"]}
+    native_nodes = {node["id"]: node for node in native_graph["nodes"]}
+    rooms = [
+        edge
+        for edge in native_graph["edges"]
+        if edge["from_id"] == character
+        and edge["relation_type"] == "INSIDE"
+        and native_nodes[edge["to_id"]].get("category") == "Rooms"
+    ]
+    if (
+        len(rooms) != 1
+        or rooms[0]["to_id"] not in nodes
+        or nodes[rooms[0]["to_id"]].get("category") != "Rooms"
+    ):
+        raise ValueError(
+            "Native navigation did not identify one known destination room"
+        )
+    return {
+        **graph,
+        "edges": [
+            edge
+            for edge in graph["edges"]
+            if not (edge["from_id"] == character and edge["relation_type"] == "INSIDE")
+        ]
+        + [dict(rooms[0])],
+    }
