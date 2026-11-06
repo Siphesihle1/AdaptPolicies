@@ -5,6 +5,11 @@ the official VirtualHome Linux v2.3.0 player (Unity 2021.2.14f1). It preserves t
 player's assets and original IK implementation. It does not rebuild the incomplete
 public Unity asset project. No simulator binaries are distributed here.
 
+Final validation: all69 annotated entries across six datasets pass all534 native
+and symbolic actions, with PSR/SR/Precision/Exec1 for every entry. Python99 tests
+pass. Evidence and the cumulative change summary are in
+`outputs/local/full_unity_final_v1/REPORT.md` and `validation-summary.json`.
+
 The hanging `MOD_PRO_Shirt_*` instances have meshes but no colliders. Native
 `GetGrabPose` rejects them before interaction execution. With the explicit
 `ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab` setting, the patch supplies the existing
@@ -518,4 +523,29 @@ preservation issue in the isolated breakfast trace is also caused by missing
 static-instance FACING: the evaluator collapses object IDs to class names. The
 reference contains the untouched plates273/277 facing the clock, not moved
 plate278. Its guard rejected an attempted extra correction; no plate reference
-was changed. The final all69 replay on version11 remains required.
+was changed. The final all69 replay on version11 passes as recorded below.
+
+## Final version11 validation and local adoption
+
+The final replay validates code/data commit
+`4bb7aef2a7e0a9813d096c923a6260643db76947`. Both independent lanes reuse their
+player across tasks; the rejected fresh-player workaround is not required.
+Train24, test_seen10, test_unseen10, ambiguous-goals5, env1 10 and env2 10 all pass
+every action and all four reference metrics1. Initial static-FACING signatures
+are identical within each scene0/1/2, and initial metadata/structural comparisons
+pass in both lanes. Exact source/data hashes, native build metadata, all534 action
+responses and graph traces are retained in `full_unity_final_v1`.
+
+The local `.env` selects the separate
+`/home/siphesihle/.local/share/virtualhome/adaptpolicies-tools-main-v1` runtime and
+the complete explicit feature list above. Its deployed DLL hashes match the
+verified version11 build. The official player remains unchanged. Original
+archive, six mapping manifests, train graphs1/10 and all other protected records
+remain preserved. No Conda/Python package versions changed in this completion
+pass. This is the documented custom runtime/dataset/vocabulary revision; these
+configuration details accompany evaluation results.
+
+No required annotation validation failures remain. The separate held-bin
+door224 Close probe stays deferred outside the agreed task. Physical fidelity
+limits remain as described above: deterministic rug deformation and floor
+drying proxy, calibrated mouth-contact animation and derived household effects.
