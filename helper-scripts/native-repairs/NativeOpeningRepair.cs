@@ -21,6 +21,7 @@ namespace AdaptPolicies.NativeRepairs
         }
         public static void Prepare(Transform home)
         {
+            LidlessBinRepair.Prepare(home);
             WindowCurtainRepair.Prepare(home);
             WindowOpeningRepair.Prepare(home);
         }

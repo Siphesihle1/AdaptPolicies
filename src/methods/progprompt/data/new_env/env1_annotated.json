@@ -33,9 +33,7 @@
         "<char0> [find] <plum> (119)",
         "<char0> [grab] <plum> (119)",
         "<char0> [find] <garbagecan> (183)",
-        "<char0> [open] <garbagecan> (183)",
-        "<char0> [putin] <plum> (119) <garbagecan> (183)",
-        "<char0> [close] <garbagecan> (183)"
+        "<char0> [putin] <plum> (119) <garbagecan> (183)"
       ]
     }
   },

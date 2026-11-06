@@ -33,9 +33,7 @@
         "<char0> [find] <bananas> (179)",
         "<char0> [grab] <bananas> (179)",
         "<char0> [find] <garbagecan> (378)",
-        "<char0> [open] <garbagecan> (378)",
-        "<char0> [putin] <bananas> (179) <garbagecan> (378)",
-        "<char0> [close] <garbagecan> (378)"
+        "<char0> [putin] <bananas> (179) <garbagecan> (378)"
       ]
     }
   },

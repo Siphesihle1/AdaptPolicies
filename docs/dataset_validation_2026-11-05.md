@@ -204,3 +204,60 @@ additional original task failure on the declared custom runtime;10 remain.
 The last complete stock replay remains55/69. The final all69 replay is pending
 the remaining container, approach and placement repairs; no aggregate result
 is inferred from separate targeted runs.
+
+## 2026-11-06: native lidless-bin disposal
+
+Rendered inspection confirms that scene0 bin229, scene1 bin183 and scene2 bin378
+are lidless. Their generic CAN_OPEN/CLOSED metadata does not describe their
+physical accessibility. The explicit `lidless-bin-colliders` feature uses each
+original hollow mesh as a collision surface. Existing box colliders become
+triggers, retaining bounds without filling the interior. No lid, OPEN flag or
+synthetic native success is added.
+
+Native insertion initially failed because the solid box or missing collider
+provided no interior floor for placement rays. Mesh colliders enable placement.
+Further live controls caught a false-positive native result: the banana group
+had an INSIDE edge while protruding through the bin side. A narrow ExecutePut
+hook now centers visible payload geometry, checks every visible mesh vertex
+against the interior and real floor, and supplies a fitting native target pose.
+Original IK, pickup, release and native graph updates perform the action.
+
+The four disposal annotations retain actual fruit insertion and omit unsupported
+Open/Close steps. Lime440 approaches through coffee table371 before pickup.
+Symbolic insertion/retrieval accepts only the three verified lidless prefabs
+while preserving their legacy state; closed unknown bins and other containers
+retain their access restrictions. Existing Unity acceptance remains mandatory.
+
+Fresh native+symbolic replays pass apple6/6, plum4/4, bananas4/4 and lime6/6.
+Post-replay live renderer bounds are contained in the receiving bin, the native
+INSIDE edge exists, and the object is not held. Separate native controls pass
+retrieval and reinsertion for all four fruits. An oversized-pan negative control
+returns failure, retains the held object and creates no INSIDE edge.
+
+The lime reference had one stale edge: lime440 INSIDE livingroom335 remained
+after insertion into kitchen bin229. Only test_seen graph2 changes that edge to
+kitchen205. The frozen old successful replay scored PSR=1, SR=1, Exec=1 but
+Precision415/416. The corrected reference removes that erroneous preservation
+condition and adds the proper room goal; a fresh six-action native replay scores
+all four metrics1. Scoring formulas are unchanged. This reference effect is not
+an execution or LLM-performance improvement.
+
+All four disposal tasks now score all four metrics1. The shirt, two curtain and
+window annotation regressions also pass, along with all3 scene comparisons,
+9 window motion cases,6 curtain cases and81 Python tests. Six of3356 original
+methods have narrow hooks;3350 remain unchanged. The player differs only in the
+patched original managed assembly and added own helper DLL. Original asset
+files, IK and installation remain unchanged.
+
+Evidence: `outputs/local/lidless_main_validation_v4/`, the separate corrected-lime
+and visual replay in `outputs/local/lidless_lime_reference_validation_v4/`,
+`outputs/local/lidless_bin_physical_v4/`, and
+`outputs/local/lidless_bin_negative_v4/`. Earlier rejected physical controls and
+the original lime reference/score remain frozen. Only four annotation records
+and that single graph2 edge change; all other records, mappings and original
+archive are preserved, including protected wash-mug graph10 and cutlery graph1.
+
+Six original failures remain: wash_clothes, put_papers_in_the_folder,
+take_out_the_trash, wash_the_frying_pan, wash_the_rug_in_washing_machine and
+brush_teeth. The last complete stock replay remains55/69. The required final
+all69 replay on the declared combined runtime is still pending.

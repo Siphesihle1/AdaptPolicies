@@ -13,7 +13,7 @@ namespace AdaptPolicies.NativeDiagnostics
         static int sequence;
         static readonly HashSet<string> Classes = new HashSet<string> {
             "curtains", "window", "closet", "clothesshirt", "clothespants", "garbagecan",
-            "folder", "washingmachine", "fryingpan", "sink", "toothbrush", "toothpaste", "rug", "lime"
+            "folder", "washingmachine", "fryingpan", "sink", "toothbrush", "toothpaste", "rug", "lime", "apple", "plum", "bananas"
         };
         [Serializable] class Switch
         {
@@ -82,10 +82,17 @@ namespace AdaptPolicies.NativeDiagnostics
                     var item = new Item { id = (int)Value(node, "id"), className = className, name = transform.name, position = Coordinates(transform.position), hierarchy = transform.name };
                     item.localScale = Coordinates(transform.localScale);
                     item.worldScale = Coordinates(transform.lossyScale);
-                    var liveRenderer = transform.GetComponent<Renderer>();
-                    if (liveRenderer != null) {
-                        item.rendererBoundsCenter = Coordinates(liveRenderer.bounds.center);
-                        item.rendererBoundsSize = Coordinates(liveRenderer.bounds.size);
+                    var liveBounds = new Bounds();
+                    var hasRenderer = false;
+                    foreach (var renderer in transform.GetComponentsInChildren<Renderer>())
+                    {
+                        if (!renderer.enabled) continue;
+                        if (hasRenderer) liveBounds.Encapsulate(renderer.bounds);
+                        else { liveBounds = renderer.bounds; hasRenderer = true; }
+                    }
+                    if (hasRenderer) {
+                        item.rendererBoundsCenter = Coordinates(liveBounds.center);
+                        item.rendererBoundsSize = Coordinates(liveBounds.size);
                     }
                     for (var parent = transform.parent; parent != null; parent = parent.parent) item.hierarchy = parent.name + "/" + item.hierarchy;
                     var components = transform.GetComponents<Component>();

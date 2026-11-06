@@ -56,14 +56,12 @@
         "<char0> [find] <garbagecan> (229)"
       ],
       "2: grab lime": [
-        "<char0> [find] <lime> (440)",
+        "<char0> [find] <coffeetable> (371)",
         "<char0> [grab] <lime> (440)"
       ],
       "3: put lime in garbage can": [
         "<char0> [find] <garbagecan> (229)",
-        "<char0> [open] <garbagecan> (229)",
-        "<char0> [putin] <lime> (440) <garbagecan> (229)",
-        "<char0> [close] <garbagecan> (229)"
+        "<char0> [putin] <lime> (440) <garbagecan> (229)"
       ],
       "4: Done": []
     }

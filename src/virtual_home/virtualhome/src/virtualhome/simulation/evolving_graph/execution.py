@@ -544,24 +544,37 @@ class PutBackExecutor(ActionExecutor):
                     yield state
 
 
-def _check_puttable(state: EnvironmentState, src_node: GraphNode, dest_node: GraphNode, relation: Relation,
-                    info: ExecutionInfo, char_index):
+def _allows_access_while_closed(node):
+    return node.class_name == "closet" or (
+        node.class_name == "garbagecan"
+        and node.prefab_name in {"Garbage_can_2", "Garbage_can_6", "Garbage_can_8"}
+    )
+
+
+def _check_puttable(
+    state: EnvironmentState,
+    src_node: GraphNode,
+    dest_node: GraphNode,
+    relation: Relation,
+    info: ExecutionInfo,
+    char_index,
+):
     hand_rel = _find_holding_hand(state, src_node, char_index)
     if hand_rel is None:
         char_node = _get_character_node(state, char_index)
-        info.error('{} is not holding {}', char_node, src_node)
+        info.error("{} is not holding {}", char_node, src_node)
         return False
     if not _is_character_close_to(state, dest_node, char_index):
         char_node = _get_character_node(state, char_index)
-        info.error('{} is not close to {}', char_node, dest_node)
+        info.error("{} is not close to {}", char_node, dest_node)
         return False
     if relation == Relation.INSIDE:
         if (
             Property.CAN_OPEN not in dest_node.properties
             or State.OPEN in dest_node.states
-            or dest_node.class_name == "closet"
+            or _allows_access_while_closed(dest_node)
         ):
-            # The installed closet assets allow access while reporting CLOSED.
+            # Native closets and these lidless bin prefabs permit access while reporting CLOSED.
             # Unity acceptance still gates every committed runtime action.
             return True
         else:
@@ -1370,7 +1383,7 @@ def _is_inside(state: EnvironmentState, node: Node):
     return any(
         State.CLOSED in container.states
         and container.category != "Rooms"
-        and container.class_name != "closet"
+        and not _allows_access_while_closed(container)
         for container in state.get_nodes_from(node, Relation.INSIDE)
     )
 
