@@ -1,6 +1,6 @@
 # Local native simulator repairs
 
-This tool builds the `adaptpolicies-native-repairs-v6` patch for a **separate copy** of
+This tool builds the `adaptpolicies-native-repairs-v7` patch for a **separate copy** of
 the official VirtualHome Linux v2.3.0 player (Unity 2021.2.14f1). It preserves that
 player's assets and original IK implementation. It does not rebuild the incomplete
 public Unity asset project. No simulator binaries are distributed here.
@@ -68,6 +68,17 @@ of its original doorway endpoints, the normal toward the kitchen and a0.4m
 standoff. The original path search, collision checks and walking execute the
 approach. The door leaf, interaction handle and scene metadata are unchanged.
 
+The `sink-release-pose` feature plans the known frying pan and washing-liquid
+bottle's sink placements from their full visible meshes in flat/upright release
+poses aligned with the sink. The original planner otherwise measures the rotated,
+held objects, whose enlarged world bounds can reject fitting placements.
+Native surface rays and obstruction checks still
+select candidate positions; a further check keeps the entire visible footprint
+inside the sink surface. The same checked rotation is registered for the native
+IK release, surviving the interaction factory's yaw reset. No scale, collider,
+sink mesh, graph edge or success response is substituted. Other payloads and
+destinations retain the original planner.
+
 ## Build
 
 Run commands through the required `%USERPROFILE%\scripts\zsh-run.cmd` wrapper.
@@ -91,7 +102,7 @@ manifest. Copy the two DLLs into the `Managed` directory of a separately copied
 official player, retaining all other player files. Keep the original installation
 unchanged. Set `VIRTUALHOME_SIM_ROOT` to the copied player's directory when using
 the existing simulator launcher, and explicitly export
-`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry` in the simulator process environment.
+`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose` in the simulator process environment.
 Record the manifest with every replay; this is a custom runtime, not stock v2.3.0.
 
 Optional `ADAPTPOLICIES_NATIVE_DIAGNOSTICS` names a directory for read-only scene
@@ -226,3 +237,39 @@ the latest paper regression passes. Native Close door224 while holding the bin
 also failed during an earlier probe; the clarified task does not require Close.
 No fix is claimed for that separate action. The final all69 replay and default
 runtime adoption remain pending.
+
+## Sink release-pose validation
+
+The original sixteen frying-pan washing actions are unchanged. Pan269 and soap267
+now both release through native IK onto sink247; their complete367- and569-vertex
+visible meshes fit its footprint, touch its surface and are no longer held.
+The existing runtime washing conditions mark the pan WASHED. Neither object is
+rescaled. The first pan-only candidate exposed the same held-pose problem for
+the soap bottle; it is retained as a failed complete-task candidate.
+
+Evidence: `outputs/local/pan_main_validation_v1/` records seven physical pan
+placements across three repeated pickup/reinsert cycles and a batch script,
+plus rejection of an unheld placement. `outputs/local/pan_main_validation_v2/`
+records the complete unchanged pan annotation, final live pan/soap vertex checks
+and fourteen successful task regressions, including all other washing tasks
+that previously completed. All three initial scenes remain equivalent.
+
+Only train reference graph13 changes: its two INSIDE sink relations for the pan
+and soap become ON, matching the original PutBack commands and the native sink's
+zero-height surface. The pan gains an explicit WASHED goal. On the same frozen
+successful trace, the old reference satisfies10/12 goals and415/415 preservation;
+the corrected reference satisfies13/13 goals and415/415 preservation. Evaluator
+formulas and every annotation remain unchanged. This reference correction and
+strengthened washing goal are distinct from improved native executability.
+
+The fresh corrected-reference replay in `outputs/local/pan_reference_validation_v2/`
+passes16/16 actions and scores PSR/SR/Precision/Exec1. The fourteen regressions
+also score all four metrics1. Python86 tests pass. The patch still changes only
+eleven of3356 original methods;3345 are unchanged. All other player files are
+byte-identical to the original. Protected graphs1/10, every other reference,
+all mapping manifests and the original archive remain preserved.
+
+Three original native failures remain: clothes washing, rug washing and brushing
+teeth. The variable clock/TV FACING goals and the earlier held-bin door-Close
+failure remain separate backlog items. Final all69 replay and runtime adoption
+are still required; targeted tests are not an aggregate69-entry result.

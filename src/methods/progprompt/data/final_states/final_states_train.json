@@ -200758,7 +200758,9 @@
           "MOVABLE",
           "GRABBABLE"
         ],
-        "states": [],
+        "states": [
+          "WASHED"
+        ],
         "prefab_name": "PRE_PRO_Frying_pan_01",
         "bounding_box": {
           "center": [
@@ -206511,7 +206513,7 @@
       },
       {
         "from_id": 267,
-        "relation_type": "INSIDE",
+        "relation_type": "ON",
         "to_id": 247
       },
       {
@@ -208821,7 +208823,7 @@
       },
       {
         "from_id": 269,
-        "relation_type": "INSIDE",
+        "relation_type": "ON",
         "to_id": 247
       },
       {

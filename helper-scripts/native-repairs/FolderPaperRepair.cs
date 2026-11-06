@@ -12,6 +12,7 @@ namespace AdaptPolicies.NativeRepairs
         static readonly Dictionary<GameObject, Quaternion> PendingRelease = new Dictionary<GameObject, Quaternion>();
         static readonly FieldInfo OriginalParent = typeof(HandInteraction).GetField("m_tsfm_parent",
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        public static void RegisterRelease(GameObject ghost, Quaternion rotation) { PendingRelease[ghost] = rotation; }
         public static void ClearPending() { PendingRelease.Clear(); }
         public static void RestoreReleasePose(HandInteraction interaction)
         {
@@ -90,7 +91,7 @@ namespace AdaptPolicies.NativeRepairs
             bool inside, bool unused, Vector2? explicitPosition, float y, State current, PutAction action)
         {
             if (!FolderOpeningRepair.IsFolder(destination))
-                return GameObjectUtils.CalculatePutPositions(interactionPosition, payload, destination, inside, unused, explicitPosition, y);
+                return SinkReleaseRepair.Positions(interactionPosition, payload, destination, inside, unused, explicitPosition, y);
             var result = new List<Vector3>();
             if (!inside || explicitPosition != null || y != -1) return result;
             ScriptObjectData data;
@@ -106,6 +107,7 @@ namespace AdaptPolicies.NativeRepairs
         }
         public static void PreparePut(State state)
         {
+            SinkReleaseRepair.PreparePut(state);
             var action = state.Action as PutAction;
             if (action == null) return;
             var destination = state.GetScriptGameObject(action.DestName);

@@ -12,7 +12,7 @@ namespace AdaptPolicies.NativeDiagnostics
     {
         static int sequence;
         static readonly HashSet<string> Classes = new HashSet<string> {
-            "paper", "curtains", "window", "closet", "clothesshirt", "clothespants", "garbagecan",
+            "dishwashingliquid", "paper", "curtains", "window", "closet", "clothesshirt", "clothespants", "garbagecan",
             "folder", "washingmachine", "fryingpan", "sink", "toothbrush", "toothpaste", "rug", "lime", "apple", "plum", "bananas"
         };
         [Serializable] class Switch
@@ -116,7 +116,7 @@ namespace AdaptPolicies.NativeDiagnostics
                         var mesh = filter.sharedMesh;
                         var rotation = filter.transform.rotation;
                         float[][] worldVertices = null;
-                        if (className == "paper" && mesh != null && mesh.isReadable)
+                        if ((className == "paper" || className == "fryingpan" || className == "dishwashingliquid") && mesh != null && mesh.isReadable)
                         {
                             var vertices = mesh.vertices;
                             worldVertices = new float[vertices.Length][];
