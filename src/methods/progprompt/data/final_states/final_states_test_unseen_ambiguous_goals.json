@@ -41880,11 +41880,6 @@
         "to_id": 205
       },
       {
-        "from_id": 334,
-        "relation_type": "FACING",
-        "to_id": 264
-      },
-      {
         "from_id": 285,
         "relation_type": "FACING",
         "to_id": 264
@@ -59489,11 +59484,6 @@
         "from_id": 53,
         "relation_type": "ON",
         "to_id": 49
-      },
-      {
-        "from_id": 442,
-        "relation_type": "FACING",
-        "to_id": 433
       },
       {
         "from_id": 255,

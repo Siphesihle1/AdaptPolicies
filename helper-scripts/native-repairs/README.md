@@ -459,3 +459,31 @@ graphs and scores all four metrics1; previously the symbolic character stayed
 in kitchen205. Evidence: `outputs/local/room_navigation_candidate_v1/`.
 Python99 tests pass. No annotation, reference or scoring formula changes are
 part of this synchronization fix.
+
+## Full replay and moved-object reference corrections
+
+The complete shared-player replay at3aa354f1 executes all69 annotations through
+Unity and the symbolic executor. Sixty score all four metrics1. Its nine scoring
+differences are retained in `full_unity_replay_economical_v1/scoring-backlog.json`:
+the character room mismatch, five static-FACING goal misses, and stale preservation
+facts on four moved objects (one task has both kinds of FACING difference).
+
+Both frozen native and symbolic traces confirm that train coffeepot307 finishes
+in livingroom335 and env1 coffeepot230 in bedroom50, on their destination coffee
+tables. Their references incorrectly retained their starting kitchen rooms.
+Only those two reference INSIDE edges are corrected. After cereal334 and peach442
+move to different rooms, both graphs also discard their old FACING edges to
+TV264 and computer433 respectively. Only these two stale moved-object reference
+edges are removed. No annotation, node, static FACING target, scoring formula,
+protected train graph1/10, mapping manifest or original archive changes.
+`moved-reference-corrections.json` records exact record IDs and physical evidence.
+These are explicit benchmark-reference corrections with scoring effects.
+
+Fresh-player probes of the exact clothes/lime tasks that missed static FACING
+in the shared player score all four metrics1. A bounded diagnostic found no
+avatar-occlusion explanation; the underlying reset/cache cause remains unproven.
+Final validation therefore starts a fresh native player for each annotation.
+Treat this process-isolation protocol, runtime flags, patch manifest and dataset
+revision as part of the reported configuration. Reusing a player across tasks
+is not covered by a claim of stable reference metrics. Final isolated all69
+validation remains pending at this point.
