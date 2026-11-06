@@ -17,6 +17,8 @@ class Action(Enum):
     GRAB = ("Grab", 1, [['GRABBABLE']]) # water too
     FOLD = ("Fold", 1, [['GRABBABLE']])
     UNFOLD = ("Unfold", 1, [['GRABBABLE']])
+    APPLY = ("Apply", 2, [['GRABBABLE'], ['GRABBABLE']])
+    USE = ("Use", 1, [['GRABBABLE']])
     LOOKAT = ("Look at", 1, [[]])
     LOOKAT_SHORT = ("Look at short", 1, [[]])
     LOOKAT_MEDIUM = LOOKAT

@@ -40,15 +40,16 @@
         "<char0> [grab] <toothbrush> (65)"
       ],
       "3: find toothpaste": [
-        "<char0> [find] <toothpaste> (62)"
+        "<char0> [find] <toothpaste> (62)",
+        "<char0> [open] <toothpaste> (62)"
       ],
       "4: put toothpaste on toothbrush": [
         "<char0> [grab] <toothpaste> (62)",
-        "<char0> [putback] <toothpaste> (62) <toothbrush> (65)",
-        "<char0> [grab] <toothpaste> (62)",
-        "<char0> [putin] <toothpaste> (62) <toothbrush> (65)"
+        "<char0> [apply] <toothpaste> (62) <toothbrush> (65)"
       ],
-      "5: brush teeth": [],
+      "5: brush teeth": [
+        "<char0> [use] <toothbrush> (65)"
+      ],
       "6: Done": []
     }
   },

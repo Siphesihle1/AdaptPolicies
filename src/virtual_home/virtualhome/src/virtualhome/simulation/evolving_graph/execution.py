@@ -1120,6 +1120,56 @@ class FoldExecutor(ActionExecutor):
         )
 
 
+class ToolExecutor(ActionExecutor):
+
+    def __init__(self, applying):
+        self.applying = applying
+
+    def execute(self, script, state, info, char_index, modify=True, in_place=False):
+        line = script[0]
+        info.set_current_line(line)
+        source = state.get_state_node(line.object())
+        brush = state.get_state_node(line.subject()) if self.applying else source
+        if source is None or brush is None:
+            info.object_found_error()
+            return
+        if (
+            brush.class_name != "toothbrush"
+            or brush.prefab_name != "PRE_PRO_Toothbrush_01"
+        ):
+            info.error("{} has no supported physical tool behavior", brush)
+            return
+        if _find_holding_hand(state, brush, char_index) is None:
+            info.error("{} must be held before applying or using", brush)
+            return
+        if self.applying:
+            if (
+                source.class_name != "toothpaste"
+                or source.prefab_name != "SHP_PRE_Toothpaste"
+                or _find_holding_hand(state, source, char_index) is None
+                or State.OPEN not in source.states
+                or State.APPLIED in brush.states
+            ):
+                info.error(
+                    "Apply requires held toothpaste with an open cap and an unprepared held brush"
+                )
+                return
+        elif State.APPLIED not in brush.states:
+            info.error("Use requires paste applied to the held brush")
+            return
+        changed = brush.copy()
+        if self.applying:
+            changed.states.add(State.APPLIED)
+        else:
+            changed.states.discard(State.APPLIED)
+            changed.states.add(State.USED)
+        yield (
+            state.change_state([ChangeNode(changed)], in_place=in_place)
+            if modify
+            else state
+        )
+
+
 class WashExecutor(ActionExecutor):
 
     def execute(
@@ -1531,6 +1581,8 @@ class ScriptExecutor(object):
         Action.GRAB: GrabExecutor(),
         Action.FOLD: FoldExecutor(True),
         Action.UNFOLD: FoldExecutor(False),
+        Action.APPLY: ToolExecutor(True),
+        Action.USE: ToolExecutor(False),
         Action.OPEN: OpenExecutor(False),
         Action.CLOSE: OpenExecutor(True),
         Action.PUTBACK: PutExecutor(Relation.ON),

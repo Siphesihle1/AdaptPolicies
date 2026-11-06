@@ -32,6 +32,8 @@ class State(Enum):
     PLUGGED_OUT = 10
     FOLDED = 11
     UNFOLDED = 12
+    APPLIED = 13
+    USED = 14
 
 
 class Relation(Enum):

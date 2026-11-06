@@ -81,6 +81,12 @@ class PutBack(PutIn):
         self.action_name = "putback"
 
 
+class Apply(PutIn):
+    def __init__(self, env, task):
+        super().__init__(env, task)
+        self.action_name = "apply"
+
+
 # One argument actions
 class Find(Action):
     def __init__(self, env: VHEnvironment, task: VHTask):
@@ -203,6 +209,12 @@ class Unfold(Fold):
     def __init__(self, env, task):
         super().__init__(env, task)
         self.action_name = "unfold"
+
+
+class Use(Talk):
+    def __init__(self, env, task):
+        super().__init__(env, task)
+        self.action_name = "use"
 
 
 class SwitchOff(Open):

@@ -31096,7 +31096,7 @@
           "GRABBABLE"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "SHP_PRE_Toothpaste",
         "bounding_box": {
@@ -31166,7 +31166,9 @@
           "GRABBABLE",
           "MOVABLE"
         ],
-        "states": [],
+        "states": [
+          "USED"
+        ],
         "prefab_name": "PRE_PRO_Toothbrush_01",
         "bounding_box": {
           "center": [
@@ -40701,11 +40703,6 @@
         "to_id": 1
       },
       {
-        "from_id": 65,
-        "relation_type": "CLOSE",
-        "to_id": 62
-      },
-      {
         "from_id": 239,
         "relation_type": "INSIDE",
         "to_id": 205
@@ -40949,11 +40946,6 @@
         "from_id": 186,
         "relation_type": "ON",
         "to_id": 109
-      },
-      {
-        "from_id": 62,
-        "relation_type": "CLOSE",
-        "to_id": 65
       },
       {
         "from_id": 62,
@@ -43703,11 +43695,6 @@
       {
         "from_id": 62,
         "relation_type": "INSIDE",
-        "to_id": 65
-      },
-      {
-        "from_id": 62,
-        "relation_type": "INSIDE",
         "to_id": 11
       },
       {
@@ -44899,6 +44886,11 @@
         "from_id": 178,
         "relation_type": "INSIDE",
         "to_id": 73
+      },
+      {
+        "from_id": 1,
+        "relation_type": "HOLDS_LH",
+        "to_id": 62
       }
     ]
   },

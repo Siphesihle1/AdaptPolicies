@@ -58,6 +58,8 @@ from virtual_home.actions import (
     Grab,
     Fold,
     Unfold,
+    Apply,
+    Use,
     Read,
     Talk,
     LookAt,
@@ -102,6 +104,8 @@ drink = Drink(env, task)
 grab = Grab(env, task)
 fold = Fold(env, task)
 unfold = Unfold(env, task)
+apply = Apply(env, task)
+use = Use(env, task)
 read = Read(env, task)
 talk = Talk(env, task)
 lookat = LookAt(env, task)

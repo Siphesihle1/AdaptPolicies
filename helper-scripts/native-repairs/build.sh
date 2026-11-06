@@ -24,6 +24,8 @@ mkdir -p "$output"
     -r:"$(cygpath -m "$managed/System.Core.dll")" \
     -r:"$(cygpath -m "$managed/UnityEngine.CoreModule.dll")" \
     -r:"$(cygpath -m "$managed/UnityEngine.PhysicsModule.dll")" \
+    -r:"$(cygpath -m "$managed/UnityEngine.ImageConversionModule.dll")" \
+    -r:"$(cygpath -m "$managed/UnityEngine.AnimationModule.dll")" \
     -r:"$(cygpath -m "$managed/Newtonsoft.Json.dll")" \
     -r:"$(cygpath -m "$managed/Assembly-CSharp.dll")" \
     -r:"$(cygpath -m "$managed/Assembly-CSharp-firstpass.dll")" \
@@ -40,6 +42,8 @@ mkdir -p "$output"
     "$(cygpath -m "$source_dir/WasherContainmentRepair.cs")" \
     "$(cygpath -m "$source_dir/WasherOpeningRepair.cs")" \
     "$(cygpath -m "$source_dir/BinCarryRepair.cs")" \
+    "$(cygpath -m "$source_dir/ToolActions.cs")" \
+    "$(cygpath -m "$source_dir/ToothpasteOpeningRepair.cs")" \
     "$(cygpath -m "$source_dir/ExtendedActions.cs")" \
     "$(cygpath -m "$source_dir/RugFold.cs")" \
     "$(cygpath -m "$source_dir/RugReleaseRepair.cs")"

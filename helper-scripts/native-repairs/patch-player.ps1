@@ -191,7 +191,7 @@ try {
     $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Call,$original.MainModule.ImportReference(($extensions.Methods | Where-Object Name -eq 'TryAdd'))))
     $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Brfalse,$first))
     $processor.InsertBefore($first,$processor.Create([Mono.Cecil.Cil.OpCodes]::Ret))
-    foreach ($entry in @(@('InteractionType','FOLD',32),@('InteractionType','UNFOLD',33),@('ObjectState','FOLDED',10),@('ObjectState','UNFOLDED',11))) {
+    foreach ($entry in @(@('InteractionType','FOLD',32),@('InteractionType','UNFOLD',33),@('ObjectState','FOLDED',10),@('ObjectState','UNFOLDED',11),@('ObjectState','APPLIED',12),@('ObjectState','USED',13),@('InteractionType','APPLY',34),@('InteractionType','USE',35))) {
         $type = $original.MainModule.Types | Where-Object FullName -eq ('StoryGenerator.Utilities.' + $entry[0])
         if ($type.Fields | Where-Object { $_.Name -eq $entry[1] -or ($_.HasConstant -and $_.Constant -eq $entry[2]) }) { throw 'Manipulation enum conflicts with native values.' }
         $field = [Mono.Cecil.FieldDefinition]::new($entry[1],([Mono.Cecil.FieldAttributes]::Public -bor [Mono.Cecil.FieldAttributes]::Static -bor [Mono.Cecil.FieldAttributes]::Literal -bor [Mono.Cecil.FieldAttributes]::HasDefault),$type)
@@ -218,12 +218,12 @@ try {
     $original.Write($OutputAssembly)
     $manifest = [ordered]@{
         base = 'Official VirtualHome Linux v2.3.0 (Unity 2021.2.14f1)'
-        patch = 'adaptpolicies-native-repairs-v9'
+        patch = 'adaptpolicies-native-repairs-v10'
         originalSha256 = $actualHash
         helperSha256 = (Get-FileHash -LiteralPath $HelperAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
         patchedSha256 = (Get-FileHash -LiteralPath $OutputAssembly -Algorithm SHA256).Hash.ToLowerInvariant()
         modifiedMethods = @($create[0].FullName,$updates[0].FullName,$grab[0].FullName,$front[0].FullName,$interaction[0].FullName,$put[0].FullName,$move.FullName,$getIO[0].FullName,$processGrab[0].FullName,$grabPlanner[0].FullName,$pointFinder[0].FullName,$dispatch[0].FullName)
-        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening,manipulation-actions'
+        activation = 'ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening,manipulation-actions,tool-manipulation'
         assetsModified = $false
         originalInstallationModified = $false
         nativeReplayVerified = $false

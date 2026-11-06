@@ -11,12 +11,14 @@ namespace AdaptPolicies.NativeRepairs
         public ScriptObjectName Name { get; private set; }
         public int ScriptLine { get; private set; }
         public int Kind { get; private set; }
+        public ScriptObjectName Target { get; private set; }
 
         public ManipulationAction(ScriptLine line)
         {
             Kind = (int)line.Interaction;
             ScriptLine = line.LineNumber;
             Name = new ScriptObjectName(line.Parameters[0].Item1, line.Parameters[0].Item2);
+            if (line.Parameters.Count == 2) Target = new ScriptObjectName(line.Parameters[1].Item1,line.Parameters[1].Item2);
         }
     }
 
@@ -26,11 +28,11 @@ namespace AdaptPolicies.NativeRepairs
         {
             var line = lines[index];
             var kind = (int)line.Interaction;
-            if (kind < 32 || kind > 33)
+            if (kind < 32 || kind > 35)
                 return false;
             if (!NativeRepairFeatures.Enabled("manipulation-actions"))
                 throw new InvalidOperationException("The custom manipulation vocabulary is disabled.");
-            if (line.Parameters.Count != 1)
+            if (line.Parameters.Count != (kind == 34 ? 2 : 1))
                 throw new ArgumentException("Incorrect number of manipulation arguments.");
             var action = new ManipulationAction(line);
             executor.script.Add(new ScriptPair { Action = action, ProcessMethod = (a, state) => Process(executor, (ManipulationAction)a, state) });
@@ -39,6 +41,7 @@ namespace AdaptPolicies.NativeRepairs
 
         static IEnumerable<IStateGroup> Process(ScriptExecutor executor, ManipulationAction action, State current)
         {
+            if (action.Kind >= 34) { foreach (var state in ToolActions.Process(executor,action,current)) yield return state; yield break; }
             var payload = current.GetScriptGameObject(action.Name);
             var held = payload != null && (current.GetGameObject("RIGHT_HAND_OBJECT") == payload || current.GetGameObject("LEFT_HAND_OBJECT") == payload);
             var fold = payload == null ? null : payload.GetComponent<RugFold>();
@@ -137,6 +140,7 @@ namespace AdaptPolicies.NativeRepairs
         {
             foreach (var node in graph.nodes)
             {
+                ToolActions.UpdateNode(node);
                 var fold = node.transform == null ? null : node.transform.GetComponent<RugFold>();
                 if (fold == null || !fold.Completed)
                     continue;

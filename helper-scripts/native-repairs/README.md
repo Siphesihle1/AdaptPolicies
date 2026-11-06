@@ -1,6 +1,6 @@
 # Local native simulator repairs
 
-This tool builds the `adaptpolicies-native-repairs-v8` patch for a **separate copy** of
+This tool builds the `adaptpolicies-native-repairs-v10` patch for a **separate copy** of
 the official VirtualHome Linux v2.3.0 player (Unity 2021.2.14f1). It preserves that
 player's assets and original IK implementation. It does not rebuild the incomplete
 public Unity asset project. No simulator binaries are distributed here.
@@ -102,7 +102,7 @@ manifest. Copy the two DLLs into the `Managed` directory of a separately copied
 official player, retaining all other player files. Keep the original installation
 unchanged. Set `VIRTUALHOME_SIM_ROOT` to the copied player's directory when using
 the existing simulator launcher, and explicitly export
-`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening` in the simulator process environment.
+`ADAPTPOLICIES_NATIVE_REPAIRS=shirt-grab,window-curtains,window-opening,lidless-bin-colliders,folder-opening,bin-carry,sink-release-pose,washer-opening,manipulation-actions,tool-manipulation` in the simulator process environment.
 Record the manifest with every replay; this is a custom runtime, not stock v2.3.0.
 
 Optional `ADAPTPOLICIES_NATIVE_DIAGNOSTICS` names a directory for read-only scene
@@ -391,3 +391,58 @@ Current candidate: `adaptpolicies-native-repairs-v9`, separate runtime
 `adaptpolicies-fold-main-v1`, build evidence `fold-main-build-v4`. Brushing via
 generic Apply/Use, FACING consistency, the earlier held-bin door-Close probe,
 final all69 replay and final runtime adoption remain pending.
+
+## Generic Apply and Use
+
+The `tool-manipulation` feature adds generic Apply(source, target) and Use(tool)
+to the native parser, symbolic executor and planner wrappers. Their implemented
+object behavior is limited to the original toothpaste and toothbrush prefabs.
+Apply requires both tools held, an actually open tube cap and an unprepared
+brush. Native hand IK aligns the original nozzle and bristles; paste geometry is
+deposited only after at least0.6 seconds within6mm. Use requires that physical
+paste, moves the held brush through lateral strokes at the calibrated Male2
+mouth region, and consumes the paste after at least0.6 seconds of contact and
+15mm of measured travel. Successful controls measure approximately24mm travel.
+This is a mouth-contact animation model, not a dental or fluid simulation.
+No toothbrushing-specific vocabulary is introduced.
+
+The original textured tube mesh is partitioned into body and hinged cap, retaining
+every triangle, material and object scale. Native Open/Close drive the cap through
+140/0 degrees. A valid native scene-state sequence preserves pickup behavior.
+The original player files and source asset installation remain untouched.
+
+Native Find/Grab can replace an object's planned opening status with UNKNOWN.
+Apply recovers the most recent explicit status from that plan's previous states;
+execution independently checks the real cap angle. It does not treat a planned
+Open as proof that the physical cap opened. Custom hand motion temporarily uses
+AlwaysAnimate and offscreen skin updates, restoring both afterward. Without
+these settings, internal IK coordinates moved while the rendered body remained
+idle; those earlier candidates were rejected despite successful action responses.
+
+Evidence: `outputs/local/tool_motion_prototype_v13/` contains three serial cycles,
+a complete batch, reversed-hand execution, and rejected unheld, dry, repeated,
+wrong-pair and closed-source operations. In-motion views from the preceding
+candidate establish mouth placement; nose/chin targets were rejected. All three
+initial scene comparisons pass. The transferred build in
+`outputs/local/tool_main_validation_v1/` completes the eight-action brush
+annotation through Unity and the symbolic executor. Python97 tests pass.
+
+Only test_unseen annotation record2 and reference graph2 change. Existing subtask
+keys and eight total actions are retained: Open/Apply/Use replace impossible
+PutBack/PutIn and redundant pickup. The reference replaces toothpaste INSIDE
+toothbrush with its actual left-hand holding relation, requires the opened cap,
+and explicitly requires USED on the brush. Every other annotation/reference,
+protected train graphs1/10, all six mapping manifests and the original archive
+remain unchanged. The custom vocabulary, executable annotation and completion
+goals constitute a benchmark revision; record them alongside evaluation results.
+Scoring formulas and FACING goals are unchanged. This targeted result does not
+replace the final69-entry replay. The separate door-Close probe is deferred
+unless a required annotation depends on it.
+
+The first integrated trace met11/13 reference goals: only the old reciprocal
+toothpaste/brush CLOSE edges were missing after the tools returned to their
+native held poses. Those edges came from the invalid final insertion and are
+removed from this one reference record. Contact is required during Apply/Use,
+not as a final proximity constraint. The same frozen trace meets11/11 corrected
+goals; `reference-proximity-correction.json` records this separate scoring effect.
+The final full replay must verify the corrected reference afresh.

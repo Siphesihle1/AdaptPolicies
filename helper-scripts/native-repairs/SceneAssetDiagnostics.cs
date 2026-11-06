@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 using Newtonsoft.Json;
+using RootMotion.FinalIK;
 
 namespace AdaptPolicies.NativeDiagnostics
 {
@@ -12,7 +13,7 @@ namespace AdaptPolicies.NativeDiagnostics
     {
         static int sequence;
         static readonly HashSet<string> Classes = new HashSet<string> {
-            "clothespile", "dishwashingliquid", "paper", "curtains", "window", "closet", "clothesshirt", "clothespants", "garbagecan",
+            "character", "clothespile", "dishwashingliquid", "paper", "curtains", "window", "closet", "clothesshirt", "clothespants", "garbagecan",
             "folder", "washingmachine", "fryingpan", "sink", "toothbrush", "toothpaste", "rug", "lime", "apple", "plum", "bananas"
         };
         [Serializable] class Switch
@@ -34,7 +35,11 @@ namespace AdaptPolicies.NativeDiagnostics
             public float[] worldScale;
             public float[][] worldVertices;
             public int[] triangles;
+            public float[][] localVertices;
+            public int[][] subMeshTriangles;
+            public string[] materials;
         }
+        [Serializable] class Bone { public string name; public float[] position; public float[] rotation; }
         [Serializable] class Item
         {
             public int id;
@@ -51,6 +56,7 @@ namespace AdaptPolicies.NativeDiagnostics
             public List<Switch> switches = new List<Switch>();
             public List<Mesh> meshes = new List<Mesh>();
             public int colliders;
+            public List<Bone> bones = new List<Bone>();
         }
         [Serializable] class Report
         {
@@ -85,6 +91,18 @@ namespace AdaptPolicies.NativeDiagnostics
                     var transform = (Transform)Value(node, "transform");
                     var item = new Item { id = (int)Value(node, "id"), className = className, name = transform.name, position = Coordinates(transform.position), hierarchy = transform.name };
                     item.localScale = Coordinates(transform.localScale);
+                    var ik = transform.GetComponentInChildren<FullBodyBipedIK>();
+                    if (className == "character" && ik != null) {
+                        var refs = ik.references;
+                        foreach (var bone in new[] { refs.head, refs.leftHand, refs.rightHand, refs.leftUpperArm, refs.rightUpperArm }) if (bone != null) {
+                            var q = bone.rotation;
+                            item.bones.Add(new Bone { name = bone.name, position = Coordinates(bone.position), rotation = new[] { q.x, q.y, q.z, q.w } });
+                        }
+                        foreach (var eye in refs.eyes) if (eye != null) {
+                            var q=eye.rotation;
+                            item.bones.Add(new Bone { name=eye.name, position=Coordinates(eye.position), rotation=new[] { q.x,q.y,q.z,q.w } });
+                        }
+                    }
                     item.worldScale = Coordinates(transform.lossyScale);
                     var liveBounds = new Bounds();
                     var hasRenderer = false;
@@ -123,7 +141,21 @@ namespace AdaptPolicies.NativeDiagnostics
                             worldVertices = new float[vertices.Length][];
                             for (var i = 0; i < vertices.Length; i++) worldVertices[i] = Coordinates(filter.transform.TransformPoint(vertices[i]));
                         }
-                        item.meshes.Add(new Mesh { objectName = filter.name, name = mesh == null ? null : mesh.name, vertices = mesh == null ? 0 : mesh.vertexCount, subMeshes = mesh == null ? 0 : mesh.subMeshCount, position = Coordinates(filter.transform.position), rotation = Coordinates(filter.transform.localEulerAngles), worldRotation = new[] { rotation.x, rotation.y, rotation.z, rotation.w }, worldScale = Coordinates(filter.transform.lossyScale), worldVertices = worldVertices, triangles = className == "rug" && mesh != null && mesh.isReadable ? mesh.triangles : null });
+                        var geometry = className == "rug" || className == "toothpaste" || className == "toothbrush";
+                        float[][] localVertices = null; int[][] subs = null; string[] materials = null;
+                        if (geometry && mesh != null && mesh.isReadable) {
+                            var vertices=mesh.vertices;
+                            localVertices=new float[vertices.Length][];
+                            for (var i=0;i<vertices.Length;i++) localVertices[i]=Coordinates(vertices[i]);
+                            subs=new int[mesh.subMeshCount][];
+                            for (var i=0;i<subs.Length;i++) subs[i]=mesh.GetTriangles(i);
+                            var renderer=filter.GetComponent<Renderer>();
+                            if (renderer != null) {
+                                materials=new string[renderer.sharedMaterials.Length];
+                                for (var i=0;i<materials.Length;i++) materials[i]=renderer.sharedMaterials[i].name;
+                            }
+                        }
+                        item.meshes.Add(new Mesh { objectName=filter.name, name=mesh == null ? null : mesh.name, vertices=mesh == null ? 0 : mesh.vertexCount, subMeshes=mesh == null ? 0 : mesh.subMeshCount, position=Coordinates(filter.transform.position), rotation=Coordinates(filter.transform.localEulerAngles), worldRotation=new[] { rotation.x,rotation.y,rotation.z,rotation.w }, worldScale=Coordinates(filter.transform.lossyScale), worldVertices=worldVertices, localVertices=localVertices, subMeshTriangles=subs, materials=materials, triangles=geometry && mesh != null && mesh.isReadable ? mesh.triangles : null });
                     }
                     report.items.Add(item);
                 }
