@@ -1,8 +1,8 @@
 # Provider and experiment configuration
 
 Task evaluation uses an audited [task-to-ground_truth_graph mapping](ground_truth_graphs.md)
-and validates the full dataset before simulator construction. All six current
-datasets have mappings; reference-content limitations are documented there.
+and validates the full dataset before simulator construction. All six datasets
+have mappings; execution results are documented in [dataset validation](dataset_validation.md).
 See [dataset selection](dataset_selection.md) for scene-specific commands.
 
 The default configuration is `config/dev.yml`: LM Studio, with Weave disabled.
@@ -16,7 +16,7 @@ export ADAPT_CONFIG=dev  # dev, live, or a path to another YAML file
 VS Code's `python.terminal.useEnvFile` setting loads the repository's `.env` for
 Python terminal launches. Set `JOB_OUTPUT_DIR` there to your local output directory
 and create that directory before running. `.env` is ignored by Git;
-`.env.example` provides a template. Python reads variables from the process
+Python reads variables from the process
 environment; launches outside VS Code must supply them through their shell or
 launcher. Cluster runs receive their variables from the workflow.
 
@@ -88,13 +88,11 @@ results are not exported to a local JSON file. With logging enabled,
 
 The launcher only starts Ollama for a configured local Ollama endpoint that is
 not already responding. LM Studio, Anthropic, and other endpoints are managed
-externally. The existing Xvfb simulator launcher still requires a separate review
-for GPU rendering before the guided WSL run.
+externally. The Xvfb launcher supports off-screen WSL rendering. See
+[simulator changes](simulator.md) for the included build behavior.
 
-PyYAML was added for configuration loading. Local simulator import dependencies
-are recorded separately in `requirements-local.txt`: OpenCV, IPython, and ipdb.
-Existing Python/Conda requirements and installed versions are preserved. Do not
-run a broad package upgrade to use these changes.
+Configuration loading uses PyYAML. Local simulator imports require the packages
+listed in `requirements-local.txt`, including OpenCV, IPython and ipdb.
 
 For local imports, the WSL Conda extension supplies basedpyright with search paths
 discovered from the selected WSL Python environment. Avoid a project
@@ -106,13 +104,6 @@ editable installation that would resolve VirtualHome's legacy dependencies.
 The activation script also respects an explicit `PROJECT_ROOT`, detects the
 checkout when sourced directly, and retains the cluster default when copied into
 Conda's activation directory.
-
-The local OpenCV pin uses the
-[4.12.0.88 release](https://pypi.org/project/opencv-python/4.12.0.88/); its NumPy
-requirement on Python 3.10 accepts the installed NumPy 2.2.6. Local additions were
-installed with existing package versions held fixed and verified afterward.
-After changing paths or installing packages, run **WSL Conda: Restart Analysis**
-once to refresh the editor's environment discovery.
 
 After the simulator and existing project environment are ready, a one-task run
 can use the following from the repository root inside WSL (with `PYTHONPATH`

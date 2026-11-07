@@ -8,7 +8,7 @@ Load these files with `json.load()`, rather than parsing each line. Task files a
 
 The action vocabulary in `zero_shot_baseline_data` is already a valid JSON array of strings. Ground-truth mapping manifests, when present, are JSON objects mapping task names to graph indices.
 
-Mapping manifests now cover train, test_seen, test_unseen, test_unseen_ambiguous_goals, env1, and env2. Their values refer to stable zero-based indices; unused graphs are retained. See [the mapping audit](../../../../docs/ground_truth_graph_mapping_audit.md) for assignment evidence and unresolved graph/annotation issues. The agent validates these mappings before simulator construction and selects ground-truth graphs by task name.
+Mapping manifests now cover train, test_seen, test_unseen, test_unseen_ambiguous_goals, env1, and env2. Their values refer to stable zero-based indices; unused graphs are retained. See [the mapping audit](../../../../docs/ground_truth_graph_mapping_audit.md) for assignment evidence and reference semantics. The agent validates these mappings before simulator construction and selects ground-truth graphs by task name.
 
 Task names are unique across the four train/test splits. Matching ignores case, underscores versus spaces, and repeated whitespace. Test assignments take precedence over training assignments. Training prompt examples and default examples contain training tasks only. The separate env1/env2 evaluations are excluded from this uniqueness rule.
 

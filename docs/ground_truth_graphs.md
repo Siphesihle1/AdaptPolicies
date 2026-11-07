@@ -1,193 +1,85 @@
-# Task-to-ground_truth_graph mapping
+# Ground-truth graphs and evaluation
 
-Evaluation selects a ground_truth_graph by task name. Names use the same
-space-to-underscore conversion as generated task functions. This conversion
-does not lowercase names or collapse repeated whitespace; split deduplication
-uses its own broader name matching.
+Evaluation selects a reference graph by task name. Names use the same
+space-to-underscore conversion as generated task functions; this does not
+lowercase names or collapse repeated whitespace. Split deduplication uses a
+separate, broader name match.
 
-## Dataset format and mapping coverage
+## Dataset format and coverage
 
-The active dataset is `src/methods/progprompt/data/`. Task annotations, plan
-collections, and world-graph collections are formatted JSON arrays. Load each
-file with `json.load()`. The action vocabulary is an array of strings, while
-mapping manifests are JSON objects.
+The active dataset is `src/methods/progprompt/data/`. Annotations, plans and world
+graphs are JSON arrays read with `json.load()`. The action vocabulary is an array
+of strings. A required manifest at
+`ground_truth_graph_mappings/<dataset>.json` maps task names to zero-based indices
+in `final_states/final_states_<dataset>.json`.
 
-Each dataset requires a manifest at
-`data/ground_truth_graph_mappings/<dataset>.json`. For example:
+All six datasets have mappings: train 24, test_seen 10, test_unseen 10,
+test_unseen_ambiguous_goals 5, env1 10 and env2 10. Graph array indices remain
+stable when tasks are removed. Training retains 34 graphs with ten unassigned;
+test_seen retains 11 graphs with the unrelated book graph at index 5 unassigned.
+See the [mapping audit](ground_truth_graph_mapping_audit.md) for associations and
+[dataset validation](dataset_validation.md) for execution results.
 
-```json
-{
-  "listen_to_radio": 6,
-  "wash_mug": 10
-}
-```
+## Validation and scoring
 
-This is an excerpt, not a complete manifest. Each value is a zero-based index
-in the array `data/final_states/final_states_<dataset>.json`. Keep existing
-indices stable when appending graphs. Reordering graph records requires
-updating their mappings.
+The complete selected dataset is validated before simulator construction, even
+when a run selects only a subset of tasks. Validation rejects duplicate task
+names or mapping keys, missing/unknown tasks, non-integer or out-of-range indices
+(including booleans), and graph entries without node and edge lists.
 
-All six current datasets have audited mappings: train (24 tasks), test_seen
-(10), test_unseen (10), test_unseen_ambiguous_goals (5), env1 (10), and env2 (10).
-The 69 assignments identify references using annotated IDs, states, placements,
-held objects, and proximity. They do not establish that every reference fully
-captures its task or that every annotation can execute in Unity.
+There is no positional fallback. Task order, mapping order and earlier failures
+cannot select another task's reference. PSR, strict SR and Precision compare
+class-name relation/state sets; IDs, bounding boxes and node properties are not
+scored. Mapping validity alone does not prove goal completeness or executability.
 
-See the [2026-11-05 validation report](dataset_validation_2026-11-05.md) for
-full replay results, current-reference rescoring and the remaining native
-failures. The dataset is not yet fully Unity-valid.
-
-Training retains 34 graphs after task deduplication; ten are unassigned.
-Test_seen contains 11 graphs for ten tasks; the unrelated book graph at index 5
-is unassigned. See the [mapping audit](ground_truth_graph_mapping_audit.md)
-for the complete index coverage, evidence, and unresolved issues, and the
-[dataset README](../src/methods/progprompt/data/README.md) for split counts.
-
-## Validation and evaluation
-
-The agent loads task names and validates the complete selected dataset mapping
-before constructing PromptBuilder, which connects to the simulator. A run that
-selects only a few tasks still requires coverage of the complete dataset.
-Validation rejects:
-
-- Duplicate normalized task names or duplicate JSON mapping keys.
-- Missing mappings, missing tasks, or unknown mapping tasks.
-- Non-integer or out-of-range graph indices, including booleans.
-- Selected graph entries without node and edge lists.
-
-There is no positional fallback. Task order, mapping order, a selected subset,
-or an earlier failed task cannot assign another task a different reference.
-Evaluation uses the task's named graph; PSR, strict SR, and Precision formulas
-are unchanged. The evaluator compares class-name relation/state sets rather
-than object IDs, bounding boxes, or node properties. Mapping validation is
-structural and does not prove goal completeness or simulator feasibility.
-
-Action execution parses and checks symbolic preconditions before contacting
-Unity. Only a successful native response, including each character's execution
-message, commits the candidate symbolic state and increments executable steps.
-A native rejection or communication exception blocks subsequent actions in that
-environment; start a fresh task environment before further execution. Unity may
-have partially moved the character before reporting failure, so the retained
-symbolic graph represents the last confirmed action, not a validated final native
-state. Failed trajectories must not be reported as successful dataset replays.
-
-Heating augmentation includes Unity's edible Props (such as bread slices) as
-well as Food-category objects. Food ON a frying pan on an active stove, or
-ON/INSIDE an active toaster, acquires HEATED through the supplied partial graph.
-This is a derived runtime state, like sink WASHED; Unity does not report HEATED
-itself. Off appliances, unrelated surfaces and inedible objects do not qualify.
-Repeated observations retain one HEATED state. Benchmark versions that add these
-conditions require consistent rescoring or rerunning of compared systems.
-
-The installed closet assets report CLOSED while accepting native grabs from
-their interiors and PutIn placements without an Open action. Reset-separated
-controls cover all three scene-0 closets. Symbolic access therefore treats
-closets as accessible while retaining their reported CLOSED state. Closed
-fridges, cabinets and washing machines retain their access checks. This narrow
-affordance correction does not bypass native execution: Unity must still accept
-every action before its candidate symbolic state is committed. Evidence is in
-`outputs/local/native_closet_controls_20261105T150907Z/` and the complete clothes
-placement replay in `outputs/local/candidate_closet_repairs_20261105T151245Z/`.
-
-Native phone Talk is available to generated plans as `talk("cellphone")`.
-It requires a held phone; it does not switch its power or release it. Only a
-confirmed native Talk derives USED for that visible phone. Rejected calls never
-derive USED. Generated plans also expose `read("book")`; both actions choose a
-held instance rather than an unrelated instance of the same class. The repaired
-call-a-friend annotation returns the phone to its original coffee table after
-talking. Its goal reference uses this replay-derived phone-use state.
-
-All CLI options are mandatory except that scenes 1 and 2 may omit `--test-set`
-to select env1 and env2, respectively. Explicit `--test-set env1 --env-id 1`
-and `--test-set env2 --env-id 2` are also supported. Scene 0 requires an explicit
-train/test split. The ambiguous-goal
-choice is `test_unseen_ambiguous_goals`, matching its directory.
-See [dataset selection](dataset_selection.md) for supported commands and cluster
-launcher behavior. The scene ID is always required.
+Symbolic preconditions are checked before contacting Unity. Only confirmed
+native success, including per-character execution messages, commits the candidate
+symbolic state and increments executable steps. A native rejection or communication
+exception blocks subsequent actions in that environment. Start a fresh task after
+failure: Unity may have partially moved before rejecting an action, while the
+symbolic state retains only confirmed actions.
 
 ## Initial-state provenance
 
-Prompt construction and task execution capture runtime graphs separately:
+Prompt construction and task execution capture runtime graphs separately.
+Prompt initialization resets the explicit scene and reads its objects. Each task
+creates a new `VHEnvironment`, resets that scene, adds Male2 in the kitchen and
+retains a fresh graph as its evaluation baseline. Task completion returns copies
+of that task's initial and final graphs.
 
-- [Prompt initialization](../src/methods/progprompt/prompt.py) resets the scene
-  selected by `--env-id` and reads `environment_graph()` for prompt objects.
-- Each generated task constructs a new
-  [VHEnvironment](../src/virtual_home/environment.py), which resets that same
-  scene, adds `Chars/Male2` in the configured initial room (`kitchen`), and reads
-  a new graph from Unity. The environment retains that graph as `initial_state`
-  and initializes its symbolic executor from it.
-- [Task completion](../src/virtual_home/task.py) returns copies of that task's
-  initial and final states. The agent uses this task-specific initial state
-  when calculating changed goal conditions and preservation conditions.
+`initial_states_env1.json` and `initial_states_env2.json` are historical snapshots,
+not initialization inputs. Comparing them with runtime graphs requires the same
+scene, character, room and capture stage; array position alone does not identify
+a matching task. No saved initial graph is loaded into Unity during evaluation.
 
-The prompt graph is therefore not the task's evaluation baseline. The files
-`data/final_states/initial_states_env1.json` and `initial_states_env2.json` are
-saved historical dataset snapshots, retained for offline inspection. Neither
-path above loads them, and the ground-truth loader reads mapped final-state
-references rather than these initial snapshots. Their location beside final
-states does not make them active initialization inputs.
+## Runtime effects and reference meaning
 
-The saved snapshots do not establish the exact starting state of the currently
-installed simulator build. To compare them, capture a runtime graph before any
-task action using the same scene, character, and initial room. Record the
-simulator build, code/dataset revisions, and capture stage. Check object IDs,
-classes, states, and relations; report geometry/property-order differences
-separately from task-relevant facts. Establish snapshot/task identity before
-pairing records rather than assuming matching array positions. Loading a saved
-snapshot into Unity would change initialization behavior and requires a separate
-review; this documentation introduces no snapshot loading.
+WASHED, HEATED and selected USED states are derived from confirmed actions and
+observed object relations. Heating includes edible Props as well as Food: food
+ON a pan on an active stove, or ON/INSIDE an active toaster, can acquire HEATED.
+Off appliances, unrelated surfaces and inedible objects do not qualify. Repeated
+observations retain a single state. Native and derived effects are distinguished
+in the [simulator documentation](simulator.md).
 
-## Validated repairs and reference versions
+Closets retain reported CLOSED metadata while allowing the native interior
+pickup/placement behavior. Closed fridges, cabinets and washers keep their access
+checks. Talk requires a held phone and derives USED only after native success;
+it neither powers nor releases the phone. Read also selects a held instance.
 
-Test_seen wash_mug uses graph 10 from the successful replay of the current
-11-step annotation, preserving all 22 action positions, duplicate finds, and
-empty steps. All 22 actions passed Unity and the symbolic executor. Mug 447,
-liquid 267, and sponge 266 end ON sink 247, neither faucet is ON, and the mug
-is not held. WASHED is derived by the runtime sink rule using the supplied
-partial graph; it was not manually inserted and is not a native Unity state.
-The rule can also mark eligible liquid/sponge nodes WASHED.
+Reference corrections preserve graph indices and unrelated records. Cutlery
+test_seen graph 1 retains the original graph except for knife280 and fork272
+INSIDEâ†’ON sink247. Wash_mug graph 10 reflects the validated mug/liquid/sponge sink
+placements and runtime-derived washing state. Complete runtime captures are
+evidence and do not automatically replace references.
 
-Replay evidence is in
-`outputs/local/ground_truth_graph_candidates/wash_mug_current_review_20261102T235812Z/`.
-The accepted graph's SHA-256 is
-`397f529c50170e0badb3354db3f887be6a85df77ad40b64629f410d04c398962`.
+Some repaired task goals use feasible native ON relations, selected alternative
+instances, or corrected moved-object room relations. Task-specific stale
+background orientation/proximity goals were corrected without globally filtering
+FACING or changing scoring formulas. Formal goal changes are dataset-version
+changes, not evidence of improved model performance. Compared systems must use
+matching versions or be rescored/rerun consistently.
 
-Test_seen cutlery graph 1 preserves the original graph from commit
-`69ad21bb021419feb32ab0dc5ab9366971b7719c`, changing only knife 280 and fork 272's
-relations to sink 247 from INSIDE to ON. The unchanged eight-action annotation
-passed Unity and the symbolic executor. The complete runtime graph remains in
-`outputs/local/ground_truth_graph_candidates/sink_goal_repair_20261103T011347Z/`
-as evidence. Its seven unrelated FACING edges and metadata differences were
-excluded from the reference; all other current test_seen graphs are preserved.
-
-The [original dataset archive](../src/methods/progprompt/data_original/README.md)
-contains all 35 original JSON files from that commit outside active dataset
-scans. Formatting and documented collection-representation conversions preserve
-original contents and order. It includes the original split overlaps, Python
-example pool, sink annotations, and graph records.
-
-Corrected sink goals revise the benchmark's formal success conditions. Offline
-rescoring of the same correctly paired cutlery replay gives PSR 0.75 and SR 0
-against the original reference, and PSR 1 and SR 1 against the narrow correction;
-Precision is 1 in both cases. This is reference-version sensitivity, not improved
-LLM performance. Identify dataset versions and rescore or rerun compared systems
-consistently. The original-data archive alone does not restore historical code.
-
-Test_unseen wash_the_plate now uses plate 199 and kitchen faucet 248. Its
-18-action annotation passed both engines in the unchanged scene; native final
-graphs confirm plate 199 and liquid 267 ON sink 247 and both faucets OFF. The
-runtime washing rule derives WASHED for both objects. Reference index 7 keeps
-the original metadata and unrelated relations, with nine task-related edge
-substitutions and those two replay-derived WASHED states. Plate 193 is restored
-to its original desk placement rather than renamed or removed. See the
-mapping audit for provenance and benchmark-version implications.
-
-The ambiguous-goal references and candle destination now have native-validated
-corrections, detailed in the mapping audit. The original frying-pan placement
-and other native failures remain unresolved. Mapping coverage alone does not
-establish that all 69 entries are executable or satisfy their goals.
-
-Regression checks cover all six manifests, order independence, single-task
-evaluation, earlier failures, and validation before simulator construction.
-Run the suite in the existing configured environment with
-`python -m unittest discover -s tests -v`; no simulator is needed for these checks.
+The [original archive](../src/methods/progprompt/data_original/README.md) preserves
+the pre-edit datasets separately from active scans. See
+[dataset selection](dataset_selection.md) for required CLI arguments and matching
+scene/split choices.

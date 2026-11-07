@@ -61,7 +61,7 @@ These commands start planning/evaluation runs. They do not establish that every
 stored goal is complete or that every generated plan succeeds. `--num-tasks`
 limits planning tasks, while reference validation covers the complete selected
 dataset. See [ground-truth evaluation](ground_truth_graphs.md) and the
-[mapping audit](ground_truth_graph_mapping_audit.md) for known goal issues.
+[mapping audit](ground_truth_graph_mapping_audit.md) for reference associations.
 
 ## Launchers
 
@@ -71,7 +71,3 @@ scene 0, train, random examples, three examples, its experiment name, and
 to `PROGPROMPT_DATASET_DIR`; the sibling original-data archive is excluded.
 The diagnostic `src/test-scripts/virtual_home_exec_test.sh` forwards its command
 arguments to the runner; supply all six options when invoking it.
-
-No cluster jobs or simulator runs were started to validate the selection change.
-Tests check mandatory arguments, scene/dataset consistency, task counts, and
-matching task/reference loading across all six datasets without a simulator.
