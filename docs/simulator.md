@@ -20,14 +20,18 @@ variable. Select the installed player directory with `VIRTUALHOME_SIM_ROOT`.
 | Washing machines | An articulated door, drum and power indicator are derived from the existing housing. Native insertion checks door state and payload dimensions; powered drum motion stops when switched off. |
 | Rugs | Fold/Unfold changes the held rug's geometry so it can fit the washer and later return to its original shape. |
 | Tool manipulation | Apply and Use execute supported toothpaste/brush preparation and brushing motions using the existing character rig. |
-| Door closing | The kitchen door closes through its original hand interaction and torque. Temporary hinge limits and fixed-housing collision handling allow closure; the body latches only after its live pose is closed. Individual and batched graph observations reflect that completed physical result. |
+| Door interactions | The kitchen door opens and closes through its original hand interactions and torque. Closing uses temporary hinge limits; fixed-housing collision handling allows both directions. The body latches only after physical closure. Individual and batched graph observations reflect completed physical results. |
 | Static orientation | Initial static FACING is recomputed with actor-body occlusion excluded, retaining the original visibility and angle rules. |
 
 Opening interactions wait for their native transitions to finish, including fast
 execution. The kitchen doorway retains its fixed native midpoint and kitchen-side
-approach. Door collision exclusions and hinge settings restore after closing;
+approach for both Open and Close. Door collision exclusions and hinge settings restore after the interaction;
 existing actor and payload collision rules remain. No successful execution
-response is fabricated by these changes.
+response is fabricated by these changes. Kitchen-door Open runs its original
+animation at normal speed even for fast requests, preserving the hand-contact
+torque window. Its housing and stopper contacts are temporarily excluded while
+opening, then restored. A measured open pose is required before completion is
+recorded; other scene doors retain their native behavior.
 
 ## Planning actions and states
 
@@ -62,7 +66,8 @@ will succeed. See [dataset validation](dataset_validation.md) and
 Rug folding is deterministic mesh deformation, and floor drying is an explicit
 proxy. Toothbrush contact is calibrated for Male2. Washing and heating effects
 use the documented runtime rules rather than a fluid or thermal simulation.
-Fast-mode Open of the kitchen door can report success without physically
-reopening a closed leaf; a completed Close does not establish a verified full
-Open/Close cycle. The trash annotation ends at carrying the bin to the doorway
-and does not require Close.
+The supported kitchen door passes repeated fast and animated Close/Open cycles,
+including carrying the bin and batches ending in either state. These controls
+cover that pinned door and approach, rather than every door/character configuration.
+The trash annotation ends at carrying the bin to the doorway and does not require
+Close or reopening.

@@ -27,8 +27,8 @@ structural relations are compared with the original player; static FACING is
 consistent within each scene.
 
 Additional door controls check actual leaf rotation and stability, held-bin
-attachment, individual and whole-script graph consistency, animated Close and
-rejection with both hands full. These controls are separate from the 69 annotated
+attachment, individual and whole-script graph consistency, animated Close, repeated fast and animated Close/Open cycles, and
+rejection of reopening with both hands full. These controls are separate from the 69 annotated
 tasks; animated controls do not imply a fully animated or video-validated dataset.
 
 ## Scope
