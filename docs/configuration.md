@@ -135,6 +135,44 @@ aborted and telemetry-failed runs. An `evaluated` task can still have goal succe
 OpenAI-compatible chat calls appear under `generate` as
 `openai.chat.completions.create`, with messages, replies and token usage.
 
+Each generated plan has one `thread_id`, retained in its local task record and
+reused from generation through execution. For a single Chat tab containing the
+whole history, open the **Plan generation and execution chat** call
+(`plan_chat_transcript`) for that task. Its standard `messages` input and chat
+completion output contain the planning prompt/answer, action requests/results,
+assertion prompts/answers and image/text observations in recorded order. Simulator
+events are labeled as recorded events; the transcript is not sent to the model
+and adds no inference request or model-token usage. The task's local result
+stores `chat_call_id` and `chat_file`; `task_chats/<task>.json` retains the messages.
+The transcript starts directly with the planning prompt. It has no introductory
+system message. JSON results/state records use fenced `json` blocks; generated
+plans, action snippets and assertion answers use fenced `python` blocks.
+Weave disables Markdown for an entire message containing a literal `<...>` pair.
+To avoid that heuristic, prompt/native-instruction prose escapes HTML-like tags,
+and JSON blocks encode angle brackets as `\u003c`/`\u003e` while preserving their
+decoded values. Native instructions appear as escaped prose, and image text
+parts use plain labels because Weave does not parse their Markdown.
+The hosted Chat renderer currently tokenizes Python code but applies identical
+text colors; language-tagged fences do not guarantee colored highlighting.
+That styling is controlled by Weave, not the experiment configuration. Formatting
+applies only to the inspection transcript; raw model requests/responses remain unchanged.
+
+The detailed traces remain available too. In Weave's Threads view, planning is
+followed by an `execute_plan` turn with nested `plan_action` steps, assertion LLM
+calls, `simulator_action` results, images and `observe_state` text. Action steps
+include arguments and distinguish succeeded, failed, unknown and skipped results;
+skipped steps explain whether a prior Unity failure, subtask termination or an
+omission rule prevented execution. Simulator steps retain the native response or
+symbolic rejection error. Returned execution states do not imply goal success.
+
+`execute_plan` records import/runtime failures and exceptions finish their active
+trace spans. Initial text/image observations and subsequent observations share
+the plan thread. Reentering the same thread preserves its turn context, so nested
+calls remain attached to their action. This groups existing calls for inspection;
+it does not combine prompts into a new model conversation, add model requests,
+or issue extra simulator actions. New runs receive complete histories; earlier
+traces are not rewritten. With Weave disabled these spans perform no upload.
+
 The launcher only starts Ollama for a configured local Ollama endpoint that is
 not already responding. LM Studio, Anthropic, and other endpoints are managed
 externally. The Xvfb launcher supports off-screen WSL rendering. See

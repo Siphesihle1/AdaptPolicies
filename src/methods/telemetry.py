@@ -1,11 +1,20 @@
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
+from contextvars import ContextVar
 from functools import wraps
 from importlib import import_module
 import os
+from typing import Any, Iterator
 
 from .config import get_config
+from .chat_transcript import (
+    record_request,
+    record_response,
+    record_span_start,
+    record_span_end,
+)
 
 _client = None
+_active_thread: ContextVar[str | None] = ContextVar("weave_plan_thread", default=None)
 
 
 def reuse_cached_wandb_login():
@@ -60,20 +69,103 @@ def op(function):
     @wraps(function)
     def wrapped(*args, **kwargs):
         nonlocal traced
+        is_generation = (
+            function.__module__ == "methods.llm" and function.__name__ == "generate"
+        )
+        if is_generation:
+            record_request(
+                kwargs.get("prompt", args[0] if args else ""),
+                kwargs.get("purpose", args[1] if len(args) > 1 else "plan"),
+            )
         client = backend()
         if client is None:
             kwargs.pop("__weave", None)
-            return function(*args, **kwargs)
-        if traced is None:
-            traced = client.op(function)
-        return traced(*args, **kwargs)
+            result = function(*args, **kwargs)
+        else:
+            if traced is None:
+                traced = client.op(function)
+            result = traced(*args, **kwargs)
+        if is_generation:
+            record_response(
+                result, kwargs.get("purpose", args[1] if len(args) > 1 else "plan")
+            )
+        if function.__name__ == "get_observation":
+            record_span_end("get_observation", {}, {"image": result})
+        return result
 
     return wrapped
 
 
-def thread(**kwargs):
+@contextmanager
+def thread(**kwargs) -> Iterator[None]:
+    """Reuse an active plan thread without resetting the SDK's turn lineage."""
     client = backend()
-    return client.thread(**kwargs) if client else nullcontext()
+    identifier = kwargs.get("thread_id")
+    if client is None or identifier is not None and _active_thread.get() == identifier:
+        yield
+        return
+    token = _active_thread.set(identifier)
+    try:
+        with client.thread(**kwargs):
+            yield
+    finally:
+        _active_thread.reset(token)
+
+
+@contextmanager
+def span(name: str, inputs: dict[str, Any]) -> Iterator[dict[str, Any]]:
+    """Trace a step without serializing the simulator or agent instance.
+
+    Callers fill the yielded output; nested LLM and observation calls inherit
+    this step as their parent. Exceptions are recorded and still propagate.
+    """
+    output: dict[str, Any] = {}
+    record_span_start(name, inputs)
+    backend_module = backend()
+    client = backend_module.get_client() if backend_module else None
+    call = (
+        client.create_call(name, inputs=inputs, display_name=name) if client else None
+    )
+    try:
+        yield output
+    except BaseException as error:
+        record_span_end(name, inputs, output, error)
+        if client:
+            client.finish_call(call, output=output, exception=error)
+        raise
+    else:
+        record_span_end(name, inputs, output)
+        if client:
+            client.finish_call(call, output=output)
+
+
+def publish_plan_chat(
+    messages: list[dict[str, Any]], final_message: str, task: str
+) -> str | None:
+    """Publish a chat-shaped transcript, without making or billing a model call."""
+    backend_module = backend()
+    if backend_module is None:
+        return None
+    client = backend_module.get_client()
+    call = client.create_call(
+        "plan_chat_transcript",
+        inputs={"messages": messages},
+        display_name=task,
+        attributes={"source": "recorded_plan_execution"},
+    )
+    client.finish_call(
+        call,
+        output={
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": final_message},
+                    "finish_reason": "stop",
+                }
+            ]
+        },
+    )
+    return call.id
 
 
 def attributes(values):

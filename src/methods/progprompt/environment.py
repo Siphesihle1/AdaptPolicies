@@ -2,6 +2,7 @@ from io import TextIOWrapper
 from typing import Dict, List, Tuple
 from virtual_home.task import VHTask
 from typing_extensions import override
+from methods import telemetry as weave
 from virtual_home.graph_query import E, N
 from virtual_home.environment import VHEnvironment
 
@@ -81,3 +82,13 @@ class ProgPromptEnvironment(VHEnvironment):
             f"\n----\n Current state (step: {self.task.step}, subtask: {self.task.current_subtask}): {self.objs} \n----\n"
         )
         self.log_file.write(f"Agent in room: {self.agent_in_room}\n")
+
+        with weave.thread(thread_id=self.task.thread_id), weave.span(
+            "observe_state",
+            {"step": self.task.step, "subtask": self.task.current_subtask},
+        ) as observation:
+            observation.update(
+                state=self.objs,
+                room=self.agent_in_room,
+                held_objects=list(self.objs_in_hand),
+            )

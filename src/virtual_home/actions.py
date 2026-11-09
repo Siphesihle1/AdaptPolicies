@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+from methods import telemetry as weave
 from .environment import VHEnvironment
 from .graph_query import N
 from .task import VHTask
@@ -77,6 +78,17 @@ class Action(ABC):
         return success
 
     def run(self, *objs: str) -> bool | None:
+        with weave.thread(thread_id=self.task.thread_id), weave.attributes(
+            {
+                "task_instruction": self.task.task_instruction,
+                "subtask": self.task.current_subtask,
+            }
+        ), weave.span(
+            "plan_action", {"action": self.action_name, "objects": list(objs)}
+        ) as output:
+            return self._run(objs, output)
+
+    def _run(self, objs: tuple[str, ...], output: dict[str, object]) -> bool | None:
         if self.action_name != "assert":
             self.task.total_steps += 1
 
@@ -91,9 +103,30 @@ class Action(ABC):
             or self.task.terminate_current_subtask
             or omit_action
         ):
+            output.update(
+                status="skipped",
+                reason=(
+                    "previous_unity_failure"
+                    if self.env.execution_failed
+                    else (
+                        "subtask_terminated"
+                        if self.task.terminate_current_subtask
+                        else "omitted_action"
+                    )
+                ),
+            )
             return None
 
-        return self.action(*objs)
+        result = self.action(*objs)
+        output.update(
+            result=result,
+            status=(
+                "succeeded"
+                if result is True
+                else "failed" if result is False else "unknown"
+            ),
+        )
+        return result
 
     @abstractmethod
     def action(self, *objs: str) -> bool | None: ...

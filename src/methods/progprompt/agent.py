@@ -8,6 +8,7 @@ from virtual_home.graph_query import N
 from uuid_utils import uuid7
 from methods import telemetry as weave
 from methods.config import get_config
+from methods.chat_transcript import PlanChatTranscript, capture_transcript
 
 from methods.llm import generate
 from .constants import (
@@ -56,6 +57,8 @@ class TaskRecordFields(TypedDict):
 class TaskRecord(TaskRecordFields, total=False):
     prompt: str
     states_file: str
+    chat_file: str
+    chat_call_id: str
 
 
 class ProgPromptAgent:
@@ -97,6 +100,7 @@ class ProgPromptAgent:
         self.exec_per_task: Dict[str, float] = {}
         self.results: Dict[str, Dict[str, float]] = {}
         self.task_records: dict[str, TaskRecord] = {}
+        self.chat_transcripts: dict[str, PlanChatTranscript] = {}
         self.evaluation_logger = weave.evaluation_logger(
             name=f"{os.getenv('EXPERIMENT_NAME')}:{uuid7()}",
             model=get_config()["llm"]["model"],
@@ -138,11 +142,44 @@ class ProgPromptAgent:
             "conditional_metrics": self.results.get("overall", {}),
         }
 
+    def publish_task_chat(self, task: str) -> None:
+        record = self.task_record(task)
+        transcript = self.chat_transcripts.get(task)
+        if transcript is None or not record["thread_id"] or record.get("chat_call_id"):
+            return
+        final_message = f"Execution status: {record['status']}"
+        if record["error"]:
+            final_message += f"\nError: {record['error']}"
+        with weave.thread(thread_id=record["thread_id"]):
+            call_id = weave.publish_plan_chat(transcript.messages, final_message, task)
+        if call_id:
+            record["chat_call_id"] = call_id
+
     def export_results(
         self, run_status: str = "running", error: str | None = None
     ) -> None:
         rows = {}
         for task in self.plans:
+            if task in self.chat_transcripts:
+                chat_path = (
+                    Path(os.environ["JOB_OUTPUT_DIR"]) / "task_chats" / f"{task}.json"
+                )
+                chat_path.parent.mkdir(parents=True, exist_ok=True)
+                chat_path.write_text(
+                    json.dumps(
+                        {
+                            "messages": self.chat_transcripts[task].messages,
+                            "status": self.task_record(task)["status"],
+                            "error": self.task_record(task)["error"],
+                        },
+                        indent=2,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+                self.task_record(task)["chat_file"] = str(
+                    chat_path.relative_to(os.environ["JOB_OUTPUT_DIR"])
+                )
             record = dict(self.task_record(task))
             record["metrics"] = self.results.get(
                 task, {"SR": 0, "PSR": 0, "Exec": 0, "Precision": None}
@@ -189,8 +226,11 @@ class ProgPromptAgent:
             self.plans[task] = []
             record = self.task_record(task)
             record.update(thread_id=thread_id, prompt=prompt_text)
+            self.chat_transcripts[task] = PlanChatTranscript()
             try:
-                with weave.thread(thread_id=thread_id):
+                with capture_transcript(self.chat_transcripts[task]), weave.thread(
+                    thread_id=thread_id
+                ):
                     with weave.attributes({"task_instruction": task}):
                         plan = generate(
                             prompt=prompt_text,
@@ -201,6 +241,7 @@ class ProgPromptAgent:
                 record.update(
                     status="generation_failed", error=f"{type(error).__name__}: {error}"
                 )
+                self.publish_task_chat(task)
                 plan_parsing_status_file.write(f"Task: {task}, Success: False\n")
                 plan_parsing_status_file.flush()
                 self.export_results()
@@ -217,6 +258,7 @@ class ProgPromptAgent:
                     status="parse_failed",
                     error="Plan does not start with a function definition",
                 )
+                self.publish_task_chat(task)
                 plan_parsing_status_file.write(f"Task: {task}, Success: False\n")
                 self.export_results()
                 continue
@@ -230,6 +272,7 @@ class ProgPromptAgent:
                     status="parse_failed",
                     error="Plan contains multiple function definitions",
                 )
+                self.publish_task_chat(task)
                 plan_parsing_status_file.write(f"Task: {task}, Success: False\n")
                 self.export_results()
                 continue
@@ -242,6 +285,7 @@ class ProgPromptAgent:
                 record.update(
                     status="parse_failed", error="Plan contains Markdown code fences"
                 )
+                self.publish_task_chat(task)
                 plan_parsing_status_file.write(f"Task: {task}, Success: False\n")
                 self.export_results()
                 continue
@@ -284,6 +328,7 @@ class ProgPromptAgent:
                     status="parse_failed",
                     error="Plan could not be compiled; see task_logs.txt",
                 )
+                self.publish_task_chat(task)
                 self.plans[task] = []
 
             plan_parsing_status_file.write(f"Task: {task}, Success: {success}\n")
@@ -305,7 +350,30 @@ class ProgPromptAgent:
 
             log_file_prefix = f"{os.getenv('JOB_OUTPUT_DIR')}/task_logs/{task}"
 
-            task_results = exec_task(task, log_file_prefix)
+            with capture_transcript(self.chat_transcripts[task]), weave.thread(
+                thread_id=task_artifacts[1]
+            ), weave.attributes(
+                {
+                    "task_instruction": task,
+                    "dataset": self.dataset,
+                    "environment_id": self.env_id,
+                }
+            ), weave.span(
+                "execute_plan", {"task_instruction": task}
+            ) as execution:
+                task_results = exec_task(task, log_file_prefix)
+                execution["status"] = (
+                    "returned" if task_results is not None else "execution_failed"
+                )
+                if task_results is not None:
+                    execution["executability"] = task_results[2]
+                if task_results is None:
+                    error_path = Path(log_file_prefix) / "execution_error.json"
+                    execution["error"] = (
+                        json.loads(error_path.read_text(encoding="utf-8"))
+                        if error_path.exists()
+                        else {"message": "Task returned no execution result"}
+                    )
 
             if task_results is None:
                 plan_execution_status_file.write(f"Task: {task}, Success: False\n")
@@ -316,6 +384,7 @@ class ProgPromptAgent:
                     else {"message": "Task returned no execution result"}
                 )
                 self.task_record(task).update(status="execution_failed", error=error)
+                self.publish_task_chat(task)
                 self.plans[task] = []
                 plan_execution_status_file.flush()
                 self.export_results()
@@ -339,6 +408,7 @@ class ProgPromptAgent:
             self.task_record(task)["states_file"] = str(
                 state_path.relative_to(os.environ["JOB_OUTPUT_DIR"])
             )
+            self.publish_task_chat(task)
             plan_execution_status_file.flush()
             self.export_results()
 

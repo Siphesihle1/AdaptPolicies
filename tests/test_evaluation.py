@@ -49,6 +49,7 @@ class EvaluationTests(unittest.TestCase):
         self.agent.num_tasks_parsed = 0
         self.agent.num_tasks_executed = 0
         self.agent.task_records = {}
+        self.agent.chat_transcripts = {}
         self.agent.dataset = "train"
         self.agent.env_id = 0
 

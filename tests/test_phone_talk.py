@@ -25,7 +25,13 @@ class PhoneTalkTests(unittest.TestCase):
                 execution_failed=False,
                 actions_to_omit=[],
             )
-            task = SimpleNamespace(total_steps=0, terminate_current_subtask=False)
+            task = SimpleNamespace(
+                total_steps=0,
+                terminate_current_subtask=False,
+                thread_id="phone-test",
+                task_instruction="call",
+                current_subtask="talk",
+            )
             action_class(env, task)(name)
             env.execute.assert_called_once_with(f"<char0> [{verb}] <{name}> (3)")
 

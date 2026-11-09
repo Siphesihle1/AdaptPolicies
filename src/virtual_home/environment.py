@@ -55,6 +55,13 @@ class VHEnvironment:
         )
         self.images.append(im[0])
 
+        with weave.thread(thread_id=self.task.thread_id), weave.span(
+            "initial_image", {}
+        ) as observation:
+            observation["image"] = Image.fromarray(
+                cv2.cvtColor(im[0], cv2.COLOR_BGR2RGB)
+            )
+
         self.initial_state = self.graph
 
         self.obj_ids_for_adding_states = get_obj_ids_for_adding_states(self.graph)
@@ -177,9 +184,18 @@ class VHEnvironment:
 
         return Image.open(img_path)
 
-    def execute(self, script_instruction: str):
+    def execute(self, script_instruction: str) -> bool:
+        with weave.thread(thread_id=self.task.thread_id), weave.span(
+            "simulator_action", {"script_instruction": script_instruction}
+        ) as output:
+            success = self._execute(script_instruction, output)
+            output["success"] = success
+            return success
+
+    def _execute(self, script_instruction: str, output: dict[str, Any]) -> bool:
         # Adapted from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_execute.py#L224
         if self.execution_failed:
+            output["error"] = "Task stopped after Unity failure"
             self.log_file.write(
                 "act_success: False, message: Task stopped after Unity failure\n"
             )
@@ -192,6 +208,7 @@ class VHEnvironment:
         try:
             script = parse_script_line(script, 0)
         except Exception:
+            output["error"] = f"Failed to parse script line {script}"
             self.log_file.write(
                 f"act_success: False, message: Failed to parse script line {script}\n"
             )
@@ -200,6 +217,7 @@ class VHEnvironment:
         success, final_state, _ = self.executor.execute(Script([script]))
 
         if not success:
+            output["error"] = self.executor.info.get_error_string()
             self.log_file.write(
                 f"act_success: False, message: {self.executor.info.get_error_string()}\n"
             )
@@ -217,6 +235,7 @@ class VHEnvironment:
             self.execution_failed = True
             raise
 
+        output["unity_response"] = response
         if not unity_execution_succeeded(response):
             self.execution_failed = True
             self.log_file.write(
@@ -228,6 +247,9 @@ class VHEnvironment:
         if script.action in (ScriptAction.FIND, ScriptAction.WALK, ScriptAction.RUN):
             graph_success, native_navigation = self.comm.environment_graph()
             if not graph_success:
+                output["error"] = (
+                    "Native navigation completed but its room could not be read"
+                )
                 self.execution_failed = True
                 self.log_file.write(
                     "Native navigation completed but its room could not be read\n"
