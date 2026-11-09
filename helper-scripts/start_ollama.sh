@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OLLAMA_HOST=$(python -c 'from methods.config import get_config; print(get_config()["llm"]["base_url"])') || exit 1
+OLLAMA_HOST=$(python -c 'from methods.config import get_llm_settings; print(get_llm_settings()["base_url"])') || exit 1
 export OLLAMA_HOST
 
 # Remote endpoints are managed externally.

@@ -9,10 +9,10 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
-from ollama import Client, Options
+from ollama import Client
 from openai import OpenAI
 
-from .config import get_config
+from .config import get_llm_settings
 
 
 def required_key(name):
@@ -24,7 +24,7 @@ def required_key(name):
 
 class LLMProvider(ABC):
     def __init__(self, settings: Optional[dict[str, Any]] = None):
-        self.settings = settings if settings is not None else get_config()["llm"]
+        self.settings = settings if settings is not None else get_llm_settings()
 
     @abstractmethod
     def generate(self, prompt: str, options: dict[str, Any], purpose: str) -> str:
@@ -35,7 +35,6 @@ class LLMProvider(ABC):
 class LMOllama(LLMProvider):
     def generate(self, prompt: str, options: dict[str, Any], purpose: str) -> str:
         settings = self.settings
-        options = options.copy()
 
         headers = None
         if urlparse(settings["base_url"]).hostname == "ollama.com":
@@ -51,7 +50,6 @@ class LMOllama(LLMProvider):
                 api_key=key,
                 timeout=settings["timeout"],
             ) as chat:
-                options.pop("think", None)
                 response = chat.chat.completions.create(
                     model=settings["model"],
                     messages=[{"role": "user", "content": prompt}],
@@ -61,15 +59,7 @@ class LMOllama(LLMProvider):
         client = Client(
             host=settings["base_url"], headers=headers, timeout=settings["timeout"]
         )
-        think = options.pop("think", None)
-        if "max_tokens" in options:
-            options["num_predict"] = options.pop("max_tokens")
-        if isinstance(options.get("stop"), str):
-            options["stop"] = [options["stop"]]
-        extra = {"think": think} if think is not None else {}
-        response = client.generate(
-            model=settings["model"], prompt=prompt, options=Options(**options), **extra
-        )
+        response = client.generate(model=settings["model"], prompt=prompt, **options)
         return response.response or ""
 
 
@@ -98,11 +88,6 @@ class LLMOpenAI(LLMProvider):
 class LLMAnthropic(LLMProvider):
     def generate(self, prompt: str, options: dict[str, Any], purpose: str) -> str:
         settings = self.settings
-        options = options.copy()
-        options.setdefault("max_tokens", 4096 if purpose == "plan" else 128)
-        if "stop" in options:
-            stop = options.pop("stop")
-            options["stop_sequences"] = [stop] if isinstance(stop, str) else stop
         payload = {
             "model": settings["model"],
             "messages": [{"role": "user", "content": prompt}],

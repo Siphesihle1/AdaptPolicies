@@ -65,9 +65,11 @@ dataset. See [ground-truth evaluation](ground_truth_graphs.md) and the
 
 ## Launchers
 
-The cluster launcher `src/methods/progprompt/progprompt_run.sh` explicitly selects
-scene 0, train, random examples, three examples, its experiment name, and
-`--num-tasks all`. It copies active `data/` contents, including the six manifests,
+`src/methods/progprompt/progprompt_exec.sh` validates CLI arguments before starting
+the simulator. It forwards them to `progprompt_run.sh`, with no implicit train
+dataset or experiment settings. The Slurm wrapper also forwards its job arguments.
+Supply the same required options to each launcher as to the Python CLI.
+`progprompt_run.sh` copies active `data/` contents, including the six manifests,
 to `PROGPROMPT_DATASET_DIR`; the sibling original-data archive is excluded.
 The diagnostic `src/test-scripts/virtual_home_exec_test.sh` forwards its command
 arguments to the runner; supply all six options when invoking it.

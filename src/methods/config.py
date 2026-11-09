@@ -1,25 +1,19 @@
-"""Process-wide configuration"""
+"""Process-wide configuration with native request parameters per provider/model."""
 
 from functools import lru_cache
 import os
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 PROVIDERS = {"ollama", "openai", "lm_studio", "anthropic"}
-COMMON_OPTIONS = {"temperature", "max_tokens", "stop"}
-PROVIDER_OPTIONS = {
-    "ollama": {"think", "frequency_penalty"},
-    "openai": {"frequency_penalty", "reasoning_effort"},
-    "lm_studio": {"frequency_penalty", "reasoning_effort"},
-    "anthropic": set(),
-}
 
 
 @lru_cache(maxsize=1)
-def get_config():
+def get_config() -> dict[str, Any]:
     selection = os.getenv("ADAPT_CONFIG", "dev")
     path = (
         ROOT / "config" / f"{selection}.yml"
@@ -31,68 +25,59 @@ def get_config():
     if not isinstance(config, dict) or set(config) != {"llm", "weave"}:
         raise ValueError("Configuration must contain only llm and weave sections")
     llm = config["llm"]
-    if not isinstance(llm, dict) or set(llm) - {
-        "provider",
-        "model",
-        "base_url",
-        "timeout",
-        "generation",
-    }:
-        raise ValueError(
-            "Invalid llm settings; credentials belong in environment variables"
-        )
-    if llm.get("provider") not in PROVIDERS:
+    if not isinstance(llm, dict) or set(llm) != {"provider", "model", "providers"}:
+        raise ValueError("llm requires provider, model and providers settings")
+    if llm["provider"] not in PROVIDERS:
         raise ValueError(f"llm.provider must be one of {sorted(PROVIDERS)}")
-    if not isinstance(llm.get("model"), str) or not llm["model"].strip():
+    if not isinstance(llm["model"], str) or not llm["model"].strip():
         raise ValueError("llm.model must be a nonempty string")
-    endpoint = urlparse(llm.get("base_url", ""))
-    if (
-        endpoint.scheme not in {"http", "https"}
-        or not endpoint.hostname
-        or endpoint.username
-        or endpoint.password
-        or endpoint.query
-        or endpoint.fragment
-    ):
-        raise ValueError(
-            "llm.base_url must be an HTTP(S) URL without credentials, query, or fragment"
-        )
-    timeout = llm.get("timeout", 120)
-    if (
-        isinstance(timeout, bool)
-        or not isinstance(timeout, (int, float))
-        or timeout <= 0
-    ):
-        raise ValueError("llm.timeout must be positive")
-    llm["timeout"] = timeout
-    generation = llm.get("generation")
-    if not isinstance(generation, dict) or set(generation) != {"plan", "assertion"}:
-        raise ValueError("llm.generation requires plan and assertion settings")
-    for purpose, settings in generation.items():
-        if not isinstance(settings, dict) or set(settings) - COMMON_OPTIONS - PROVIDERS:
-            raise ValueError(f"Unsupported generation settings for {purpose}")
-        for provider in PROVIDERS & settings.keys():
-            options = settings[provider]
-            if (
-                not isinstance(options, dict)
-                or set(options) - PROVIDER_OPTIONS[provider]
-            ):
-                raise ValueError(f"Unsupported {provider} options for {purpose}")
-        tokens = settings.get("max_tokens")
-        if tokens is not None and (type(tokens) is not int or tokens <= 0):
-            raise ValueError("max_tokens must be a positive integer")
-        temperature = settings.get("temperature")
-        if temperature is not None and (
-            type(temperature) not in {int, float} or temperature < 0
+    providers = llm["providers"]
+    if not isinstance(providers, dict) or set(providers) - PROVIDERS:
+        raise ValueError("llm.providers must contain supported provider names")
+    for provider, settings in providers.items():
+        if not isinstance(settings, dict) or set(settings) != {
+            "base_url",
+            "timeout",
+            "models",
+        }:
+            raise ValueError(f"{provider} requires base_url, timeout and models")
+        if not isinstance(settings["base_url"], str):
+            raise ValueError("base_url must be an HTTP(S) URL")
+        endpoint = urlparse(settings["base_url"])
+        if (
+            endpoint.scheme not in {"http", "https"}
+            or not endpoint.hostname
+            or endpoint.username
+            or endpoint.password
+            or endpoint.query
+            or endpoint.fragment
         ):
-            raise ValueError("temperature must be a nonnegative number")
-        stop = settings.get("stop")
-        if stop is not None and not (
-            isinstance(stop, str)
-            or isinstance(stop, list)
-            and all(isinstance(item, str) for item in stop)
-        ):
-            raise ValueError("stop must be a string or list of strings")
+            raise ValueError(
+                "base_url must be an HTTP(S) URL without credentials, query, or fragment"
+            )
+        timeout = settings["timeout"]
+        if type(timeout) not in {int, float} or timeout <= 0:
+            raise ValueError("timeout must be positive")
+        models = settings["models"]
+        if not isinstance(models, dict) or not models:
+            raise ValueError(f"{provider}.models must contain model settings")
+        for model, model_settings in models.items():
+            if not isinstance(model, str) or not model.strip():
+                raise ValueError("Model names must be nonempty strings")
+            if not isinstance(model_settings, dict) or set(model_settings) != {
+                "plan",
+                "assertion",
+            }:
+                raise ValueError(
+                    f"{provider}/{model} requires plan and assertion settings"
+                )
+            for purpose, request in model_settings.items():
+                validate_request_parameters(request, f"{provider}/{model}/{purpose}")
+    if (
+        llm["provider"] not in providers
+        or llm["model"] not in providers[llm["provider"]]["models"]
+    ):
+        raise ValueError("Selected provider/model has no configured settings")
     logging = config["weave"]
     if (
         not isinstance(logging, dict)
@@ -101,6 +86,41 @@ def get_config():
     ):
         raise ValueError("weave.enabled must be a YAML boolean")
     return config
+
+
+def validate_request_parameters(parameters: Any, location: str) -> None:
+    """Check structure and keep credentials out of exported configuration.
+
+    Parameter names and values otherwise belong to the selected native API.
+    """
+    if not isinstance(parameters, dict) or any(
+        not isinstance(key, str) for key in parameters
+    ):
+        raise ValueError(f"{location} must be a mapping of native request parameters")
+    for key in parameters:
+        if key.lower() in {
+            "api_key",
+            "authorization",
+            "headers",
+            "extra_headers",
+            "model",
+            "messages",
+            "prompt",
+        }:
+            raise ValueError(f"{location}: {key} belongs outside generation settings")
+
+
+def get_llm_settings() -> dict[str, Any]:
+    """Select connection settings and native profiles without translating parameters."""
+    llm = get_config()["llm"]
+    provider = llm["providers"][llm["provider"]]
+    return {
+        "provider": llm["provider"],
+        "model": llm["model"],
+        "base_url": provider["base_url"],
+        "timeout": provider["timeout"],
+        **provider["models"][llm["model"]],
+    }
 
 
 if __name__ == "__main__":

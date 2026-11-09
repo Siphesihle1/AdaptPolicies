@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from random import choice
+from collections.abc import Iterable
 from .environment import VHEnvironment
+from .graph_query import N
 from .task import VHTask
 from .virtualhome_types import ObjectClassName
 
@@ -11,7 +12,71 @@ class Action(ABC):
         self.task = task
         self.action_name = ""
 
-    def run(self, *objs: str):
+    def resolve_object(self, name: str, held_only: bool = False) -> int | None:
+        nearest_in_room = self.env.find_obj(name)
+        candidates = (
+            N(self.env.graph).class_name(name).select("id")
+            if hasattr(self.env, "graph")
+            else nearest_in_room
+        )
+        held = [
+            identifier
+            for identifier in candidates
+            if identifier in self.env.obj_ids_in_hand
+        ]
+        bindings = getattr(self.env, "object_bindings", {})
+        if held_only:
+            candidates = held
+        if not candidates:
+            self.env.log_file.write(
+                f"Object {name} {'not in hand' if held_only else 'not found'}\n"
+            )
+            return None
+        eligible = held or candidates
+        bound = bindings.get(name)
+        previous = getattr(self.env, "found_id", None)
+        close = set(getattr(self.env, "obj_ids_close", []))
+        distances = getattr(self.env, "object_distances", {})
+
+        def nearest(identifiers: Iterable[int]) -> int:
+            return min(
+                identifiers,
+                key=lambda identifier: (
+                    distances.get(identifier, float("inf")),
+                    identifier,
+                ),
+            )
+
+        if bound in eligible:
+            identifier, reason = bound, "bound"
+        elif held:
+            identifier, reason = min(held), "held"
+        elif previous in eligible:
+            identifier, reason = previous, "last_find"
+        elif close.intersection(eligible):
+            identifier, reason = nearest(close.intersection(eligible)), "close"
+        elif set(nearest_in_room).intersection(eligible):
+            identifier, reason = (
+                nearest(set(nearest_in_room).intersection(eligible)),
+                "nearest_in_room",
+            )
+        else:
+            identifier, reason = nearest(eligible), "eligible"
+        self.env.log_file.write(
+            f"resolve {self.action_name} {name}: candidates={sorted(candidates)}, selected={identifier}, reason={reason}, squared_distance={distances.get(identifier)}\n"
+        )
+        return identifier
+
+    def execute(self, *objects: tuple[str, int]) -> bool:
+        arguments = " ".join(f"<{name}> ({identifier})" for name, identifier in objects)
+        success = self.env.execute(f"<char0> [{self.action_name}] {arguments}")
+        if success:
+            if not hasattr(self.env, "object_bindings"):
+                self.env.object_bindings = {}
+            self.env.object_bindings.update(objects)
+        return success
+
+    def run(self, *objs: str) -> bool | None:
         if self.action_name != "assert":
             self.task.total_steps += 1
 
@@ -43,36 +108,14 @@ class PutIn(Action):
     def __call__(self, obj: ObjectClassName, receptable: ObjectClassName):
         super().run(obj, receptable)
 
-    def action(self, *objs: str):
+    def action(self, *objs: str) -> bool:
         obj, receptacle = objs
         self.env.last_action = (self.action_name, *objs)
-        obj_ids = [
-            id for id in self.env.find_obj(obj) if id in self.env.obj_ids_in_hand
-        ]
-        receptable_ids = self.env.find_obj(receptacle)
-
-        if len(obj_ids) == 0:
-            self.env.log_file.write(f"Object {obj} not in hand\n")
+        obj_id = self.resolve_object(obj, held_only=True)
+        receptacle_id = self.resolve_object(receptacle)
+        if obj_id is None or receptacle_id is None:
             return False
-
-        if len(receptable_ids) == 0:
-            self.env.log_file.write(f"Object {obj} not found\n")
-            return False
-
-        obj_id = obj_ids[0] if len(obj_ids) == 1 else choice(obj_ids)
-        receptable_id = (
-            receptable_ids[0]
-            if len(receptable_ids) == 1
-            else (
-                self.env.found_id
-                if self.env.found_id in receptable_ids
-                else choice(receptable_ids)
-            )
-        )
-
-        return self.env.execute(
-            f"<char0> [{self.action_name}] <{obj}> ({obj_id}) <{receptacle}> ({receptable_id})"
-        )
+        return self.execute((obj, obj_id), (receptacle, receptacle_id))
 
 
 class PutBack(PutIn):
@@ -82,7 +125,7 @@ class PutBack(PutIn):
 
 
 class Apply(PutIn):
-    def __init__(self, env, task):
+    def __init__(self, env: VHEnvironment, task: VHTask):
         super().__init__(env, task)
         self.action_name = "apply"
 
@@ -96,18 +139,16 @@ class Find(Action):
     def __call__(self, obj: ObjectClassName):
         super().run(obj)
 
-    def action(self, *objs: str):
+    def action(self, *objs: str) -> bool:
         (obj,) = objs
         self.env.last_action = (self.action_name, *objs)
-        obj_ids = self.env.find_obj(obj)
-
-        if len(obj_ids) == 0:
-            self.env.log_file.write(f"Object {obj} not found\n")
+        obj_id = self.resolve_object(obj)
+        if obj_id is None:
             return False
-
-        obj_id = self.env.found_id = choice(obj_ids)
-
-        return self.env.execute(f"<char0> [{self.action_name}] <{obj}> ({obj_id})")
+        success = self.execute((obj, obj_id))
+        if success:
+            self.env.found_id = obj_id
+        return success
 
 
 class Walk(Find):
@@ -121,24 +162,13 @@ class Open(Find):
         super().__init__(env, task)
         self.action_name = "open"
 
-    def action(self, *objs: str):
+    def action(self, *objs: str) -> bool:
         (obj,) = objs
         self.env.last_action = (self.action_name, *objs)
-        obj_ids = self.env.find_obj(obj)
-
-        if len(obj_ids) == 0:
-            self.env.log_file.write(f"Object {obj} not found\n")
+        obj_id = self.resolve_object(obj)
+        if obj_id is None:
             return False
-
-        obj_id = (
-            obj_ids[0]
-            if len(obj_ids) == 1
-            else (
-                self.env.found_id if self.env.found_id in obj_ids else choice(obj_ids)
-            )
-        )
-
-        return self.env.execute(f"<char0> [{self.action_name}] <{obj}> ({obj_id})")
+        return self.execute((obj, obj_id))
 
 
 class Run(Open):
@@ -176,21 +206,13 @@ class Talk(Open):
         super().__init__(env, task)
         self.action_name = "talk"
 
-    def action(self, *objs: str):
+    def action(self, *objs: str) -> bool:
         (obj,) = objs
         self.env.last_action = (self.action_name, obj)
-        held_ids = [
-            identifier
-            for identifier in self.env.find_obj(obj)
-            if identifier in self.env.obj_ids_in_hand
-        ]
-        if not held_ids:
-            self.env.log_file.write(f"Object {obj} not in hand\n")
+        identifier = self.resolve_object(obj, held_only=True)
+        if identifier is None:
             return False
-        identifier = (
-            self.env.found_id if self.env.found_id in held_ids else choice(held_ids)
-        )
-        return self.env.execute(f"<char0> [{self.action_name}] <{obj}> ({identifier})")
+        return self.execute((obj, identifier))
 
 
 class Read(Talk):
@@ -200,19 +222,19 @@ class Read(Talk):
 
 
 class Fold(Talk):
-    def __init__(self, env, task):
+    def __init__(self, env: VHEnvironment, task: VHTask):
         super().__init__(env, task)
         self.action_name = "fold"
 
 
 class Unfold(Fold):
-    def __init__(self, env, task):
+    def __init__(self, env: VHEnvironment, task: VHTask):
         super().__init__(env, task)
         self.action_name = "unfold"
 
 
 class Use(Talk):
-    def __init__(self, env, task):
+    def __init__(self, env: VHEnvironment, task: VHTask):
         super().__init__(env, task)
         self.action_name = "use"
 

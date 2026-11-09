@@ -1,12 +1,13 @@
 """Evaluation regression checks without starting a simulator or loading its SDK."""
 
 import importlib
+import json
 import os
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from methods import config
 
@@ -47,6 +48,9 @@ class EvaluationTests(unittest.TestCase):
         self.agent.evaluation_logger = None
         self.agent.num_tasks_parsed = 0
         self.agent.num_tasks_executed = 0
+        self.agent.task_records = {}
+        self.agent.dataset = "train"
+        self.agent.env_id = 0
 
     def tearDown(self):
         self.environment.stop()
@@ -60,9 +64,13 @@ class EvaluationTests(unittest.TestCase):
         self.agent.ground_truth_graphs = {"failed": {"nodes": [], "edges": []}}
         self.agent.exec_per_task = {}
         self.agent.eval()
+        self.agent.export_results(run_status="completed")
         self.agent.log_eval_results()
         self.assertEqual(self.agent.results["overall"]["SR"], 0)
-        self.assertFalse((Path(self.directory.name) / "evaluation.json").exists())
+        saved = json.loads((Path(self.directory.name) / "results.json").read_text())
+        self.assertEqual(saved["summary"]["num_tasks"], 1)
+        self.assertEqual(saved["tasks"]["failed"]["metrics"]["SR"], 0)
+        self.assertIsNone(saved["tasks"]["failed"]["metrics"]["Precision"])
 
     def test_failed_task_does_not_shift_ground_truth(self):
         def graph(state):
@@ -84,6 +92,57 @@ class EvaluationTests(unittest.TestCase):
         self.agent.log_eval_results()
         self.assertEqual(self.agent.results["successful"]["SR"], 1)
         self.assertNotIn("failed", self.agent.results)
+        self.assertEqual(self.agent.evaluation_summary()["SR"], 0.5)
+        self.assertEqual(
+            self.agent.evaluation_summary()["conditional_metrics"]["SR"], 1
+        )
+
+    def test_weave_includes_failure_rows_and_uses_all_intended_tasks(self):
+        self.agent.plans = {"failed": [], "success": ["def success():", "thread"]}
+        self.agent.results = {
+            "success": {"SR": 1, "PSR": 1, "Exec": 1, "Precision": 1},
+            "overall": {"SR": 1, "PSR": 1, "Exec": 1, "Precision": 1},
+        }
+        self.agent.task_record("failed").update(
+            status="execution_failed",
+            plan="raw rejected plan",
+            error="unsupported action",
+        )
+        logger = self.agent.evaluation_logger = MagicMock()
+        self.agent.log_eval_results()
+        self.assertEqual(logger.log_prediction.call_count, 2)
+        failure = logger.log_prediction.call_args_list[0].kwargs
+        self.assertEqual(failure["output"]["status"], "execution_failed")
+        self.assertEqual(failure["output"]["plan"], "raw rejected plan")
+        summary = logger.log_summary.call_args.args[0]
+        self.assertEqual(summary["SR"], 0.5)
+        self.assertEqual(summary["num_tasks_without_results"], 1)
+        self.assertEqual(summary["conditional_metrics"]["SR"], 1)
+
+    def test_generation_exception_does_not_lose_later_tasks_or_raw_rejections(self):
+        prompts = [
+            SimpleNamespace(task_instruction=name, text=f"prompt {name}")
+            for name in ["api_failure", "bad_format", "valid"]
+        ]
+        self.agent.prompt_builder = prompts
+        self.agent.plans = {prompt.task_instruction: [] for prompt in prompts}
+        self.agent.exec_per_task = {}
+        with patch(
+            "methods.progprompt.agent.generate",
+            side_effect=[
+                RuntimeError("connection failed"),
+                "```python\ndef bad_format():\n pass\n```",
+                "def valid():\n pass",
+            ],
+        ):
+            self.agent.generate_task_plans()
+        saved = json.loads((Path(self.directory.name) / "results.json").read_text())
+        self.assertEqual(saved["summary"]["num_tasks"], 3)
+        self.assertEqual(saved["tasks"]["api_failure"]["status"], "generation_failed")
+        self.assertEqual(saved["tasks"]["bad_format"]["status"], "parse_failed")
+        self.assertTrue(saved["tasks"]["bad_format"]["plan"].startswith("```"))
+        self.assertEqual(saved["tasks"]["valid"]["status"], "generated")
+        self.assertEqual(saved["tasks"]["valid"]["prompt"], "prompt valid")
 
     def test_single_task_uses_its_named_graph(self):
         def graph(state):

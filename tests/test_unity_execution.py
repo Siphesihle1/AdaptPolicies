@@ -86,6 +86,38 @@ class UnityExecutionTests(unittest.TestCase):
             find_solution=False,
         )
 
+    def test_navigation_refreshes_resolution_distances_from_native_pose(self):
+        env = self.environment()
+        env.comm.environment_graph = Mock(
+            return_value=(
+                True,
+                {
+                    "nodes": [
+                        {
+                            "id": 1,
+                            "class_name": "character",
+                            "bounding_box": {"center": [10, 1, 0]},
+                        },
+                        {
+                            "id": 2,
+                            "class_name": "mug",
+                            "bounding_box": {"center": [0, 1, 0]},
+                        },
+                        {
+                            "id": 3,
+                            "class_name": "mug",
+                            "bounding_box": {"center": [11, 1, 0]},
+                        },
+                    ],
+                    "edges": [],
+                },
+            )
+        )
+        with patch("virtual_home.environment.weave.thread"):
+            self.assertTrue(env.execute("<char0> [find] <mug> (3)"))
+        self.assertEqual(env.object_distances[2], 100)
+        self.assertEqual(env.object_distances[3], 1)
+
     def test_only_confirmed_phone_talk_derives_used(self):
         for native_success in (True, False):
             with self.subTest(native_success=native_success):
@@ -107,3 +139,28 @@ class UnityExecutionTests(unittest.TestCase):
                     self.assertEqual(
                         env.nodes_with_additonal_states[3]["states"], ["OFF", "USED"]
                     )
+
+    def test_distance_cache_uses_all_three_axes_and_excludes_partial_centers(self):
+        env = self.environment()
+        env.update_object_distances(
+            {
+                "nodes": [
+                    {
+                        "id": 1,
+                        "class_name": "character",
+                        "bounding_box": {"center": [1, 2, 3]},
+                    },
+                    {
+                        "id": 2,
+                        "class_name": "mug",
+                        "bounding_box": {"center": [3, 5, 9]},
+                    },
+                    {"id": 3, "class_name": "mug", "bounding_box": {"center": [1, 2]}},
+                    {"id": 4, "class_name": "mug"},
+                ],
+                "edges": [],
+            }
+        )
+        self.assertEqual(env.object_distances, {1: 0, 2: 49})
+        env.update_object_distances({"nodes": [], "edges": []})
+        self.assertEqual(env.object_distances, {})

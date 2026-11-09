@@ -31,11 +31,30 @@ def execute_progprompt_agent(args: ProgramArgs):
         num_tasks=args.num_tasks,
     )
 
-    progprompt_agent.generate_task_plans()
-    progprompt_agent.generate_tasks_scripts()
-    progprompt_agent.exec_plans()
-    progprompt_agent.eval()
-    progprompt_agent.log_eval_results()
+    try:
+        progprompt_agent.generate_task_plans()
+        progprompt_agent.generate_tasks_scripts()
+        progprompt_agent.exec_plans()
+        progprompt_agent.eval()
+    except Exception as error:
+        message = f"{type(error).__name__}: {error}"
+        progprompt_agent.export_results(run_status="aborted", error=message)
+        try:
+            progprompt_agent.log_eval_results(run_status="aborted", error=message)
+        except Exception as logging_error:
+            progprompt_agent.export_results(
+                run_status="aborted",
+                error=f"{message}; Weave finalization failed: {type(logging_error).__name__}: {logging_error}",
+            )
+        raise
+    progprompt_agent.export_results(run_status="completed")
+    try:
+        progprompt_agent.log_eval_results()
+    except Exception as error:
+        progprompt_agent.export_results(
+            run_status="telemetry_failed", error=f"{type(error).__name__}: {error}"
+        )
+        raise
 
 
 # Adapted from https://github.com/tan90cot0/progprompt-vh/blob/main/scripts/run_eval.py#L253

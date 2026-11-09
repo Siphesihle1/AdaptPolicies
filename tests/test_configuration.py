@@ -46,7 +46,8 @@ class ConfigurationTests(unittest.TestCase):
         os.environ["ADAPT_CONFIG"] = "live"
         config.get_config.cache_clear()
         self.assertTrue(config.get_config()["weave"]["enabled"])
-        self.assertEqual(config.get_config()["llm"]["provider"], "ollama")
+        self.assertEqual(config.get_config()["llm"]["provider"], "lm_studio")
+        self.assertEqual(config.get_config()["llm"]["model"], "qwen/qwen3.5-9b")
 
     def test_invalid_configuration_fails_early(self):
         original = deepcopy(config.get_config())
@@ -92,7 +93,9 @@ class ConfigurationTests(unittest.TestCase):
         os.environ.update(ADAPT_CONFIG="live", PROJECT_NAME="entity/project")
         fake = MagicMock()
         fake.op.side_effect = lambda function: function
-        with patch.dict("sys.modules", {"weave": fake}):
+        with patch.dict("sys.modules", {"weave": fake}), patch.object(
+            telemetry, "reuse_cached_wandb_login"
+        ):
 
             @telemetry.op
             def operation():
@@ -112,24 +115,26 @@ class ConfigurationTests(unittest.TestCase):
         for provider in config.PROVIDERS:
             data = deepcopy(original)
             data["llm"]["provider"] = provider
+            data["llm"]["providers"][provider] = deepcopy(
+                data["llm"]["providers"]["lm_studio"]
+            )
             adapter = MagicMock()
-            adapter.return_value.settings = data["llm"]
             adapter.return_value.generate.return_value = "result"
             with self.subTest(provider=provider), self.configuration(data), patch.dict(
                 llm.PROVIDERS, {provider: adapter}
             ):
+                adapter.return_value.settings = config.get_llm_settings()
                 for purpose, tokens in [("plan", 4096), ("assertion", 128)]:
                     self.assertEqual(
                         llm.generate("prompt", purpose, __weave={}), "result"
                     )
-                    adapter.assert_called_with(data["llm"])
+                    adapter.assert_called_with(config.get_llm_settings())
                     args = adapter.return_value.generate.call_args.args
                     expected: dict[str, int | str] = {
                         "temperature": 0,
                         "max_tokens": tokens,
                     }
-                    if provider == "lm_studio":
-                        expected["reasoning_effort"] = "none"
+                    expected["reasoning_effort"] = "none"
                     self.assertEqual(args[1], expected)
                     self.assertEqual(args[2], purpose)
 
@@ -148,17 +153,19 @@ class ConfigurationTests(unittest.TestCase):
 
         fake.op.side_effect = trace
         adapter = MagicMock()
-        adapter.return_value.settings = config.get_config()["llm"]
+        adapter.return_value.settings = config.get_llm_settings()
         adapter.return_value.generate.return_value = "True"
-        with patch.dict("sys.modules", {"weave": fake}), patch.dict(
-            llm.PROVIDERS, {"ollama": adapter}
-        ):
+        with patch.dict("sys.modules", {"weave": fake}), patch.object(
+            telemetry, "reuse_cached_wandb_login"
+        ), patch.dict(llm.PROVIDERS, {"lm_studio": adapter}):
             self.assertEqual(
                 llm.generate("state", "assertion", __weave=metadata), "True"
             )
         self.assertEqual(traced_calls, [metadata])
         adapter.return_value.generate.assert_called_once_with(
-            "state", {"temperature": 0}, "assertion"
+            "state",
+            {"temperature": 0, "max_tokens": 128, "reasoning_effort": "none"},
+            "assertion",
         )
 
     def test_configuration_selects_provider_class(self):
@@ -172,10 +179,96 @@ class ConfigurationTests(unittest.TestCase):
         for name, provider_class in classes.items():
             data = deepcopy(original)
             data["llm"]["provider"] = name
+            data["llm"]["providers"][name] = deepcopy(
+                data["llm"]["providers"]["lm_studio"]
+            )
             with self.subTest(provider=name), self.configuration(data):
                 provider = llm.get_provider()
                 self.assertIs(type(provider), provider_class)
-                self.assertEqual(provider.settings, data["llm"])
+                self.assertEqual(provider.settings, config.get_llm_settings())
+
+    def test_parameters_are_scoped_to_provider_and_model_without_remapping(self):
+        data = deepcopy(config.get_config())
+        data["llm"]["providers"]["anthropic"] = {
+            "base_url": "https://api.anthropic.com/v1",
+            "timeout": 90,
+            "models": {
+                "selected-model": {
+                    "plan": {
+                        "max_tokens": 42,
+                        "stop_sequences": ["END"],
+                        "thinking": {"type": "adaptive"},
+                    },
+                    "assertion": {"max_tokens": 8},
+                },
+                "other-model": {"plan": {"temperature": 0.5}, "assertion": {}},
+            },
+        }
+        data["llm"].update(provider="anthropic", model="selected-model")
+        adapter = MagicMock()
+        with self.configuration(data), patch.dict(
+            llm.PROVIDERS, {"anthropic": adapter}
+        ):
+            adapter.return_value.settings = config.get_llm_settings()
+            llm.generate("prompt", "plan")
+            adapter.return_value.generate.assert_called_once_with(
+                "prompt",
+                {
+                    "max_tokens": 42,
+                    "stop_sequences": ["END"],
+                    "thinking": {"type": "adaptive"},
+                },
+                "plan",
+            )
+            self.assertEqual(adapter.call_args.args[0]["timeout"], 90)
+
+    def test_missing_model_and_invalid_nested_settings_fail_early(self):
+        original = deepcopy(config.get_config())
+        for key, value in [
+            ("base_url", "http://user:password@localhost"),
+            ("timeout", -1),
+        ]:
+            data = deepcopy(original)
+            data["llm"]["providers"]["lm_studio"][key] = value
+            with self.subTest(key=key), self.configuration(data), self.assertRaises(
+                ValueError
+            ):
+                config.get_config()
+        data = deepcopy(original)
+        data["llm"]["model"] = "unconfigured-model"
+        with self.configuration(data), self.assertRaisesRegex(
+            ValueError, "no configured settings"
+        ):
+            config.get_config()
+
+    def test_weave_auth_uses_transport_library_without_global_patching(self):
+        original_library = SimpleNamespace(BasicAuth=object())
+        transport_library = SimpleNamespace(BasicAuth=object())
+        original_auth = original_library.BasicAuth
+        api = SimpleNamespace(httpx=original_library)
+        transport = SimpleNamespace(httpx=transport_library)
+        with patch.object(telemetry, "import_module", side_effect=[api, transport]):
+            telemetry.align_weave_auth_transport()
+        self.assertIs(api.httpx.BasicAuth, transport_library.BasicAuth)
+        self.assertIs(original_library.BasicAuth, original_auth)
+
+    def test_cached_login_is_available_to_weave_without_writing_credentials(self):
+        settings = SimpleNamespace(api_key=None, base_url="https://configured-host")
+        setup = SimpleNamespace(singleton=lambda: SimpleNamespace(settings=settings))
+        auth = MagicMock()
+        auth.read_netrc_auth.return_value = "cached-test-credential"
+        with patch.object(telemetry, "import_module", side_effect=[setup, auth]):
+            telemetry.reuse_cached_wandb_login()
+        auth.read_netrc_auth.assert_called_once_with(host="https://configured-host")
+        self.assertEqual(os.environ["WANDB_API_KEY"], "cached-test-credential")
+
+    def test_explicit_credential_takes_precedence_over_cached_login(self):
+        with patch.dict(
+            os.environ, {"WANDB_API_KEY": "explicit-test-credential"}
+        ), patch.object(telemetry, "import_module") as load:
+            telemetry.reuse_cached_wandb_login()
+            load.assert_not_called()
+            self.assertEqual(os.environ["WANDB_API_KEY"], "explicit-test-credential")
 
     def test_openai_and_lm_studio_requests(self):
         sdk = MagicMock()
@@ -183,7 +276,7 @@ class ConfigurationTests(unittest.TestCase):
         client.chat.completions.create.return_value = SimpleNamespace(
             choices=[SimpleNamespace(message=SimpleNamespace(content="True"))]
         )
-        settings = config.get_config()["llm"]
+        settings = config.get_llm_settings()
         with patch.object(providers, "OpenAI", sdk.OpenAI):
             self.assertEqual(
                 providers.LLMOpenAI(settings).generate(
@@ -204,9 +297,12 @@ class ConfigurationTests(unittest.TestCase):
 
     def test_ollama_preserves_plan_and_assertion_protocols(self):
         os.environ["ADAPT_CONFIG"] = "live"
-        settings = config.get_config()["llm"]
+        settings = {
+            **config.get_llm_settings(),
+            "provider": "ollama",
+            "base_url": "http://localhost:11430",
+        }
         ollama_sdk, openai_sdk = MagicMock(), MagicMock()
-        ollama_sdk.Options.side_effect = lambda **kwargs: kwargs
         ollama_sdk.Client.return_value.generate.return_value = SimpleNamespace(
             response="def task():"
         )
@@ -215,17 +311,20 @@ class ConfigurationTests(unittest.TestCase):
             choices=[SimpleNamespace(message=SimpleNamespace(content="False"))]
         )
         with patch.object(providers, "Client", ollama_sdk.Client), patch.object(
-            providers, "Options", ollama_sdk.Options
-        ), patch.object(providers, "OpenAI", openai_sdk.OpenAI):
+            providers, "OpenAI", openai_sdk.OpenAI
+        ):
             self.assertEqual(
                 providers.LMOllama(settings).generate(
-                    "task", {"think": False, "max_tokens": 42}, "plan"
+                    "task",
+                    {"think": False, "options": {"num_predict": 42, "stop": ["END"]}},
+                    "plan",
                 ),
                 "def task():",
             )
             request = ollama_sdk.Client.return_value.generate.call_args.kwargs
             self.assertFalse(request["think"])
             self.assertEqual(request["options"]["num_predict"], 42)
+            self.assertEqual(request["options"]["stop"], ["END"])
             self.assertEqual(
                 providers.LMOllama(settings).generate("state", {}, "assertion"), "False"
             )
@@ -236,7 +335,7 @@ class ConfigurationTests(unittest.TestCase):
 
     def test_anthropic_wire_format_and_text_blocks(self):
         settings = {
-            **config.get_config()["llm"],
+            **config.get_llm_settings(),
             "base_url": "https://api.anthropic.com/v1",
         }
         result = {
@@ -250,7 +349,7 @@ class ConfigurationTests(unittest.TestCase):
         ) as send:
             self.assertEqual(
                 providers.LLMAnthropic(settings).generate(
-                    "state", {"stop": "END"}, "assertion"
+                    "state", {"max_tokens": 128, "stop_sequences": ["END"]}, "assertion"
                 ),
                 "True",
             )

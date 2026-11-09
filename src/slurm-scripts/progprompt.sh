@@ -41,14 +41,14 @@ source ~/.bashrc
 
 # Run setup script
 conda run \
-  --live-stream -n research_proj \
+  --live-stream -n research_proj env \
   SLURM_JOB_ID=$SLURM_JOB_ID \
   SLURM_JOB_NAME=$SLURM_JOB_NAME \
   SLURM_JOB_NODELIST=$SLURM_JOB_NODELIST \
   PROGPROMPT_DATASET_DIR=$PROGPROMPT_DATASET_DIR \
   PROGPROMPT_PREFIX=$PROGPROMPT_PREFIX \
   JOB_OUTPUT_DIR=$LOCAL_OUTPUT_DIR bash \
-  $PROGPROMPT_PREFIX/progprompt_exec.sh
+  "$PROGPROMPT_PREFIX/progprompt_exec.sh" "$@"
 
 # Copy results back to home directory
 mv $LOCAL_OUTPUT_DIR/* $JOB_OUTPUT_DIR/

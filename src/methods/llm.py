@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from .config import COMMON_OPTIONS, get_config
+from .config import get_llm_settings
 from . import telemetry
 from .providers import LLMProvider, LMOllama, LLMOpenAI, LLMAnthropic
 
@@ -15,7 +15,7 @@ PROVIDERS = {
 
 
 def get_provider() -> LLMProvider:
-    settings = get_config()["llm"]
+    settings = get_llm_settings()
     return PROVIDERS[settings["provider"]](settings)
 
 
@@ -31,11 +31,4 @@ def generate(
     settings = provider.settings
     if purpose not in {"plan", "assertion"}:
         raise ValueError("purpose must be plan or assertion")
-    profile = settings["generation"][purpose]
-    options = {
-        key: value
-        for key, value in profile.items()
-        if key in COMMON_OPTIONS and value is not None
-    }
-    options.update(profile.get(settings["provider"], {}))
-    return provider.generate(prompt, options, purpose)
+    return provider.generate(prompt, settings[purpose], purpose)

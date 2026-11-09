@@ -1,6 +1,6 @@
 from io import TextIOWrapper
 import os
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 import cv2
 from cv2.typing import MatLike
 from methods import telemetry as weave
@@ -38,6 +38,8 @@ class VHEnvironment:
         self.actions_to_omit: List[Tuple[str, ...]] = []
         self.log_file = log_file
         self.found_id: Optional[int] = None
+        self.object_bindings: dict[str, int] = {}
+        self.object_distances: dict[int, float] = {}
         self.last_action: Tuple[str, ...] = tuple()
         self.execution_failed = False
 
@@ -46,6 +48,7 @@ class VHEnvironment:
         _, self.graph = self.comm.environment_graph()
 
         self.get_current_state()
+        self.update_object_distances(self.graph)
         _, camera_count = self.comm.camera_count()
         _, im = self.comm.camera_image(
             [camera_count - 5], image_width=300, image_height=300
@@ -118,7 +121,30 @@ class VHEnvironment:
 
         return N(self.graph).class_name(class_name).select("id")  # type: ignore
 
-    def update_executor(self, state: EnvironmentState, native_navigation=None):
+    def update_object_distances(self, native_graph: dict[str, Any]) -> None:
+        """Cache squared 3D center distances for duplicate-object ranking.
+
+        Native positions reflect actual movement; symbolic bounding boxes can be
+        stale. This is a proximity heuristic, not a path or reachability check.
+        Missing or non-3D centers are excluded from the cache.
+        """
+        characters = N(native_graph).class_name("character").get_all()
+        self.object_distances = {}
+        if len(characters) != 1:
+            return
+        position = characters[0].get("bounding_box", {}).get("center")
+        if position is None or len(position) != 3:
+            return
+        for node in N(native_graph).get_all():
+            center = node.get("bounding_box", {}).get("center")
+            if center is not None and len(center) == 3:
+                self.object_distances[node["id"]] = sum(
+                    (position[axis] - center[axis]) ** 2 for axis in range(3)
+                )
+
+    def update_executor(
+        self, state: EnvironmentState, native_navigation: dict[str, Any] | None = None
+    ) -> None:
         self.graph = state.to_dict()
         if native_navigation is not None:
             self.graph = reconcile_navigation_room(self.graph, native_navigation)
@@ -207,6 +233,7 @@ class VHEnvironment:
                     "Native navigation completed but its room could not be read\n"
                 )
                 return False
+            self.update_object_distances(native_navigation)
 
         try:
             if native_navigation is None:
@@ -230,7 +257,7 @@ class VHEnvironment:
         )
 
         if script.action == ScriptAction.TALK:
-            phone = N(self.partial_graph).id(script.object().instance).get_first()
+            phone = N(self.partial_graph).id(script.object().instance).get_first()  # type: ignore
             if phone is not None:
                 if "USED" not in phone["states"]:
                     phone["states"].append("USED")
@@ -239,7 +266,7 @@ class VHEnvironment:
         return True
 
 
-def unity_execution_succeeded(response):
+def unity_execution_succeeded(response: object) -> bool:
     """Require transport success and successful character execution messages."""
     if not isinstance(response, (tuple, list)) or len(response) != 2:
         return False
@@ -247,7 +274,7 @@ def unity_execution_succeeded(response):
     if success is not True:
         return False
 
-    def successful_message(message):
+    def successful_message(message: object) -> bool:
         if isinstance(message, str):
             return message.strip().lower() == "success"
         if isinstance(message, dict):
@@ -259,37 +286,34 @@ def unity_execution_succeeded(response):
     return successful_message(messages)
 
 
-def reconcile_navigation_room(graph, native_graph):
-    """Use the actual navigation destination for objects approached across a room boundary."""
-    characters = [
-        node["id"] for node in graph["nodes"] if node["class_name"] == "character"
-    ]
+def reconcile_navigation_room(
+    graph: dict[str, Any], native_graph: dict[str, Any]
+) -> dict[str, Any]:
+    """Replace the symbolic character's room with Unity's confirmed destination.
+
+    Approaching an object across a room boundary can leave the character in a
+    different room from the symbolic prediction. Preserve all other symbolic
+    state and require exactly one known native destination room.
+    """
+    characters = N(graph).class_name("character").select("id")
     if len(characters) != 1:
         raise ValueError("Navigation room synchronization requires one character")
     character = characters[0]
-    nodes = {node["id"]: node for node in graph["nodes"]}
-    native_nodes = {node["id"]: node for node in native_graph["nodes"]}
-    rooms = [
-        edge
-        for edge in native_graph["edges"]
-        if edge["from_id"] == character
-        and edge["relation_type"] == "INSIDE"
-        and native_nodes[edge["to_id"]].get("category") == "Rooms"
-    ]
-    if (
-        len(rooms) != 1
-        or rooms[0]["to_id"] not in nodes
-        or nodes[rooms[0]["to_id"]].get("category") != "Rooms"
-    ):
+    native_rooms = N(native_graph).category("Rooms").select("id")
+    rooms = (
+        E(native_graph)
+        .from_(character)
+        .relation("INSIDE")
+        .to_in(*native_rooms)
+        .get_all()
+    )
+    if len(rooms) != 1 or not N(graph).id(rooms[0]["to_id"]).category("Rooms").exists():
         raise ValueError(
             "Native navigation did not identify one known destination room"
         )
+    predicted_rooms = E(graph).from_(character).relation("INSIDE").get_all()
     return {
         **graph,
-        "edges": [
-            edge
-            for edge in graph["edges"]
-            if not (edge["from_id"] == character and edge["relation_type"] == "INSIDE")
-        ]
+        "edges": [edge for edge in E(graph).get_all() if edge not in predicted_rooms]
         + [dict(rooms[0])],
     }

@@ -22,6 +22,7 @@ from .constants import (
 from typing import Dict, List, Tuple, Any
 from pathlib import Path
 from importlib import import_module
+import json
 
 from cv2.typing import MatLike
 
@@ -157,17 +158,19 @@ def generate_task_scripts(
 def exec_task(
     task_instruction: str, log_file_prefix: str
 ) -> Tuple[Dict[str, Any], Dict[str, Any], float, List[MatLike]] | None:
-    # Assuming the system path contains the tasks module
-    task_module = import_module(f"tasks.{task_instruction}.task")
+    with open(f"{log_file_prefix}/task_logs.txt", "a") as f:
+        f.write(f"----Executing task: {task_instruction}----\n")
 
-    if hasattr(task_module, "exec_task"):
-        with open(f"{log_file_prefix}/task_logs.txt", "a") as f:
-            f.write(f"----Executing task: {task_instruction}----\n")
-
-        try:
+    try:
+        task_module = import_module(f"tasks.{task_instruction}.task")
+        if hasattr(task_module, "exec_task"):
             return task_module.exec_task()
-        except Exception as e:
-            with open(f"{log_file_prefix}/task_logs.txt", "a") as f:
-                f.write(f"----Error executing task {task_instruction}: {str(e)}\n")
+    except Exception as e:
+        with open(f"{log_file_prefix}/task_logs.txt", "a") as f:
+            f.write(f"----Error executing task {task_instruction}: {str(e)}\n")
+        (Path(log_file_prefix) / "execution_error.json").write_text(
+            json.dumps({"type": type(e).__name__, "message": str(e)}) + "\n",
+            encoding="utf-8",
+        )
 
     return None

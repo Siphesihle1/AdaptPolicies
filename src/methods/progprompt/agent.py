@@ -24,7 +24,7 @@ from .prompt import (
 )
 from .task_scripts import exec_task, generate_task_scripts
 
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, TypedDict
 
 sys.path.insert(0, os.getenv("JOB_OUTPUT_DIR", ""))
 
@@ -44,6 +44,18 @@ def get_object_states(state: Dict[str, Any]) -> Set[str]:
     return set(
         [n["class_name"] + " " + st for n in state["nodes"] for st in n["states"]]
     )
+
+
+class TaskRecordFields(TypedDict):
+    status: str
+    plan: str | None
+    thread_id: str | None
+    error: str | dict[str, Any] | None
+
+
+class TaskRecord(TaskRecordFields, total=False):
+    prompt: str
+    states_file: str
 
 
 class ProgPromptAgent:
@@ -75,11 +87,16 @@ class ProgPromptAgent:
             .with_examples(examples_type, examples_num)
             .with_tasks(test_set=test_set, num_tasks=num_tasks)
         )
-        self.plans: Dict[str, List[str]] = {}
+        # Register every intended task before generation so failed requests still
+        # count in evaluation and appear in incremental exports and Weave rows.
+        self.plans: Dict[str, List[str]] = {
+            prompt.task_instruction: [] for prompt in self.prompt_builder
+        }
         self.final_states: List[Dict[str, Any]] = []
         self.initial_states: List[Dict[str, Any]] = []
         self.exec_per_task: Dict[str, float] = {}
         self.results: Dict[str, Dict[str, float]] = {}
+        self.task_records: dict[str, TaskRecord] = {}
         self.evaluation_logger = weave.evaluation_logger(
             name=f"{os.getenv('EXPERIMENT_NAME')}:{uuid7()}",
             model=get_config()["llm"]["model"],
@@ -93,7 +110,73 @@ class ProgPromptAgent:
         self.num_tasks_parsed = 0
         self.num_tasks_executed = 0
 
+    def task_record(self, task: str) -> TaskRecord:
+        artifacts = self.plans.get(task, [])
+        return self.task_records.setdefault(
+            task,
+            {
+                "status": "pending",
+                "plan": artifacts[0] if artifacts else None,
+                "thread_id": artifacts[1] if len(artifacts) == 2 else None,
+                "error": None,
+            },
+        )
+
+    def evaluation_summary(self) -> dict[str, Any]:
+        count = len(self.plans)
+        metrics = [self.results[task] for task in self.plans if task in self.results]
+        return {
+            "num_tasks": count,
+            "num_tasks_parsed": self.num_tasks_parsed,
+            "num_tasks_executed": self.num_tasks_executed,
+            "num_tasks_evaluated": len(metrics),
+            "num_tasks_without_results": count - len(metrics),
+            **{
+                name: sum(row[name] for row in metrics) / count if count else 0
+                for name in ("SR", "PSR", "Exec")
+            },
+            "conditional_metrics": self.results.get("overall", {}),
+        }
+
+    def export_results(
+        self, run_status: str = "running", error: str | None = None
+    ) -> None:
+        rows = {}
+        for task in self.plans:
+            record = dict(self.task_record(task))
+            record["metrics"] = self.results.get(
+                task, {"SR": 0, "PSR": 0, "Exec": 0, "Precision": None}
+            )
+            rows[task] = record
+        output = {
+            "schema_version": 1,
+            "evaluation_protocol": {
+                "headline_denominator": "all_intended_tasks",
+                "missing_result_scores": {
+                    "SR": 0,
+                    "PSR": 0,
+                    "Exec": 0,
+                    "Precision": None,
+                },
+                "precision_scope": "evaluated_tasks_only",
+                "object_resolution": "held_class_binding_close_room_native_distance_id_v1",
+            },
+            "experiment_name": os.getenv("EXPERIMENT_NAME"),
+            "dataset": self.dataset,
+            "environment_id": self.env_id,
+            "run_status": run_status,
+            "error": error,
+            "configuration": get_config(),
+            "summary": self.evaluation_summary(),
+            "tasks": rows,
+        }
+        path = Path(os.environ["JOB_OUTPUT_DIR"]) / "results.json"
+        temporary = path.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
+        temporary.replace(path)
+
     def generate_task_plans(self):
+        self.export_results()
         plan_parsing_status_file = open(
             f"{os.getenv('JOB_OUTPUT_DIR')}/plan_parsing_status.txt", "w"
         )
@@ -103,26 +186,39 @@ class ProgPromptAgent:
             prompt_text = prompt.text
             thread_id = f"{os.getenv('EXPERIMENT_NAME')}:{task}:{str(uuid7())}"
 
-            with weave.thread(thread_id=thread_id):
-                with weave.attributes(
-                    {
-                        "task_instruction": task,
-                    }
-                ):
-                    plan = generate(
-                        prompt=prompt_text,
-                        purpose="plan",
-                        __weave={
-                            "display_name": thread_id,
-                        },
-                    )
+            self.plans[task] = []
+            record = self.task_record(task)
+            record.update(thread_id=thread_id, prompt=prompt_text)
+            try:
+                with weave.thread(thread_id=thread_id):
+                    with weave.attributes({"task_instruction": task}):
+                        plan = generate(
+                            prompt=prompt_text,
+                            purpose="plan",
+                            __weave={"display_name": thread_id},
+                        )
+            except Exception as error:
+                record.update(
+                    status="generation_failed", error=f"{type(error).__name__}: {error}"
+                )
+                plan_parsing_status_file.write(f"Task: {task}, Success: False\n")
+                plan_parsing_status_file.flush()
+                self.export_results()
+                continue
+
+            record.update(plan=plan, status="generated")
 
             if not plan.strip().startswith("def"):
                 print(
                     f"\n\n---Plan for task '{task}' does not start with a function definition.---\n\n{plan}"
                 )
                 self.plans[task] = []
+                record.update(
+                    status="parse_failed",
+                    error="Plan does not start with a function definition",
+                )
                 plan_parsing_status_file.write(f"Task: {task}, Success: False\n")
+                self.export_results()
                 continue
 
             if plan.strip().count("def") > 1:
@@ -130,7 +226,12 @@ class ProgPromptAgent:
                     f"\n\n---Plan for task '{task}' contains multiple function definitions.---\n\n{plan}"
                 )
                 self.plans[task] = []
+                record.update(
+                    status="parse_failed",
+                    error="Plan contains multiple function definitions",
+                )
                 plan_parsing_status_file.write(f"Task: {task}, Success: False\n")
+                self.export_results()
                 continue
 
             if "```" in plan.strip():
@@ -138,10 +239,15 @@ class ProgPromptAgent:
                     f"\n\n---Plan for task '{task}' contains code block formatting.---\n\n{plan}"
                 )
                 self.plans[task] = []
+                record.update(
+                    status="parse_failed", error="Plan contains Markdown code fences"
+                )
                 plan_parsing_status_file.write(f"Task: {task}, Success: False\n")
+                self.export_results()
                 continue
 
             self.plans[task] = [plan.strip(), thread_id]
+            self.export_results()
 
         with open(f"{os.getenv('JOB_OUTPUT_DIR')}/plans.json", "w") as f:
             json.dump(self.plans, f, indent=4)
@@ -172,10 +278,17 @@ class ProgPromptAgent:
 
             if success:
                 self.num_tasks_parsed += 1
+                self.task_record(task)["status"] = "parsed"
             else:
+                self.task_record(task).update(
+                    status="parse_failed",
+                    error="Plan could not be compiled; see task_logs.txt",
+                )
                 self.plans[task] = []
 
             plan_parsing_status_file.write(f"Task: {task}, Success: {success}\n")
+            plan_parsing_status_file.flush()
+            self.export_results()
 
         plan_parsing_status_file.close()
 
@@ -196,7 +309,16 @@ class ProgPromptAgent:
 
             if task_results is None:
                 plan_execution_status_file.write(f"Task: {task}, Success: False\n")
+                error_path = Path(log_file_prefix) / "execution_error.json"
+                error = (
+                    json.loads(error_path.read_text(encoding="utf-8"))
+                    if error_path.exists()
+                    else {"message": "Task returned no execution result"}
+                )
+                self.task_record(task).update(status="execution_failed", error=error)
                 self.plans[task] = []
+                plan_execution_status_file.flush()
+                self.export_results()
                 continue
 
             plan_execution_status_file.write(f"Task: {task}, Success: True\n")
@@ -207,23 +329,38 @@ class ProgPromptAgent:
             self.final_states.append(final_state)
             self.initial_states.append(initial_state)
             self.exec_per_task[task] = task_exec
+            self.task_record(task)["status"] = "executed"
+            state_path = Path(log_file_prefix) / "states.json"
+            state_path.write_text(
+                json.dumps({"initial_state": initial_state, "final_state": final_state})
+                + "\n",
+                encoding="utf-8",
+            )
+            self.task_record(task)["states_file"] = str(
+                state_path.relative_to(os.environ["JOB_OUTPUT_DIR"])
+            )
+            plan_execution_status_file.flush()
+            self.export_results()
 
         plan_execution_status_file.close()
 
-    def log_eval_results(self):
+    def log_eval_results(
+        self, run_status: str = "completed", error: str | None = None
+    ) -> None:
         if self.evaluation_logger is None:
             return
 
-        for task, metrics in self.results.items():
-            if task == "overall":
-                continue
+        for task in self.plans:
+            record = self.task_record(task)
+            metrics = self.results.get(task, {"SR": 0, "PSR": 0, "Exec": 0})
 
             inputs = {
                 "task_instruction": task,
             }
 
             pred = self.evaluation_logger.log_prediction(
-                inputs=inputs, output=self.plans[task][0]
+                inputs=inputs,
+                output={key: record[key] for key in ("plan", "status", "error")},
             )
 
             for metric_name, metric_value in metrics.items():
@@ -231,15 +368,12 @@ class ProgPromptAgent:
 
             pred.finish()
 
-        if "overall" in self.results:
-            summary = {
-                "num_tasks": len(self.plans),
-                "num_tasks_parsed": self.num_tasks_parsed,
-                "num_tasks_executed": self.num_tasks_executed,
-                **self.results["overall"],
-            }
-
-            self.evaluation_logger.log_summary(summary, auto_summarize=False)
+        summary = {
+            **self.evaluation_summary(),
+            "run_status": run_status,
+            "error": error,
+        }
+        self.evaluation_logger.log_summary(summary, auto_summarize=False)
 
     # Adapted from https://github.com/tan90cot0/progprompt-vh/blob/main/scripts/run_eval.py#L37
     def eval(self):
@@ -315,6 +449,7 @@ class ProgPromptAgent:
                 ),
                 "Exec": self.exec_per_task[task],
             }
+            self.task_record(task)["status"] = "evaluated"
 
         if len(test_tasks) > 0:
             self.results["overall"] = {

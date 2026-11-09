@@ -6,7 +6,7 @@ have mappings; execution results are documented in [dataset validation](dataset_
 See [dataset selection](dataset_selection.md) for scene-specific commands.
 
 The default configuration is `config/dev.yml`: LM Studio, with Weave disabled.
-The cluster workflow selects `config/live.yml`: Ollama, with Weave enabled.
+The live profile selects LM Studio with `qwen/qwen3.5-9b` and Weave enabled.
 Choose a configuration **before starting Python**:
 
 ```bash
@@ -35,7 +35,7 @@ implemented by `LMOllama`, `LLMOpenAI`, and `LLMAnthropic`
 classes in `src/methods/providers.py`. LM Studio shares `LLMOpenAI`, using its
 configured endpoint without requiring credentials. `src/methods/llm.py` selects the provider class and its
 generation settings. Both calling paths use the configured
-endpoint, timeout, and their respective `generation` profiles. Set the dev model
+endpoint, timeout, and their respective `plan`/`assertion` profiles. Set the dev model
 to the exact model ID loaded in LM Studio. The selected dev model is
 `qwen/qwen3.5-9b`, which is listed by the Windows LM Studio server.
 WSL must be able to reach the configured
@@ -53,43 +53,108 @@ GitHub Secrets → SSH environment → Conda activation hook mechanism. Configur
 only the secrets needed by your selected provider, plus `PROJECT_NAME` and
 `WANDB_API_KEY` for Weave. No secret values are stored in this repository.
 
-Common generation settings are `temperature`, `max_tokens`, and `stop`.
-Optional provider-specific settings are nested under their provider name:
+`llm.provider` and `llm.model` select a configured provider/model pair.
+Connection settings belong to the provider; all model parameters belong to
+`llm.providers.<provider>.models.<model>.<purpose>`:
 
 ```yaml
-generation:
-  plan:
-    temperature: 0
-    max_tokens: 4096
-    ollama:
-      think: false
-      frequency_penalty: 0.15
-    openai:
-      frequency_penalty: 0.15
-  assertion:
-    temperature: 0
-    max_tokens: 128
+llm:
+  provider: lm_studio
+  model: qwen/qwen3.5-9b
+  providers:
+    lm_studio:
+      base_url: http://127.0.0.1:1234/v1
+      timeout: 300
+      models:
+        qwen/qwen3.5-9b:
+          plan:
+            temperature: 0
+            max_tokens: 4096
+            reasoning_effort: none
+          assertion:
+            temperature: 0
+            max_tokens: 128
+            reasoning_effort: none
+weave:
+  enabled: true
 ```
 
-Only the selected provider's nested settings are sent. Anthropic uses the
+Only the selected pair's profile is sent, using native request arguments without
+renaming, merging shared settings, dropping parameters or adding generation defaults.
+Switching to an unconfigured provider/model fails before simulator startup.
+The previous top-level `llm.generation`, `base_url` and `timeout` layout must be
+migrated to this structure in custom YAML configurations. The intermediate
+model-level `generation` wrapper is also removed; `plan` and `assertion` sit
+directly beneath each model ID.
+
+LM Studio's [Chat Completions API](https://lmstudio.ai/docs/developer/openai-compat/chat-completions)
+supports `max_tokens`. This is a serving API parameter, not a parameter of the
+Qwen weights. The installed server reports `off`/`on` reasoning capability for
+`qwen/qwen3.5-9b`, rather than graduated effort levels. On the configured
+`/v1/chat/completions` endpoint, a local probe verified that
+`reasoning_effort: none` produces an answer with no reasoning tokens. A second
+probe with `medium` enabled thinking and stopped at the requested 16-token cap.
+That verifies the toggle and output cap, not separate low/medium/high levels.
+These two short local probes are API checks, not experimental task trials.
+LM Studio's separate [native REST endpoint](https://lmstudio.ai/docs/developer/rest/chat)
+uses `reasoning` and `max_output_tokens`; those names must not be mixed into this
+Chat Completions configuration.
+
+Anthropic uses the
 [Messages API](https://platform.claude.com/docs/en/api/messages/create) through
 Python's standard HTTP library. LM Studio uses its
 [OpenAI-compatible API](https://lmstudio.ai/docs/developer/openai-compat).
 Ollama keeps the existing generate API for plans and chat API for assertions.
-Unsupported options are rejected; the selected model must also support the
-chosen generation settings. Anthropic defaults to 4096 output tokens for plans
-and 128 for assertions when `max_tokens` is omitted.
+The selected API/model validates its native parameters. For example, an Ollama
+plan profile uses `think: false` and `options: {num_predict: 4096, temperature: 0}`;
+its assertion profile uses Chat Completions arguments such as `max_tokens: 128`.
+An Anthropic profile explicitly supplies `max_tokens` and uses `stop_sequences`
+when needed. Parameters such as `thinking` or `extra_body` remain nested exactly
+as required by the selected API. No common sampling-parameter vocabulary is imposed.
 
 With `weave.enabled: false`, the application does not import or initialize Weave,
 create traces, or upload evaluations. Local plans, task logs, images, and
 other existing task artifacts are still saved beneath `JOB_OUTPUT_DIR`. Evaluation
-results are not exported to a local JSON file. With logging enabled,
-`PROJECT_NAME` must be set, and existing Weave authentication applies.
+results are exported incrementally to `JOB_OUTPUT_DIR/results.json`, including
+every intended task, planning prompts/raw plan text, statuses, errors, metrics, configuration
+and the evaluation protocol. Tasks that return execution results save initial/final graph
+snapshots in `task_logs/<task>/states.json`; exceptions also produce
+`execution_error.json` there. A zero-action task has executability 0.
+With logging enabled, `PROJECT_NAME` must be set. An explicit `WANDB_API_KEY`
+takes precedence; otherwise the application reuses the current W&B SDK's cached
+settings/netrc login in memory. No external credential bridge or saved key is needed.
+The Weave compatibility client uses the authentication transport selected by
+the installed GraphQL library, including installations that use `httpx2`.
+
+Weave records one evaluation row per intended task, including generation,
+parsing and execution failures. Headline SR, PSR and Exec divide by all intended
+tasks, with missing results contributing 0. Existing conditional aggregates are
+retained under `conditional_metrics`; Precision is reported only for evaluated
+states, and is null for missing local results. Run status distinguishes completed,
+aborted and telemetry-failed runs. An `evaluated` task can still have goal success 0.
+OpenAI-compatible chat calls appear under `generate` as
+`openai.chat.completions.create`, with messages, replies and token usage.
 
 The launcher only starts Ollama for a configured local Ollama endpoint that is
 not already responding. LM Studio, Anthropic, and other endpoints are managed
 externally. The Xvfb launcher supports off-screen WSL rendering. See
 [simulator changes](simulator.md) for the included build behavior.
+`progprompt_exec.sh` forwards explicit evaluation arguments, waits for its
+simulator to become ready, and stops that simulator when the run exits. Local
+runs propagate failures and send no cluster notification.
+Generated task import errors and runtime exceptions are recorded for that task;
+the evaluator continues with the remaining plans.
+Object selection prioritizes held instances and per-class bindings, then
+proximity/current room and native-position distance with an ID tie-break.
+Navigation refreshes the position cache from its existing native graph read.
+Squared center distance includes x, y and z; malformed/missing 3D centers are
+excluded. It preserves the same ranking as Euclidean distance, without a square root.
+It does not measure navigation path length or prove reachability. Room synchronization
+uses graph queries to replace only the character's symbolic `INSIDE` room edge with
+Unity's confirmed destination, retaining other symbolic state and rejecting ambiguous
+or unknown destination rooms.
+Resolution decisions are logged; rejected actions keep their failure semantics.
+This policy does not guarantee reachability or substitute a different object class.
 
 Configuration loading uses PyYAML. Local simulator imports require the packages
 listed in `requirements-local.txt`, including OpenCV, IPython and ipdb.

@@ -65,6 +65,6 @@ class VHTask:
         return (
             final_state,
             initial_state,
-            self.executable_steps / self.total_steps,
+            self.executable_steps / self.total_steps if self.total_steps else 0.0,
             env.images,
         )
