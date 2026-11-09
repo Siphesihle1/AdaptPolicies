@@ -5,6 +5,7 @@ import cv2
 from cv2.typing import MatLike
 from methods import telemetry as weave
 from .graph_query import N, E
+from .visibility import get_visible_graph
 from .task import VHTask
 from virtualhome.simulation.unity_simulator import UnityCommunication
 from virtualhome.simulation.evolving_graph import utils
@@ -105,7 +106,7 @@ class VHEnvironment:
             E(self.graph).from_(self.agent).relation("CLOSE").select("to_id")
         )
 
-        self.partial_graph = utils.get_visible_nodes(self.graph, agent_id=self.agent)
+        self.partial_graph = get_visible_graph(self.graph, agent_id=self.agent)
         self.obj_close: List[str] = (  # type: ignore
             N(self.partial_graph)
             .id_in(*self.obj_ids_close)
@@ -324,16 +325,16 @@ def reconcile_navigation_room(
     native_rooms = N(native_graph).category("Rooms").select("id")
     rooms = (
         E(native_graph)
-        .from_(character)
+        .from_(character)  # type: ignore
         .relation("INSIDE")
-        .to_in(*native_rooms)
+        .to_in(*native_rooms)  # type: ignore
         .get_all()
     )
     if len(rooms) != 1 or not N(graph).id(rooms[0]["to_id"]).category("Rooms").exists():
         raise ValueError(
             "Native navigation did not identify one known destination room"
         )
-    predicted_rooms = E(graph).from_(character).relation("INSIDE").get_all()
+    predicted_rooms = E(graph).from_(character).relation("INSIDE").get_all()  # type: ignore
     return {
         **graph,
         "edges": [edge for edge in E(graph).get_all() if edge not in predicted_rooms]

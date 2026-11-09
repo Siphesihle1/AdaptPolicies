@@ -8945,7 +8945,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "PRE_FUR_Closet_01_01",
         "bounding_box": {
@@ -21416,7 +21416,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "PRE_FUR_Closet_01_01",
         "bounding_box": {
@@ -33897,7 +33897,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "PRE_FUR_Closet_01_01",
         "bounding_box": {
@@ -46398,7 +46398,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "PRE_FUR_Closet_01_01",
         "bounding_box": {
@@ -58901,7 +58901,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "PRE_FUR_Closet_01_01",
         "bounding_box": {
@@ -71397,7 +71397,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "PRE_FUR_Closet_01_01",
         "bounding_box": {
@@ -83888,7 +83888,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "PRE_FUR_Closet_01_01",
         "bounding_box": {
@@ -96374,7 +96374,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "PRE_FUR_Closet_01_01",
         "bounding_box": {
@@ -108875,7 +108875,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "PRE_FUR_Closet_01_01",
         "bounding_box": {
@@ -121356,7 +121356,7 @@
           "CAN_OPEN"
         ],
         "states": [
-          "CLOSED"
+          "OPEN"
         ],
         "prefab_name": "PRE_FUR_Closet_01_01",
         "bounding_box": {

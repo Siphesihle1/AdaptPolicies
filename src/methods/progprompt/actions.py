@@ -41,6 +41,9 @@ class Assert(Action):
         state = "You see: " + ", ".join(
             [i.strip() for i in state if any(ele in i for ele in assert_objs)]
         )
+        held = [name for name in self.env.objs_in_hand if name in assert_objs]
+        if held:
+            state += f"\nYou have {', '.join(held)}."
         action = f"{self.action_name}({assert_cond})"
 
         current_state = f"{get_current_state_prompt()}\n\n{state}\n\n{action}\n"

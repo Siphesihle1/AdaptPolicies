@@ -17,11 +17,12 @@ variable. Select the installed player directory with `VIRTUALHOME_SIM_ROOT`.
 | Empty-bin carrying | The known small empty scene-0 bin can be carried to the kitchen doorway. Filled bins, unsupported prefabs and full hands reject pickup. |
 | Binders | The existing folder receives native opening transitions and a usable paper compartment. Paper placement checks opening state, held state and geometric fit. |
 | Sink placement | Native release poses fit the original frying pan and washing objects onto the sink without resizing them. |
-| Washing machines | An articulated door, drum and power indicator are derived from the existing housing. Native insertion checks door state and payload dimensions; powered drum motion stops when switched off. |
+| Washing machines | An articulated door, drum and power indicator are derived from the existing housing. Native insertion accepts folded clothes-pile prefabs that pass the readable-mesh, drum-containment and collision checks; the door must be open. Payload geometry is unchanged. Powered drum motion stops when switched off. |
 | Rugs | Fold/Unfold changes the held rug's geometry so it can fit the washer and later return to its original shape. |
 | Tool manipulation | Apply and Use execute supported toothpaste/brush preparation and brushing motions using the existing character rig. |
 | Door interactions | The kitchen door opens and closes through its original hand interactions and torque. Closing uses temporary hinge limits; fixed-housing collision handling allows both directions. The body latches only after physical closure. Individual and batched graph observations reflect completed physical results. |
 | Static orientation | Initial static FACING is recomputed with actor-body occlusion excluded, retaining the original visibility and angle rules. |
+| Accessible closets | Closet assets without a native Open control report OPEN at initialization and graph refresh, matching their accessible interiors. Closets with an Open control retain their native state. |
 
 Opening interactions wait for their native transitions to finish, including fast
 execution. The kitchen doorway retains its fixed native midpoint and kitchen-side
@@ -42,6 +43,7 @@ recorded; other scene doors retain their native behavior.
 | `use(toothbrush)` | Requires a held prepared brush. Performs the calibrated brushing motion, consumes the paste and derives USED. |
 | `talk(cellphone)` | Uses the existing native Talk action on a held phone. Confirmed use derives USED; it does not toggle phone power. |
 | `read(book)` | Uses the supported native Read interaction on the selected held book. |
+| `touch(keyboard)` | Exposes the existing native Touch action through ProgPrompt. It uses the selected instance and native proximity/interaction checks. |
 
 Apply and Use are general action names; the current implementation supports only
 the documented toothpaste/brush pair. Other tool pairs reject explicitly. No
@@ -49,8 +51,11 @@ toothbrushing-specific command is added.
 
 The AdaptPolicies runtime derives WASHED, HEATED and selected USED effects from
 confirmed execution and observed relations. These are evaluation augmentations;
-they are not all native Unity states. Closet interiors remain accessible while
-their assets report CLOSED, matching native pickup and placement behavior.
+they are not all native Unity states. Closet interiors without an opening control
+report OPEN, matching native pickup and placement behavior. This corrects graph
+metadata; it does not add door geometry or Open/Close interactions. The verified
+prefabs are `PRE_FUR_Closet_02_02_01`, `PRE_FUR_Closet_02_03_01`,
+`PRE_FUR_Closet_02_03_04` and `PRE_FUR_Closet_01_01` across scenes 0–2.
 Closed fridges, cabinets and washers retain their access checks. Character-room
 observations follow the character's actual position after movement.
 
@@ -62,6 +67,10 @@ evaluation setting; compare systems using the same versions. Successful stored
 annotations do not establish that generated plans or every same-class instance
 will succeed. See [dataset validation](dataset_validation.md) and
 [ground-truth evaluation](ground_truth_graphs.md).
+
+ProgPrompt now advertises and exports the existing Touch action. Updated prompt
+examples and explicit held-object facts in assertion prompts also change the
+planning condition; record the code and dataset revision with experiments.
 
 Rug folding is deterministic mesh deformation, and floor drying is an explicit
 proxy. Toothbrush contact is calibrated for Male2. Washing and heating effects

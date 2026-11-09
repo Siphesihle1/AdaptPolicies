@@ -3,7 +3,7 @@ import io
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from virtual_home.actions import Read, Talk
+from virtual_home.actions import Read, Talk, Touch
 
 from virtualhome.simulation.evolving_graph.environment import EnvironmentGraph
 from virtualhome.simulation.evolving_graph.execution import ScriptExecutor
@@ -11,6 +11,27 @@ from virtualhome.simulation.evolving_graph.scripts import Script, parse_script_l
 
 
 class PhoneTalkTests(unittest.TestCase):
+    def test_touch_uses_the_selected_unheld_object(self):
+        env = SimpleNamespace(
+            find_obj=lambda _: [2, 3],
+            obj_ids_in_hand=[],
+            object_bindings={"keyboard": 3},
+            found_id=2,
+            log_file=io.StringIO(),
+            execute=Mock(return_value=True),
+            execution_failed=False,
+            actions_to_omit=[],
+        )
+        task = SimpleNamespace(
+            total_steps=0,
+            terminate_current_subtask=False,
+            thread_id="touch-test",
+            task_instruction="work_on_computer",
+            current_subtask="type",
+        )
+        Touch(env, task)("keyboard")
+        env.execute.assert_called_once_with("<char0> [touch] <keyboard> (3)")
+
     def test_generated_actions_select_a_held_instance(self):
         for action_class, name, verb in (
             (Talk, "cellphone", "talk"),

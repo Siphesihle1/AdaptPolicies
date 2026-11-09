@@ -61,8 +61,10 @@ Off appliances, unrelated surfaces and inedible objects do not qualify. Repeated
 observations retain a single state. Native and derived effects are distinguished
 in the [simulator documentation](simulator.md).
 
-Closets retain reported CLOSED metadata while allowing the native interior
-pickup/placement behavior. Closed fridges, cabinets and washers keep their access
+Closets without a native opening control report OPEN, reflecting their accessible
+interiors. Active final-state references use OPEN for the four verified static
+closet prefabs. Historical initial snapshots and the original archive are retained
+as captured. Closed fridges, cabinets and washers keep their access
 checks. Talk requires a held phone and derives USED only after native success;
 it neither powers nor releases the phone. Read also selects a held instance.
 
@@ -71,6 +73,13 @@ test_seen graph 1 retains the original graph except for knife280 and fork272
 INSIDEâ†’ON sink247. Wash_mug graph 10 reflects the validated mug/liquid/sponge sink
 placements and runtime-derived washing state. Complete runtime captures are
 evidence and do not automatically replace references.
+
+Train graph 21 (take_off_pictureframe) omits an invalid character CLOSE itself
+edge. Train graph 9 (work_on_computer) omits character ON bedroom chair110:
+the validated native trajectory ends standing at the keyboard, while the old
+symbolic final graph retained that seated relation after standing and moving.
+The remaining pickup, room, computer-power and desk/keyboard proximity goals
+are preserved. These are isolated reference corrections, not scoring filters.
 
 Some repaired task goals use feasible native ON relations, selected alternative
 instances, or corrected moved-object room relations. Task-specific stale

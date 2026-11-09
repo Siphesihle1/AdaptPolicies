@@ -234,6 +234,12 @@ class LookAt(Open):
         self.action_name = "lookat"
 
 
+class Touch(Open):
+    def __init__(self, env: VHEnvironment, task: VHTask):
+        super().__init__(env, task)
+        self.action_name = "touch"
+
+
 class Talk(Open):
     def __init__(self, env: VHEnvironment, task: VHTask):
         super().__init__(env, task)

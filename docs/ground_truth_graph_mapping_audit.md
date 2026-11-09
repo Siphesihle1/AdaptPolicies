@@ -51,3 +51,19 @@ preserves the pre-edit records. These goal and affordance revisions define a
 different benchmark version and require consistent comparison reruns/rescoring.
 See [evaluation semantics](ground_truth_graphs.md),
 [simulator changes](simulator.md) and [dataset validation](dataset_validation.md).
+
+
+## Accessible closet state correction
+
+Static closets without a native opening control now report OPEN. Active final-state
+references replace CLOSED with OPEN for the four verified static closet prefabs;
+all graph indices, edges and other node data are preserved. Earlier descriptions
+of retained CLOSED closet metadata refer to the preceding simulator version.
+
+## Example replay reference corrections
+
+Train graph 21 (take_off_pictureframe) removes only the character1 CLOSE
+character1 self-edge. Train graph 9 (work_on_computer) removes only character1 ON
+chair110: the native annotation ends standing at the keyboard, and the saved
+symbolic graph had retained that seated relation after StandUp and navigation.
+The remaining task goals, graph indices, nodes and edges are preserved.

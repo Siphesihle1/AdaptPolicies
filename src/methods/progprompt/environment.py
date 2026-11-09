@@ -21,6 +21,7 @@ class ProgPromptEnvironment(VHEnvironment):
         # Adapated from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_execute.py
         super().get_current_state()
 
+        # obj_ids: Dict[int, str]
         if self.time_step > 1:
             obj_ids: Dict[int, str] = dict(
                 N(self.graph)
@@ -30,7 +31,7 @@ class ProgPromptEnvironment(VHEnvironment):
             )
             relations_to_exclude = ["CLOSE", "FACING", "INSIDE"]
         else:
-            obj_ids: Dict[int, str] = dict(
+            obj_ids = dict(
                 N(self.graph)
                 .id_in(*self.obj_ids_close)
                 .class_name_in(*self.obj_close)
@@ -53,7 +54,10 @@ class ProgPromptEnvironment(VHEnvironment):
             )
         )
         obj_states: List[Tuple[str, List[str]]] = (
-            N(self.graph).class_name_in(*self.obj_close).select("class_name", "states")
+            N(self.partial_graph)
+            .id_in(*self.obj_ids_close)
+            .id_not(self.agent)
+            .select("class_name", "states")
         )
 
         objs = ""
@@ -64,13 +68,12 @@ class ProgPromptEnvironment(VHEnvironment):
             else:
                 objs = objs + class_name + ", "
 
-        objs = list(set(objs.split(", ")))
-        objs = [ob for ob in objs if len(ob) > 0]
+        visible_objects = [ob for ob in set(objs.split(", ")) if len(ob) > 0]
         objs = (
-            ", ".join(objs)
-            + (", " if len(objs) > 0 and len(relations) > 0 else "")
+            ", ".join(visible_objects)
+            + (", " if len(visible_objects) > 0 and len(relations) > 0 else "")
             + ", ".join(relations)
-            + (". " if len(relations) > 0 or len(objs) > 0 else "")
+            + (". " if len(relations) > 0 or len(visible_objects) > 0 else "")
         )
 
         if len(self.objs_in_hand) > 0:
