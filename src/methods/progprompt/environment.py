@@ -21,7 +21,6 @@ class ProgPromptEnvironment(VHEnvironment):
         # Adapated from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_execute.py
         super().get_current_state()
 
-        # obj_ids: Dict[int, str]
         if self.time_step > 1:
             obj_ids: Dict[int, str] = dict(
                 N(self.graph)

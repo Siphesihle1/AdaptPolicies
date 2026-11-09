@@ -1,7 +1,6 @@
 import os
 from tqdm import tqdm
 
-import virtualhome
 from unity_simulator.comm_unity import UnityCommunication
 from demo.utils_demo import (
     display_grid_img,
@@ -11,7 +10,6 @@ from demo.utils_demo import (
     add_edge,
 )
 from unity_simulator import utils_viz
-
 
 comm = UnityCommunication(file_name=None, port=os.getenv("SIM_PORT", "8082"))
 

@@ -7,8 +7,11 @@ from .graph_query import E, N
 
 def get_visible_graph(graph: dict[str, Any], agent_id: int) -> dict[str, Any]:
     nodes = {node["id"]: node for node in N(graph).get_all()}
-    rooms = set(N(graph).category("Rooms").select("id"))
-    current = E(graph).from_(agent_id).relation("INSIDE").to_in(*rooms).select("to_id")  # type: ignore
+    rooms: set[int] = {node["id"] for node in N(graph).category("Rooms").get_all()}
+    current: list[int] = [
+        edge["to_id"]
+        for edge in E(graph).from_(agent_id).relation("INSIDE").to_in(*rooms).get_all()
+    ]
     if len(current) != 1:
         raise ValueError("Visibility requires one character room")
 
@@ -17,9 +20,13 @@ def get_visible_graph(graph: dict[str, Any], agent_id: int) -> dict[str, Any]:
     for edge in E(graph).relation("INSIDE").get_all():
         parents.setdefault(edge["from_id"], []).append(edge["to_id"])
         children.setdefault(edge["to_id"], []).append(edge["from_id"])
-    held = set(
-        E(graph).from_(agent_id).relation_in("HOLDS_LH", "HOLDS_RH").select("to_id")
-    )
+    held: set[int] = {
+        edge["to_id"]
+        for edge in E(graph)
+        .from_(agent_id)
+        .relation_in("HOLDS_LH", "HOLDS_RH")
+        .get_all()
+    }
     candidates = set(current) | held
     pending = list(candidates)
     while pending:
@@ -47,9 +54,9 @@ def get_visible_graph(graph: dict[str, Any], agent_id: int) -> dict[str, Any]:
     visible = (
         rooms
         | held
-        | {identifier for identifier in candidates if not hidden(identifier)}  # type: ignore
+        | {identifier for identifier in candidates if not hidden(identifier)}
     )
     return {
-        "nodes": N(graph).id_in(*visible).get_all(),  # type: ignore
-        "edges": E(graph).from_in(*visible).to_in(*visible).get_all(),  # type: ignore
+        "nodes": N(graph).id_in(*visible).get_all(),
+        "edges": E(graph).from_in(*visible).to_in(*visible).get_all(),
     }
