@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+#SBATCH --partition=bigbatch
+#SBATCH --job-name=lmstudio_download
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
+#SBATCH --time=04:00:00
+#SBATCH --output=/home-mscluster/%u/slurm-logs/lmstudio_download/%j.out
+#SBATCH --error=/home-mscluster/%u/slurm-logs/lmstudio_download/%j.err
+
+set -euo pipefail
+
+# Log directories must exist before sbatch; the GitHub workflow creates them.
+# Manual submission: mkdir -p "$HOME/slurm-logs/lmstudio_download"
+: "${SLURM_JOB_ID:?Submit this script with sbatch}"
+: "${SLURM_JOB_NODELIST:?Missing Slurm node allocation}"
+
+export NTFY_TOPIC="${NTFY_TOPIC:-research-project-slurm-job-alerts}"
+NTFY_SERVER="${NTFY_SERVER:-https://ntfy.sh}"
+
+notify_finished() {
+  local exit_status=$?
+  trap - EXIT
+  local result="FAILED" tags="warning"
+  if (( exit_status == 0 )); then
+    result="COMPLETED"
+    tags="white_check_mark"
+  fi
+  # Notification delivery must never replace the workload's exit status.
+  curl --fail --silent --show-error --retry 2 --retry-delay 2 \
+    --connect-timeout 5 --max-time 15 \
+    --header "Title: Slurm model download $result" \
+    --header "Tags: $tags" \
+    --data-binary "Job $SLURM_JOB_ID (lmstudio_download): $result. Exit code: $exit_status." \
+    "${NTFY_SERVER%/}/$NTFY_TOPIC" >/dev/null || \
+    echo "Warning: could not deliver the ntfy notification." >&2
+  exit "$exit_status"
+}
+trap notify_finished EXIT
+trap 'exit 143' TERM
+trap 'exit 130' INT
+
+PROJECT_ROOT="${PROJECT_ROOT:-$HOME/AdaptPolicies}"
+export LMSTUDIO_MODELS_DIR="${LMSTUDIO_MODELS_DIR:-/datasets/$(id -un)/lmstudio/models}"
+
+echo "Job ID: $SLURM_JOB_ID"
+echo "Allocated nodes: $SLURM_JOB_NODELIST"
+echo "Running on: $(hostname)"
+echo "Master models directory: $LMSTUDIO_MODELS_DIR"
+
+cd "$PROJECT_ROOT"
+
+# Fail early if compute nodes cannot reach Hugging Face.
+curl --fail --silent --show-error --location \
+  --connect-timeout 15 --max-time 60 \
+  https://huggingface.co/ -o /dev/null
+
+# Download the pinned Qwen3.8-27B Q4_K_M GGUF, resume partial transfers,
+# and verify its size and SHA-256 before publishing the completed file.
+bash helper-scripts/lmstudio_setup.sh --download-only
+
+echo "Model download completed and verified."

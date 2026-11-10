@@ -3,7 +3,7 @@ name: Workflow to run slurm jobs
 on:
   push:
     branches:
-      - main
+      - deploy
     paths:
       - '.github/workflows/**'
       - "src/**/*.py"
