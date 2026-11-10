@@ -163,7 +163,9 @@ run_condition() {  # run_condition TEMP REASONING, e.g. t06 ron
 }
 
 # ---- main ----
-mkdir -p "$RECORD"
+# Jobs starting together create the same campaign folder; the nodes' mkdir
+# (uutils) fails with "Already exists" when it loses that race, so retry once.
+mkdir -p "$RECORD" 2>/dev/null || mkdir -p "$RECORD"
 trap cleanup EXIT
 trap stop_child TERM INT
 echo "Job $SLURM_JOB_ID on $(hostname -s): $SWEEP_MODEL_TAG, $dataset"
