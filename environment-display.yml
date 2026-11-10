@@ -1,0 +1,11 @@
+# Headless display for the VirtualHome (Unity) player on cluster nodes that have
+# no system Xvfb. Kept separate from research_proj so local machines that use the
+# system xvfb-run are unaffected. Created by helper-scripts/conda_setup.sh.
+# Xvfb needs Mesa's DRI drivers for a GLX OpenGL 4.5 core context; Unity itself
+# renders with the node's system Mesa (llvmpipe), see helper-scripts/run-sim.sh.
+name: vh_display
+channels:
+  - conda-forge
+dependencies:
+  - xorg-xvfb-server=21.1.25
+  - mesalib=26.3.0

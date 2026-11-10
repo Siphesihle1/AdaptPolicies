@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run via src/slurm-scripts/conda_setup.sh (a login shell initializes Lmod).
+# Run via src/slurm-scripts/conda_setup.sh.old (a login shell initializes Lmod).
 # Conda is supplied by the cluster's Apptainer-backed Anaconda module.
 set -euo pipefail
 : "${SLURM_JOB_ID:?Run environment installation inside a Slurm allocation}"
@@ -15,6 +15,8 @@ export CONDA_PKGS_DIRS="$HOME/.conda/pkgs"
 export CONDA_CACHEDIR="$HOME/.conda/cache"
 export PIP_CACHE_DIR="$HOME/.cache/pip"
 export PYTHONNOUSERSITE=1
+# Pin pip packages to the local experiment environment's exact versions.
+export PIP_CONSTRAINT="$PROJECT_ROOT/src/constraints-experiments.txt"
 mkdir -p "$CONDA_ENVS_PATH" "$CONDA_PKGS_DIRS" "$CONDA_CACHEDIR" "$PIP_CACHE_DIR" "$RESULTS_DIR"
 exec 9>"$HOME/.conda/research_proj-setup.lock"
 flock -n 9 || { echo 'Another research_proj setup is already running.' >&2; exit 1; }
@@ -36,7 +38,8 @@ conda run --no-capture-output --prefix "$ENV_PREFIX" python - "$ENV_PREFIX" "$RE
 import importlib, importlib.metadata, json, pathlib, subprocess, sys
 assert sys.version_info[:2] == (3, 10), sys.version
 assert pathlib.Path(sys.prefix).resolve() == pathlib.Path(sys.argv[1]).resolve(), sys.prefix
-modules = ["matplotlib", "openai", "ollama", "weave", "wandb", "uuid_utils", "PIL", "yaml"]
+modules = ["matplotlib", "openai", "ollama", "weave", "wandb", "uuid_utils", "PIL", "yaml",
+           "cv2", "IPython", "ipdb"]
 for name in modules:
     importlib.import_module(name)
 for command in (["ffmpeg", "-version"], ["rustc", "--version"]):
@@ -48,5 +51,18 @@ print(f"PASS: Python {sys.version.split()[0]}, declared dependency imports, ffmp
 print(f"Environment: {sys.prefix}")
 PY
 conda list --prefix "$ENV_PREFIX" --explicit > "$RESULTS_DIR/conda-explicit.txt"
+# Headless display for the simulator: compute nodes have no system Xvfb.
+# A separate conda-forge prefix keeps research_proj unchanged (environment-display.yml).
+DISPLAY_PREFIX="$HOME/.conda/envs/vh_display"
+if [[ -f $DISPLAY_PREFIX/conda-meta/history ]]; then
+  conda env update --prefix "$DISPLAY_PREFIX" --file environment-display.yml --prune
+else
+  conda env create --prefix "$DISPLAY_PREFIX" --file environment-display.yml --yes
+fi
+[[ -x $DISPLAY_PREFIX/bin/Xvfb && -e $DISPLAY_PREFIX/lib/dri/swrast_dri.so ]] || {
+  echo "vh_display lacks Xvfb or Mesa's swrast DRI driver." >&2; exit 1;
+}
+conda list --prefix "$DISPLAY_PREFIX" --explicit > "$RESULTS_DIR/vh-display-explicit.txt"
+echo "PASS: headless display environment at $DISPLAY_PREFIX"
 conda run --no-capture-output --prefix "$ENV_PREFIX" python -m pip freeze > "$RESULTS_DIR/pip-freeze.txt"
 echo "Environment setup and verification completed. Details: $RESULTS_DIR"
