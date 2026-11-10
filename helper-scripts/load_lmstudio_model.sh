@@ -6,7 +6,7 @@
 # The caller must call stop_lmstudio_model from its EXIT trap (including errors).
 # Single-file GGUF models only. The persistent source is never moved or changed.
 # Jobs on different nodes share the installed binaries, but keep daemon state in
-# their own /scratch job directory. One helper-managed instance per user per node.
+# their own node-local /var/tmp job directory. One instance per user per node.
 # Optional settings: LMSTUDIO_PORT (1234), LMSTUDIO_MODEL_ID, LMSTUDIO_RUNTIME
 # (llama.cpp or a pinned runtime query), LMSTUDIO_LOAD_TIMEOUT (3600 seconds).
 
@@ -52,7 +52,7 @@ load_lmstudio_model() {
     echo 'Stop the model from the previous helper invocation first.' >&2
     return 1
   fi
-  local source_model filename scratch_dir available required expected actual namespace
+  local source_model filename scratch_root scratch_dir available required expected actual namespace
   source_model=$(realpath -e -- "$1") || return
   [[ -f $source_model && $source_model == *.gguf ]] || {
     echo 'The model must be an existing single GGUF file.' >&2; return 1;
@@ -62,8 +62,23 @@ load_lmstudio_model() {
     echo 'Split GGUF models are not supported by this helper.' >&2
     return 1
   fi
-  scratch_dir="/scratch/$(id -un)/lmstudio/job-$SLURM_JOB_ID"
-  mkdir -p "$scratch_dir/models" || return
+  # Current cluster nodes have no /scratch; /tmp is RAM-backed. /var/tmp is
+  # writable node-local disk. Use a private numeric-UID directory, including
+  # an ownership check before using an existing directory in this shared area.
+  scratch_root="/var/tmp/lmstudio-$(id -u)"
+  if [[ ! -e $scratch_root && ! -L $scratch_root ]]; then
+    mkdir -m 700 -- "$scratch_root" || return
+  fi
+  if [[ -L $scratch_root || ! -d $scratch_root || ! -O $scratch_root ]]; then
+    echo "Refusing staging directory that is a symlink or not owned by this user: $scratch_root" >&2
+    return 1
+  fi
+  chmod 700 "$scratch_root" || return
+  scratch_dir="$scratch_root/job-$SLURM_JOB_ID"
+  echo "Node-local staging directory: $scratch_dir"
+  mkdir -p "$scratch_dir/models" || {
+    echo "Cannot create model staging directory: $scratch_dir/models" >&2; return 1;
+  }
   chmod 700 "$scratch_dir" || return
   required=$(( $(stat -c %s "$source_model") + 1073741824 ))
   available=$(df -PB1 "$scratch_dir" | awk 'NR==2 {print $4}') || return
@@ -89,9 +104,9 @@ load_lmstudio_model() {
   [[ $studio_root == /* ]] || { echo 'LM Studio home must be absolute.' >&2; return 1; }
   export LMSTUDIO_SHARED_LMS_BIN="$studio_root/bin/lms"
   [[ -x $LMSTUDIO_SHARED_LMS_BIN ]] || { echo 'Run lmstudio_setup.sh to install LM Studio first.' >&2; return 1; }
-  # /scratch is node-local: this lock prevents competing instances on THIS node
+  # The staging root is node-local: this lock prevents instances on THIS node
   # without blocking jobs on other nodes. Keep the fixed localhost port simple.
-  exec {LMSTUDIO_LOCK_FD}>"$(dirname "$scratch_dir")/node.lock" || return
+  exec {LMSTUDIO_LOCK_FD}>"$scratch_root/node.lock" || return
   flock -n "$LMSTUDIO_LOCK_FD" || {
     echo 'Another helper-managed LM Studio job is already running on this node.' >&2; return 1;
   }
