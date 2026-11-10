@@ -162,10 +162,20 @@ run_condition() {  # run_condition TEMP REASONING, e.g. t06 ron
   fi
 }
 
+make_home_dir() {  # make_home_dir DIR (inside $HOME)
+  # Home is NFS: a node can cache a stale "does not exist" for a folder that a
+  # job on another node created, and mkdir then fails with "Already exists".
+  # Listing each parent on the way down refreshes those cached entries.
+  local path=$HOME part IFS=/
+  for part in ${1#"$HOME"/}; do
+    ls "$path" > /dev/null
+    path+="/$part"
+    [[ -d $path ]] || mkdir "$path" 2>/dev/null || { ls "${path%/*}" > /dev/null; [[ -d $path ]]; }
+  done
+}
+
 # ---- main ----
-# Jobs starting together create the same campaign folder; the nodes' mkdir
-# (uutils) fails with "Already exists" when it loses that race, so retry once.
-mkdir -p "$RECORD" 2>/dev/null || mkdir -p "$RECORD"
+make_home_dir "$RECORD"
 trap cleanup EXIT
 trap stop_child TERM INT
 echo "Job $SLURM_JOB_ID on $(hostname -s): $SWEEP_MODEL_TAG, $dataset"
