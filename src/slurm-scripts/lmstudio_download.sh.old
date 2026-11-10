@@ -13,6 +13,8 @@ set -euo pipefail
 
 # Log directories must exist before sbatch; the GitHub workflow creates them.
 # Manual submission: mkdir -p "$HOME/slurm-logs/lmstudio_download"
+#   sbatch src/slurm-scripts/lmstudio_download.sh.old [qwen3.8-27b|qwen3.5-9b]
+# The model defaults to LMSTUDIO_MODEL, then qwen3.8-27b.
 : "${SLURM_JOB_ID:?Submit this script with sbatch}"
 : "${SLURM_JOB_NODELIST:?Missing Slurm node allocation}"
 
@@ -32,7 +34,7 @@ notify_finished() {
     --connect-timeout 5 --max-time 15 \
     --header "Title: Slurm model download $result" \
     --header "Tags: $tags" \
-    --data-binary "Job $SLURM_JOB_ID (lmstudio_download): $result. Exit code: $exit_status." \
+    --data-binary "Job $SLURM_JOB_ID (lmstudio_download, ${LMSTUDIO_MODEL:-unknown model}): $result. Exit code: $exit_status." \
     "${NTFY_SERVER%/}/$NTFY_TOPIC" >/dev/null || \
     echo "Warning: could not deliver the ntfy notification." >&2
   exit "$exit_status"
@@ -42,11 +44,13 @@ trap 'exit 143' TERM
 trap 'exit 130' INT
 
 PROJECT_ROOT="${PROJECT_ROOT:-$HOME/AdaptPolicies}"
+export LMSTUDIO_MODEL="${1:-${LMSTUDIO_MODEL:-qwen3.8-27b}}"
 export LMSTUDIO_MODELS_DIR="${LMSTUDIO_MODELS_DIR:-/datasets/$(id -un)/lmstudio/models}"
 
 echo "Job ID: $SLURM_JOB_ID"
 echo "Allocated nodes: $SLURM_JOB_NODELIST"
 echo "Running on: $(hostname)"
+echo "Model: $LMSTUDIO_MODEL"
 echo "Master models directory: $LMSTUDIO_MODELS_DIR"
 
 cd "$PROJECT_ROOT"
@@ -56,8 +60,8 @@ curl --fail --silent --show-error --location \
   --connect-timeout 15 --max-time 60 \
   https://huggingface.co/ -o /dev/null
 
-# Download the pinned Qwen3.8-27B Q4_K_M GGUF, resume partial transfers,
+# Download the selected pinned Q4_K_M GGUF, resume partial transfers,
 # and verify its size and SHA-256 before publishing the completed file.
-bash helper-scripts/lmstudio_setup.sh --download-only
+bash helper-scripts/lmstudio_setup.sh --download-only --model "$LMSTUDIO_MODEL"
 
 echo "Model download completed and verified."

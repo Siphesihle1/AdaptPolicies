@@ -12,23 +12,29 @@ set -euo pipefail
 update=0
 download_model=0
 download_only=0
+model_name="${LMSTUDIO_MODEL:-qwen3.8-27b}"
 while (( $# )); do
   case "$1" in
     --update) update=1 ;;
     --download-model) download_model=1 ;;
     --download-only) download_model=1; download_only=1 ;;
+    --model)
+      (( $# >= 2 )) || { echo "--model requires a name." >&2; exit 2; }
+      model_name="$2"; shift ;;
+    --model=*) model_name="${1#--model=}" ;;
     -h|--help)
       cat <<'USAGE'
-Usage: lmstudio_setup.sh [--update] [--download-model | --download-only]
+Usage: lmstudio_setup.sh [--update] [--download-model | --download-only] [--model NAME]
   No flags          Install/reuse llmster and link ~/.local/bin/lms.
   --update          Update llmster using the current official installer.
-  --download-model  Also download the pinned Qwen3.8-27B Q4_K_M model.
+  --download-model  Also download the pinned Q4_K_M model selected by --model.
   --download-only   Download weights without installing or running LM Studio.
+  --model NAME      qwen3.8-27b (default) or qwen3.5-9b; also LMSTUDIO_MODEL.
 
 Run downloads on the datasets transfer node (cluster guide section 8.1):
   ssh <username>@10.100.14.250
   bash /path/to/helper-scripts/lmstudio_setup.sh --download-only
-Or submit src/slurm-scripts/lmstudio_download.sh through Slurm.
+Or submit src/slurm-scripts/lmstudio_download.sh.old through Slurm (sbatch).
 
 Environment overrides:
   LMSTUDIO_MODELS_DIR      Master directory (default /datasets/<user>/lmstudio/models)
@@ -60,12 +66,24 @@ install_log="$install_cache/install.log"
 models_dir="${LMSTUDIO_MODELS_DIR:-/datasets/$(id -un)/lmstudio/models}"
 download_host="${LMSTUDIO_DOWNLOAD_HOST:-10.100.14.250}"
 # Hugging Face metadata pins both the exact artifact and its SHA-256/size.
-# https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF
-model_repo="ggml-org/Qwen3.8-27B-GGUF"
-model_revision="8ccda149192dec5f41450a402e66889e5fd25a24"
-model_filename="Qwen3.8-27B-Q4_K_M.gguf"
-model_sha256="d15d4b6de55f662ac40e867702d31afe738d032fa06b829b2b1a21a49d4a48ee"
-model_bytes=19403684480
+case "$model_name" in
+  qwen3.8-27b)
+    # https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF
+    model_repo="ggml-org/Qwen3.8-27B-GGUF"
+    model_revision="8ccda149192dec5f41450a402e66889e5fd25a24"
+    model_filename="Qwen3.8-27B-Q4_K_M.gguf"
+    model_sha256="d15d4b6de55f662ac40e867702d31afe738d032fa06b829b2b1a21a49d4a48ee"
+    model_bytes=19403684480 ;;
+  qwen3.5-9b)
+    # https://huggingface.co/lmstudio-community/Qwen3.5-9B-GGUF
+    # Byte-identical to the GGUF used by the local Qwen3.5-9B baseline campaign.
+    model_repo="lmstudio-community/Qwen3.5-9B-GGUF"
+    model_revision="1379f25c6b505a3fc737bd7818cb09389cf807c1"
+    model_filename="Qwen3.5-9B-Q4_K_M.gguf"
+    model_sha256="cd76ec205963b3b33350093e6904d9de16c4e666fd104e1f632d25c7f15f2a13"
+    model_bytes=5627044256 ;;
+  *) echo "Unknown model: $model_name (expected qwen3.8-27b or qwen3.5-9b)" >&2; exit 2 ;;
+esac
 
 download_master_model() (
   set -euo pipefail

@@ -12,6 +12,8 @@ on:
       - "src/slurm-scripts/*.slurm"
       - "**/requirements.txt"
       - "**/environment.yml"
+      - "environment-display.yml"
+      - "src/constraints-experiments.txt"
       - "env_vars/**"
       - "helper-scripts/**"
       - "config/**"
@@ -33,7 +35,7 @@ jobs:
         uses: appleboy/ssh-action@v1
         env: 
           GITHUB_SHA: ${{ github.sha }}
-          CONDA_PREFIX: ${{ env.HOME }}/.local/conda/envs/research_proj/etc/conda
+          CONDA_PREFIX: ${{ env.HOME }}/.conda/envs/research_proj/etc/conda
           PROJECT_ROOT: ${{ env.HOME }}/AdaptPolicies
           SLURM_SCRIPTS_PREFIX: ${{ env.HOME }}/AdaptPolicies/src/slurm-scripts
           SLURM_LOGS_PREFIX: ${{ env.HOME }}/slurm-logs
@@ -42,13 +44,18 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ADAPT_CONFIG: live
           PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
-          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }} 
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+          # Persistent simulator build (home) and the node-local copy each job stages
+          # and runs (helper-scripts/stage_simulator.sh); /tmp is RAM-backed on nodes.
+          VIRTUALHOME_SIM_SOURCE: ${{ env.HOME }}/virtualhome/adaptpolicies-simulator-v2
+          VIRTUALHOME_SIM_ROOT: /var/tmp/${{ secrets.USER }}/virtualhome/adaptpolicies-simulator-v2
+          VIRTUALHOME_DISPLAY_PREFIX: ${{ env.HOME }}/.conda/envs/vh_display
 
         with: 
           host: ${{ secrets.HOSTNAME }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.PRIVATE_KEY }}
-          envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPTS_PREFIX,SLURM_LOGS_PREFIX,CONDA_PREFIX,OLLAMA_CLOUD_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,ADAPT_CONFIG,PROJECT_NAME,WANDB_API_KEY
+          envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPTS_PREFIX,SLURM_LOGS_PREFIX,CONDA_PREFIX,OLLAMA_CLOUD_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,ADAPT_CONFIG,PROJECT_NAME,WANDB_API_KEY,VIRTUALHOME_SIM_SOURCE,VIRTUALHOME_SIM_ROOT,VIRTUALHOME_DISPLAY_PREFIX
           script: |
             echo ':--- Syncing local repo ---:'
             cd $PROJECT_ROOT
@@ -61,6 +68,7 @@ jobs:
             git reset --hard $GITHUB_SHA
 
             echo '--- Copying env_vars files to conda prefix ---'
+            mkdir -p $CONDA_PREFIX/activate.d $CONDA_PREFIX/deactivate.d
             cp -v env_vars/activate_env_vars.sh $CONDA_PREFIX/activate.d/env_vars.sh
             cp -v env_vars/deactivate_env_vars.sh $CONDA_PREFIX/deactivate.d/env_vars.sh
             
@@ -71,6 +79,9 @@ jobs:
             export ADAPT_CONFIG=$ADAPT_CONFIG
             export PROJECT_NAME=$PROJECT_NAME
             export WANDB_API_KEY=$WANDB_API_KEY
+            export VIRTUALHOME_SIM_SOURCE=$VIRTUALHOME_SIM_SOURCE
+            export VIRTUALHOME_SIM_ROOT=$VIRTUALHOME_SIM_ROOT
+            export VIRTUALHOME_DISPLAY_PREFIX=$VIRTUALHOME_DISPLAY_PREFIX
             EOF
 
             cat >> $CONDA_PREFIX/deactivate.d/env_vars.sh <<EOF
@@ -80,6 +91,9 @@ jobs:
             unset ADAPT_CONFIG
             unset PROJECT_NAME
             unset WANDB_API_KEY
+            unset VIRTUALHOME_SIM_SOURCE
+            unset VIRTUALHOME_SIM_ROOT
+            unset VIRTUALHOME_DISPLAY_PREFIX
             EOF
 
             for slurm_script in "$SLURM_SCRIPTS_PREFIX"/*.sh; do
@@ -90,11 +104,19 @@ jobs:
 
                 if [ ! -d "$jobdir" ]; then
                   echo "--- Creating job dir for $jobname ---"
-                  mkdir $jobdir
+                  mkdir -p "$jobdir"
                 fi
-                
+
+                # Self-submitting scripts check node availability and submit one
+                # job per dataset themselves; run them with bash, not sbatch.
+                if grep -qx '# adaptpolicies: self-submit' "$slurm_script"; then
+                  echo "--- Submitting per-dataset jobs for $jobname ---"
+                  bash "$slurm_script"
+                  continue
+                fi
+
                 echo "--- Submitting job $jobname ---"
-                job_id=$(sbatch $slurm_script | awk '{print $NF}')
+                job_id=$(sbatch "$slurm_script" | awk '{print $NF}')
                 scontrol show job $job_id
               fi
             done

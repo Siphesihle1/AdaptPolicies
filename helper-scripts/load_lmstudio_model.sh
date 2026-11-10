@@ -8,7 +8,9 @@
 # Jobs on different nodes share the installed binaries, but keep daemon state in
 # their own node-local /var/tmp job directory. One instance per user per node.
 # Optional settings: LMSTUDIO_PORT (1234), LMSTUDIO_MODEL_ID, LMSTUDIO_RUNTIME
-# (llama.cpp or a pinned runtime query), LMSTUDIO_LOAD_TIMEOUT (3600 seconds).
+# (default llama.cpp:cuda on NVIDIA nodes, else llama.cpp; or a pinned runtime
+# query such as llama.cpp:cuda@2.73.0), LMSTUDIO_LOAD_TIMEOUT (3600 seconds),
+# LMSTUDIO_CONTEXT_LENGTH (unset: LM Studio's default context length).
 
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
   echo 'Source this helper inside a Slurm job; see the usage comments.' >&2
@@ -25,6 +27,11 @@ stop_lmstudio_model() {
       echo 'Failed to stop the LM Studio daemon.' >&2
       status=1
     fi
+  fi
+  # Delete this job's node-local model copy and daemon state once nothing uses them.
+  if [[ ${LMSTUDIO_DAEMON_OWNED:-0} == 0 && -n ${LMSTUDIO_JOB_DIR:-} ]]; then
+    rm -rf -- "$LMSTUDIO_JOB_DIR" || status=1
+    unset LMSTUDIO_JOB_DIR
   fi
   if [[ -n ${LMSTUDIO_LOCK_FD:-} ]]; then
     flock -u "$LMSTUDIO_LOCK_FD" || status=1
@@ -75,6 +82,7 @@ load_lmstudio_model() {
   fi
   chmod 700 "$scratch_root" || return
   scratch_dir="$scratch_root/job-$SLURM_JOB_ID"
+  export LMSTUDIO_JOB_DIR="$scratch_dir"   # removed by stop_lmstudio_model
   echo "Node-local staging directory: $scratch_dir"
   mkdir -p "$scratch_dir/models" || {
     echo "Cannot create model staging directory: $scratch_dir/models" >&2; return 1;
@@ -152,7 +160,38 @@ PY
   # Set ownership before startup so an interrupted startup is also cleaned up.
   LMSTUDIO_DAEMON_OWNED=1
   timeout 120 "$LMSTUDIO_LMS_BIN" daemon up || return
-  timeout 600 "$LMSTUDIO_LMS_BIN" runtime get "${LMSTUDIO_RUNTIME:-llama.cpp}" --yes || return
+  # A bare "llama.cpp" query resolves to the CPU (avx2) engine first, which ran a
+  # 9B model at ~5 tok/s instead of ~53 tok/s on an RTX 3060. Request the CUDA
+  # engine on GPU nodes. The fresh private home has no other engine installed, so
+  # the downloaded one is the engine used; record it for provenance.
+  local runtime_query="${LMSTUDIO_RUNTIME:-}"
+  if [[ -z $runtime_query ]]; then
+    runtime_query='llama.cpp'
+    if nvidia-smi -L >/dev/null 2>&1; then runtime_query='llama.cpp:cuda'; fi
+  fi
+  timeout 600 "$LMSTUDIO_LMS_BIN" runtime get "$runtime_query" --yes || return
+  # The daemon indexes a new engine shortly after installation ("No runtimes
+  # found" until then). Wait for it, then make sure it is the selected engine.
+  local engine_attempt installed=""
+  export LMSTUDIO_ENGINE=""
+  for (( engine_attempt=0; engine_attempt<30; engine_attempt++ )); do
+    timeout 60 "$LMSTUDIO_LMS_BIN" runtime ls > "$scratch_dir/runtimes.txt" 2>&1 || return
+    installed=$(awk '$1 ~ /^llama\.cpp-/ {print $1; exit}' "$scratch_dir/runtimes.txt")
+    [[ -n $installed ]] && break
+    sleep 2
+  done
+  [[ -n $installed ]] || { echo 'The installed engine was not indexed; see runtimes.txt.' >&2; return 1; }
+  LMSTUDIO_ENGINE=$(awk '$2 == "✓" {print $1}' "$scratch_dir/runtimes.txt")
+  if [[ $LMSTUDIO_ENGINE != "$installed" ]]; then
+    timeout 60 "$LMSTUDIO_LMS_BIN" runtime select "$installed" || return
+    timeout 60 "$LMSTUDIO_LMS_BIN" runtime ls > "$scratch_dir/runtimes.txt" 2>&1 || return
+    LMSTUDIO_ENGINE=$(awk '$2 == "✓" {print $1}' "$scratch_dir/runtimes.txt")
+  fi
+  echo "LM Studio engine: ${LMSTUDIO_ENGINE:-unknown}"
+  if [[ $runtime_query == *:cuda && $LMSTUDIO_ENGINE != *cuda* ]]; then
+    echo 'A CUDA engine was requested but is not the selected engine; see runtimes.txt.' >&2
+    return 1
+  fi
   timeout 120 "$LMSTUDIO_LMS_BIN" import "$LMSTUDIO_STAGED_MODEL" \
     --symbolic-link --user-repo "$namespace" --yes || return
   # The CLI loads indexed model keys, which are not necessarily filesystem paths.
@@ -185,9 +224,16 @@ PY
   }
   export LMSTUDIO_MODEL_KEY="$model_key"
   echo "Discovered model key: $LMSTUDIO_MODEL_KEY"
-  # Deliberately omit --gpu and context/resource flags: use LM Studio defaults.
-  timeout "${LMSTUDIO_LOAD_TIMEOUT:-3600}" "$LMSTUDIO_LMS_BIN" load \
-    "$LMSTUDIO_MODEL_KEY" --identifier "$LMSTUDIO_MODEL_ID" --yes || return
+  # Omit --gpu and resource flags: use LM Studio defaults. Context length is the
+  # only override, so experiments can match the context of a reference campaign.
+  local load_args=("$LMSTUDIO_MODEL_KEY" --identifier "$LMSTUDIO_MODEL_ID" --yes)
+  if [[ -n ${LMSTUDIO_CONTEXT_LENGTH:-} ]]; then
+    [[ $LMSTUDIO_CONTEXT_LENGTH =~ ^[1-9][0-9]*$ ]] || {
+      echo 'LMSTUDIO_CONTEXT_LENGTH must be a positive integer.' >&2; return 1;
+    }
+    load_args+=(--context-length "$LMSTUDIO_CONTEXT_LENGTH")
+  fi
+  timeout "${LMSTUDIO_LOAD_TIMEOUT:-3600}" "$LMSTUDIO_LMS_BIN" load "${load_args[@]}" || return
   timeout 120 "$LMSTUDIO_LMS_BIN" server start --bind 127.0.0.1 --port "$LMSTUDIO_PORT" || return
   local attempt ready=0
   for (( attempt=0; attempt<60; attempt++ )); do

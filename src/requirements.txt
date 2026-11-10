@@ -9,3 +9,8 @@ wandb
 uuid_utils
 Pillow
 PyYAML
+# Runtime imports of the bundled VirtualHome client (cv2; IPython via
+# virtualhome/__init__ -> utils_viz; ipdb in its simulation modules).
+opencv-python
+ipython
+ipdb
