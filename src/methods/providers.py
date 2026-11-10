@@ -5,6 +5,7 @@ from typing import Any, Optional
 
 import json
 import os
+from time import perf_counter
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -13,6 +14,7 @@ from ollama import Client
 from openai import OpenAI
 
 from .config import get_llm_settings
+from .generation_metrics import record_completion
 
 
 def required_key(name):
@@ -76,11 +78,22 @@ class LLMOpenAI(LLMProvider):
             base_url=self.settings["base_url"],
             api_key=key,
             timeout=self.settings["timeout"],
+            max_retries=0,
         ) as client:
-            response = client.chat.completions.create(
-                model=self.settings["model"],
-                messages=[{"role": "user", "content": prompt}],
-                **options,
+            started = perf_counter()
+            try:
+                response = client.chat.completions.create(
+                    model=self.settings["model"],
+                    messages=[{"role": "user", "content": prompt}],
+                    **options,
+                )
+            except Exception as error:
+                record_completion(
+                    purpose, prompt, options, perf_counter() - started, error=error
+                )
+                raise
+            record_completion(
+                purpose, prompt, options, perf_counter() - started, response=response
             )
         return response.choices[0].message.content or ""
 

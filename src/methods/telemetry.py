@@ -5,7 +5,7 @@ from importlib import import_module
 import os
 from typing import Any, Iterator
 
-from .config import get_config
+from .config import get_config, get_llm_settings
 from .chat_transcript import (
     record_request,
     record_response,
@@ -15,6 +15,27 @@ from .chat_transcript import (
 
 _client = None
 _active_thread: ContextVar[str | None] = ContextVar("weave_plan_thread", default=None)
+
+
+def experiment_attributes() -> dict[str, Any]:
+    """Metadata shared by every call in a named experiment run."""
+    name = os.getenv("EXPERIMENT_NAME")
+    if not name:
+        return {}
+    settings = get_llm_settings()
+    values = {
+        "experiment_name": name,
+        "provider": settings["provider"],
+        "model": settings["model"],
+        "plan_temperature": settings["plan"].get("temperature"),
+        "plan_max_tokens": settings["plan"].get("max_tokens"),
+        "plan_reasoning_effort": settings["plan"].get("reasoning_effort"),
+    }
+    if os.getenv("EXPERIMENT_RUN_ID"):
+        values["run_id"] = os.environ["EXPERIMENT_RUN_ID"]
+    if os.getenv("EXPERIMENT_REPEAT"):
+        values["repeat_index"] = int(os.environ["EXPERIMENT_REPEAT"])
+    return values
 
 
 def reuse_cached_wandb_login():
@@ -151,7 +172,7 @@ def publish_plan_chat(
         "plan_chat_transcript",
         inputs={"messages": messages},
         display_name=task,
-        attributes={"source": "recorded_plan_execution"},
+        attributes={**experiment_attributes(), "source": "recorded_plan_execution"},
     )
     client.finish_call(
         call,

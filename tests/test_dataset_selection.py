@@ -151,7 +151,9 @@ class DatasetSelectionTests(unittest.TestCase):
             with self.subTest(dataset=dataset), patch(
                 "methods.progprompt.prompt.init_simulator",
                 return_value={"nodes": [], "edges": []},
-            ) as simulator:
+            ) as simulator, patch(
+                "methods.telemetry.evaluation_logger", return_value=None
+            ):
                 agent = self.runner.ProgPromptAgent(
                     env_id=env_id, test_set=split, num_tasks=2
                 )

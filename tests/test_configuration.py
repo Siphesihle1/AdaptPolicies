@@ -42,7 +42,7 @@ class ConfigurationTests(unittest.TestCase):
     def test_profiles_and_default(self):
         del os.environ["ADAPT_CONFIG"]
         self.assertEqual(config.get_config()["llm"]["provider"], "lm_studio")
-        self.assertFalse(config.get_config()["weave"]["enabled"])
+        self.assertTrue(config.get_config()["weave"]["enabled"])
         os.environ["ADAPT_CONFIG"] = "live"
         config.get_config.cache_clear()
         self.assertTrue(config.get_config()["weave"]["enabled"])
@@ -64,7 +64,7 @@ class ConfigurationTests(unittest.TestCase):
                 with self.configuration(data), self.assertRaises(ValueError):
                     config.get_config()
 
-    def test_dev_never_imports_weave_even_with_credentials(self):
+    def test_disabled_logging_never_imports_weave_even_with_credentials(self):
         real_import = builtins.__import__
 
         def guarded(name, *args, **kwargs):
@@ -72,9 +72,11 @@ class ConfigurationTests(unittest.TestCase):
                 raise AssertionError("Dev attempted to import Weave")
             return real_import(name, *args, **kwargs)
 
-        with patch.object(telemetry, "import_module") as load_weave, patch(
-            "builtins.__import__", side_effect=guarded
-        ), patch.dict(
+        data = deepcopy(config.get_config())
+        data["weave"]["enabled"] = False
+        with self.configuration(data), patch.object(
+            telemetry, "import_module"
+        ) as load_weave, patch("builtins.__import__", side_effect=guarded), patch.dict(
             os.environ, {"PROJECT_NAME": "entity/project", "WANDB_API_KEY": "test"}
         ):
 
@@ -112,6 +114,7 @@ class ConfigurationTests(unittest.TestCase):
 
     def test_both_purposes_route_to_selected_provider(self):
         original = deepcopy(config.get_config())
+        original["weave"]["enabled"] = False
         for provider in config.PROVIDERS:
             data = deepcopy(original)
             data["llm"]["provider"] = provider
@@ -189,6 +192,7 @@ class ConfigurationTests(unittest.TestCase):
 
     def test_parameters_are_scoped_to_provider_and_model_without_remapping(self):
         data = deepcopy(config.get_config())
+        data["weave"]["enabled"] = False
         data["llm"]["providers"]["anthropic"] = {
             "base_url": "https://api.anthropic.com/v1",
             "timeout": 90,

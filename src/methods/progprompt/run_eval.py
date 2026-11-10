@@ -8,6 +8,7 @@ from methods.progprompt.datasets import Dataset, validate_dataset
 from methods.progprompt.prompt import ExamplesType
 
 from methods.config import get_config
+from methods import telemetry
 
 
 @dataclass
@@ -113,7 +114,14 @@ def main(argv=None):
     args = parse_args(argv)
     os.environ["EXPERIMENT_NAME"] = args.expt_name
 
-    execute_progprompt_agent(args)
+    with telemetry.attributes(
+        {
+            **telemetry.experiment_attributes(),
+            "dataset": args.test_set,
+            "environment_id": args.env_id,
+        }
+    ):
+        execute_progprompt_agent(args)
 
 
 if __name__ == "__main__":

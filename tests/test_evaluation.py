@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import MagicMock, patch
 
-from methods import config
+from methods import config, telemetry
 
 
 class EvaluationTests(unittest.TestCase):
@@ -37,6 +37,9 @@ class EvaluationTests(unittest.TestCase):
             ).ProgPromptAgent
 
     def setUp(self):
+        tracing = patch.object(telemetry, "backend", return_value=None)
+        tracing.start()
+        self.addCleanup(tracing.stop)
         self.directory = tempfile.TemporaryDirectory()
         self.environment = patch.dict(
             os.environ, {"JOB_OUTPUT_DIR": self.directory.name, "ADAPT_CONFIG": "dev"}

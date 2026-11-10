@@ -4,7 +4,7 @@ llm:
   providers:
     lm_studio:
       base_url: http://127.0.0.1:1234/v1
-      timeout: 120
+      timeout: 300
       models:
         qwen/qwen3.5-9b:
           plan:
@@ -16,4 +16,4 @@ llm:
             max_tokens: 128
             reasoning_effort: none
 weave:
-  enabled: false
+  enabled: true

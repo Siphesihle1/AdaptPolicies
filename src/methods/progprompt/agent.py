@@ -106,6 +106,7 @@ class ProgPromptAgent:
             model=get_config()["llm"]["model"],
             dataset=self.dataset,
             eval_attributes={
+                **weave.experiment_attributes(),
                 "experiment_name": os.getenv("EXPERIMENT_NAME"),
                 "dataset": self.dataset,
                 "environment_id": self.env_id,
