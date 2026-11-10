@@ -1,0 +1,19 @@
+llm:
+  provider: lm_studio
+  model: qwen/qwen3.5-9b
+  providers:
+    lm_studio:
+      base_url: http://127.0.0.1:1234/v1
+      timeout: 1200
+      models:
+        qwen/qwen3.5-9b:
+          plan:
+            temperature: 0.6
+            max_tokens: 16384
+            reasoning_effort: medium
+          assertion:
+            temperature: 0
+            max_tokens: 128
+            reasoning_effort: none
+weave:
+  enabled: true

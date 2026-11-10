@@ -13,7 +13,7 @@
 # SWEEP_DRY_RUN=1 prints the placement and sbatch commands without submitting.
 set -euo pipefail
 (( $# >= 1 )) || { echo "Usage: $(basename "$0") JOB_SCRIPT [DATASET ...]" >&2; exit 2; }
-: "${SWEEP_CAMPAIGN:?}" "${SWEEP_MODEL_TAG:?}" "${SWEEP_PARTITIONS:?}" "${SWEEP_TIME:?}"
+: "${SWEEP_CAMPAIGN:?}" "${SWEEP_MODEL_TAG:?}" "${SWEEP_PLAN_TOKENS:?}" "${SWEEP_PARTITIONS:?}" "${SWEEP_TIME:?}"
 if [[ -n ${SLURM_JOB_ID:-} ]]; then
   echo 'Submit from the login node, not from inside a Slurm job.' >&2
   exit 1
@@ -47,8 +47,13 @@ for dataset in "${datasets[@]}"; do
     echo "$dataset: already in the queue (job $existing); not resubmitted."
     continue
   fi
+  # Count only runs at this dataset's current plan budget (run names contain m<tokens>).
+  plan_tokens=$SWEEP_PLAN_TOKENS
+  for pair in ${SWEEP_PLAN_TOKENS_BY_DATASET:-}; do
+    if [[ ${pair%%=*} == "$dataset" ]]; then plan_tokens=${pair#*=}; fi
+  done
   done_runs=0
-  for code in "$HOME/outputs/experiments/$SWEEP_CAMPAIGN/$dataset/$SWEEP_MODEL_TAG"-*-"$dataset"-r1/exit-code.txt; do
+  for code in "$HOME/outputs/experiments/$SWEEP_CAMPAIGN/$dataset/$SWEEP_MODEL_TAG"-*-m"$plan_tokens"-*-"$dataset"-r1/exit-code.txt; do
     [[ -f $code && $(<"$code") == 0 ]] && done_runs=$(( done_runs + 1 ))
   done
   if (( done_runs >= 6 )); then
