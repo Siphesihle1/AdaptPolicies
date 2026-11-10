@@ -23,10 +23,33 @@ module load anaconda/anaconda-2025-12-2
 cd "$PROJECT_ROOT"
 echo "Installing research_proj at $ENV_PREFIX on $(hostname -s)"
 conda --version
+# Use the project's community channels without accepting Anaconda repository
+# terms on the user's behalf. Keep the checked-in environment.yml unchanged.
+export CONDA_CHANNELS=conda-forge,nvidia
+python - "$PROJECT_ROOT" "$RESULTS_DIR/environment-cluster.yml" <<'PY'
+from pathlib import Path
+from ruamel.yaml import YAML
+import sys
+root = Path(sys.argv[1])
+yaml = YAML()
+with (root / "environment.yml").open() as f:
+    spec = yaml.load(f)
+spec["channels"] = ["conda-forge", "nvidia", "nodefaults"]
+# Conda resolves pip requirement paths relative to the generated specification.
+for dependency in spec["dependencies"]:
+    if isinstance(dependency, dict) and "pip" in dependency:
+        dependency["pip"] = [
+            "-r " + str((root / item[3:].strip()).resolve()) if item.startswith("-r ") else item
+            for item in dependency["pip"]
+        ]
+with Path(sys.argv[2]).open("w") as f:
+    yaml.dump(spec, f)
+print(f"Cluster environment specification: {sys.argv[2]}")
+PY
 if [[ -f $ENV_PREFIX/conda-meta/history ]]; then
-  conda env update --prefix "$ENV_PREFIX" --file environment.yml
+  conda env update --prefix "$ENV_PREFIX" --file "$RESULTS_DIR/environment-cluster.yml"
 else
-  conda env create --prefix "$ENV_PREFIX" --file environment.yml --yes
+  conda env create --prefix "$ENV_PREFIX" --file "$RESULTS_DIR/environment-cluster.yml" --yes
 fi
 
 # Simulator imports need these additional packages. Keep the bundled VirtualHome
