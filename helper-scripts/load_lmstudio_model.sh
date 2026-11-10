@@ -5,6 +5,8 @@
 #   stop_lmstudio_model
 # The caller must call stop_lmstudio_model from its EXIT trap (including errors).
 # Single-file GGUF models only. The persistent source is never moved or changed.
+# Jobs on different nodes share the installed binaries, but keep daemon state in
+# their own /scratch job directory. One helper-managed instance per user per node.
 # Optional settings: LMSTUDIO_PORT (1234), LMSTUDIO_MODEL_ID, LMSTUDIO_RUNTIME
 # (llama.cpp or a pinned runtime query), LMSTUDIO_LOAD_TIMEOUT (3600 seconds).
 
@@ -85,16 +87,32 @@ load_lmstudio_model() {
     studio_root=$(cat "$HOME/.lmstudio-home-pointer") || return
   fi
   [[ $studio_root == /* ]] || { echo 'LM Studio home must be absolute.' >&2; return 1; }
-  export LMSTUDIO_LMS_BIN="$studio_root/bin/lms"
-  [[ -x $LMSTUDIO_LMS_BIN ]] || { echo 'Run lmstudio_setup.sh to install LM Studio first.' >&2; return 1; }
-  mkdir -p "$studio_root/.internal" || return
-  # This CLI stores daemon metadata in the shared home. Serialize helper-managed
-  # jobs across nodes so that they cannot load into or stop each other's daemon.
-  exec {LMSTUDIO_LOCK_FD}>"$studio_root/.internal/slurm-model.lock" || return
+  export LMSTUDIO_SHARED_LMS_BIN="$studio_root/bin/lms"
+  [[ -x $LMSTUDIO_SHARED_LMS_BIN ]] || { echo 'Run lmstudio_setup.sh to install LM Studio first.' >&2; return 1; }
+  # /scratch is node-local: this lock prevents competing instances on THIS node
+  # without blocking jobs on other nodes. Keep the fixed localhost port simple.
+  exec {LMSTUDIO_LOCK_FD}>"$(dirname "$scratch_dir")/node.lock" || return
   flock -n "$LMSTUDIO_LOCK_FD" || {
-    echo 'Another helper-managed LM Studio job is using this account.' >&2; return 1;
+    echo 'Another helper-managed LM Studio job is already running on this node.' >&2; return 1;
   }
   LMSTUDIO_DAEMON_OWNED=0
+  export LMSTUDIO_PROCESS_HOME="$scratch_dir/home"
+  mkdir -p "$LMSTUDIO_PROCESS_HOME/.lmstudio/.internal" || return
+  # Reuse only the installation descriptor (binary path/cwd), never shared daemon
+  # discovery files, credentials, model registrations, or runtime configuration.
+  cp -- "$studio_root/.internal/llmster-install-location.json" \
+    "$LMSTUDIO_PROCESS_HOME/.lmstudio/.internal/llmster-install-location.json" || return
+  export LMSTUDIO_LMS_BIN="$scratch_dir/lms"
+  # HOME is scoped to the child process; the calling job retains its real $HOME
+  # for repository paths, outputs and logs. The daemon inherits this private home.
+  cat > "$LMSTUDIO_LMS_BIN" <<'SH' || return
+#!/usr/bin/env bash
+exec env -u LMS_API_SERVER_INFO_PATH -u LMSTUDIO_HOME -u LMS_LMSTUDIO_HOME \
+  HOME="$LMSTUDIO_PROCESS_HOME" XDG_CACHE_HOME="$LMSTUDIO_PROCESS_HOME/.cache" \
+  "$LMSTUDIO_SHARED_LMS_BIN" "$@"
+SH
+  chmod 700 "$LMSTUDIO_LMS_BIN" || return
+  echo "Private LM Studio state: $LMSTUDIO_PROCESS_HOME/.lmstudio"
   timeout 60 "$LMSTUDIO_LMS_BIN" daemon status --json > "$scratch_dir/daemon-before.json" || return
   python3 - "$scratch_dir/daemon-before.json" <<'PY' || return
 import json, sys
