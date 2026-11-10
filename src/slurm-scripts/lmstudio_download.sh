@@ -16,6 +16,31 @@ set -euo pipefail
 : "${SLURM_JOB_ID:?Submit this script with sbatch}"
 : "${SLURM_JOB_NODELIST:?Missing Slurm node allocation}"
 
+export NTFY_TOPIC="${NTFY_TOPIC:-research-project-slurm-job-alerts}"
+NTFY_SERVER="${NTFY_SERVER:-https://ntfy.sh}"
+
+notify_finished() {
+  local exit_status=$?
+  trap - EXIT
+  local result="FAILED" tags="warning"
+  if (( exit_status == 0 )); then
+    result="COMPLETED"
+    tags="white_check_mark"
+  fi
+  # Notification delivery must never replace the workload's exit status.
+  curl --fail --silent --show-error --retry 2 --retry-delay 2 \
+    --connect-timeout 5 --max-time 15 \
+    --header "Title: Slurm model download $result" \
+    --header "Tags: $tags" \
+    --data-binary "Job $SLURM_JOB_ID (lmstudio_download): $result. Exit code: $exit_status." \
+    "${NTFY_SERVER%/}/$NTFY_TOPIC" >/dev/null || \
+    echo "Warning: could not deliver the ntfy notification." >&2
+  exit "$exit_status"
+}
+trap notify_finished EXIT
+trap 'exit 143' TERM
+trap 'exit 130' INT
+
 PROJECT_ROOT="${PROJECT_ROOT:-$HOME/AdaptPolicies}"
 export LMSTUDIO_MODELS_DIR="${LMSTUDIO_MODELS_DIR:-/datasets/$(id -un)/lmstudio/models}"
 
