@@ -155,9 +155,39 @@ PY
   timeout 600 "$LMSTUDIO_LMS_BIN" runtime get "${LMSTUDIO_RUNTIME:-llama.cpp}" --yes || return
   timeout 120 "$LMSTUDIO_LMS_BIN" import "$LMSTUDIO_STAGED_MODEL" \
     --symbolic-link --user-repo "$namespace" --yes || return
+  # The CLI loads indexed model keys, which are not necessarily filesystem paths.
+  # This private LM Studio home contains only the single LLM imported above.
+  # Allow the daemon's model index a short time to notice the new import.
+  local index_attempt model_key=""
+  for (( index_attempt=0; index_attempt<15; index_attempt++ )); do
+    timeout 30 "$LMSTUDIO_LMS_BIN" ls --llm --json > "$scratch_dir/disk-models.json" || return
+    model_key=$(python3 - "$scratch_dir/disk-models.json" <<'PY'
+import json, sys
+with open(sys.argv[1]) as f:
+    models = json.load(f)
+if not isinstance(models, list):
+    raise SystemExit("Unexpected model index format; see disk-models.json.")
+if len(models) > 1:
+    raise SystemExit("Expected exactly one LLM in the private model index; refusing to choose another model.")
+if models:
+    key = models[0].get("modelKey")
+    if not isinstance(key, str) or not key.strip():
+        raise SystemExit("Model index entry has no usable modelKey.")
+    print(key)
+PY
+    ) || return
+    [[ -n $model_key ]] && break
+    sleep 2
+  done
+  [[ -n $model_key ]] || {
+    echo "Imported model did not appear in the model index; see $scratch_dir/disk-models.json" >&2
+    return 1
+  }
+  export LMSTUDIO_MODEL_KEY="$model_key"
+  echo "Discovered model key: $LMSTUDIO_MODEL_KEY"
   # Deliberately omit --gpu and context/resource flags: use LM Studio defaults.
   timeout "${LMSTUDIO_LOAD_TIMEOUT:-3600}" "$LMSTUDIO_LMS_BIN" load \
-    "$namespace/$filename" --identifier "$LMSTUDIO_MODEL_ID" --yes || return
+    "$LMSTUDIO_MODEL_KEY" --identifier "$LMSTUDIO_MODEL_ID" --yes || return
   timeout 120 "$LMSTUDIO_LMS_BIN" server start --bind 127.0.0.1 --port "$LMSTUDIO_PORT" || return
   local attempt ready=0
   for (( attempt=0; attempt<60; attempt++ )); do
