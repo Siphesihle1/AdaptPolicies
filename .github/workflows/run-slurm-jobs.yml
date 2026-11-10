@@ -57,15 +57,20 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           envs: HOME,PROJECT_ROOT,GITHUB_SHA,SLURM_SCRIPTS_PREFIX,SLURM_LOGS_PREFIX,CONDA_PREFIX,OLLAMA_CLOUD_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,ADAPT_CONFIG,PROJECT_NAME,WANDB_API_KEY,VIRTUALHOME_SIM_SOURCE,VIRTUALHOME_SIM_ROOT,VIRTUALHOME_DISPLAY_PREFIX
           script: |
+            # Stop at the first failure: never submit jobs from stale code.
+            set -e
             echo ':--- Syncing local repo ---:'
             cd $PROJECT_ROOT
             # git stash push -u -m "github-actions-$(date +%s)"
 
+            # Fetch the pushed commit by SHA: the cluster clone tracks only main,
+            # so a plain fetch would not download commits on other branches.
             echo '--- Fetching latest commit ---'
-            git fetch origin --depth=1
+            git fetch --depth=1 origin "$GITHUB_SHA"
 
             echo '--- Resetting to the latest commit ---'
-            git reset --hard $GITHUB_SHA
+            git reset --hard "$GITHUB_SHA"
+            test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
 
             echo '--- Copying env_vars files to conda prefix ---'
             mkdir -p $CONDA_PREFIX/activate.d $CONDA_PREFIX/deactivate.d
