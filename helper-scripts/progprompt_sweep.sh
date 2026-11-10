@@ -6,6 +6,7 @@
 #   SWEEP_MODEL_TAG    e.g. qwen35-9b
 #   SWEEP_MODEL_ID     LM Studio model name used in the configs, e.g. qwen/qwen3.5-9b
 #   SWEEP_PLAN_TOKENS  plan max_tokens in the config names, e.g. 8192
+#   SWEEP_PLAN_TOKENS_BY_DATASET  optional overrides, e.g. "test_unseen_ambiguous_goals=16384"
 #   SWEEP_GGUF         model file on /datasets
 #   SWEEP_CAMPAIGN     results folder under ~/outputs/experiments
 # Optional for quick tests: SWEEP_NUM_TASKS (default all).
@@ -23,6 +24,10 @@ case $dataset in
   env2) env_id=2 ;;
   *) echo "Unknown dataset: $dataset" >&2; exit 2 ;;
 esac
+plan_tokens=$SWEEP_PLAN_TOKENS
+for pair in ${SWEEP_PLAN_TOKENS_BY_DATASET:-}; do
+  if [[ ${pair%%=*} == "$dataset" ]]; then plan_tokens=${pair#*=}; fi
+done
 
 REPO="${PROJECT_ROOT:-$HOME/AdaptPolicies}"
 ENV_PREFIX="$HOME/.conda/envs/research_proj"
@@ -104,7 +109,7 @@ record_provenance() {
   {
     echo "job=$SLURM_JOB_ID node=$(hostname -s) partition=$SLURM_JOB_PARTITION"
     echo "dataset=$dataset env_id=$env_id model=$SWEEP_MODEL_ID gguf=$SWEEP_GGUF"
-    echo "plan_tokens=$SWEEP_PLAN_TOKENS context=$LMSTUDIO_CONTEXT_LENGTH engine=$LMSTUDIO_ENGINE"
+    echo "plan_tokens=$plan_tokens context=$LMSTUDIO_CONTEXT_LENGTH engine=$LMSTUDIO_ENGINE"
     echo "started=$(date -u +%FT%TZ)"
   } > "$RECORD/job.txt"
   "$LMSTUDIO_LMS_BIN" ps --json > "$RECORD/model-load.json"
@@ -115,7 +120,7 @@ record_provenance() {
 }
 
 run_condition() {  # run_condition TEMP REASONING, e.g. t06 ron
-  local experiment="$SWEEP_MODEL_TAG-$1-m$SWEEP_PLAN_TOKENS-$2"
+  local experiment="$SWEEP_MODEL_TAG-$1-m$plan_tokens-$2"
   local run_id="$experiment-$dataset-r1"
   local final="$RESULTS/$run_id"
   local run_dir="$WORK/runs/$run_id"
