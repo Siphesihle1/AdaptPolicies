@@ -23,71 +23,28 @@ module load anaconda/anaconda-2025-12-2
 cd "$PROJECT_ROOT"
 echo "Installing research_proj at $ENV_PREFIX on $(hostname -s)"
 conda --version
-# Use the project's community channels without accepting Anaconda repository
-# terms on the user's behalf. Keep the checked-in environment.yml unchanged.
-export CONDA_CHANNELS=conda-forge,nvidia
-python - "$PROJECT_ROOT" "$RESULTS_DIR/environment-cluster.yml" <<'PY'
-from pathlib import Path
-from ruamel.yaml import YAML
-import sys
-root = Path(sys.argv[1])
-yaml = YAML()
-with (root / "environment.yml").open() as f:
-    spec = yaml.load(f)
-spec["channels"] = ["conda-forge", "nvidia", "nodefaults"]
-# Conda resolves pip requirement paths relative to the generated specification.
-for dependency in spec["dependencies"]:
-    if isinstance(dependency, dict) and "pip" in dependency:
-        dependency["pip"] = [
-            "-r " + str((root / item[3:].strip()).resolve()) if item.startswith("-r ") else item
-            for item in dependency["pip"]
-        ]
-with Path(sys.argv[2]).open("w") as f:
-    yaml.dump(spec, f)
-print(f"Cluster environment specification: {sys.argv[2]}")
-PY
+# Use the repository specification directly, including its declared channels,
+# constraints and pip requirements. Repository ToS acceptance is a separate,
+# explicitly authorized account operation, never automated by this script.
 if [[ -f $ENV_PREFIX/conda-meta/history ]]; then
-  conda env update --prefix "$ENV_PREFIX" --file "$RESULTS_DIR/environment-cluster.yml"
+  conda env update --prefix "$ENV_PREFIX" --file environment.yml
 else
-  conda env create --prefix "$ENV_PREFIX" --file "$RESULTS_DIR/environment-cluster.yml" --yes
+  conda env create --prefix "$ENV_PREFIX" --file environment.yml --yes
 fi
-
-# Simulator imports need these additional packages. Keep the bundled VirtualHome
-# source importable without installing its legacy pinned distribution metadata.
-conda run --no-capture-output --prefix "$ENV_PREFIX" python -m pip install \
-  'opencv-python-headless>=4.8' IPython ipdb networkx plotly termcolor tqdm requests
-conda run --no-capture-output --prefix "$ENV_PREFIX" python - "$PROJECT_ROOT" <<'PY'
-from pathlib import Path
-import sys, sysconfig
-root = Path(sys.argv[1]).resolve()
-vh = root / "src/virtual_home/virtualhome/src/virtualhome"
-paths = [root / "src", root / "src/virtual_home", vh.parent, vh, vh / "simulation"]
-for path in paths:
-    if not path.is_dir():
-        raise SystemExit(f"Missing project source directory: {path}")
-pth = Path(sysconfig.get_path("purelib")) / "adaptpolicies-local.pth"
-pth.write_text("".join(f"{path}\n" for path in paths))
-print(f"Registered project source paths: {pth}")
-PY
 conda run --no-capture-output --prefix "$ENV_PREFIX" python -m pip check
 conda run --no-capture-output --prefix "$ENV_PREFIX" python - "$ENV_PREFIX" "$RESULTS_DIR" <<'PY'
 import importlib, importlib.metadata, json, pathlib, subprocess, sys
 assert sys.version_info[:2] == (3, 10), sys.version
 assert pathlib.Path(sys.prefix).resolve() == pathlib.Path(sys.argv[1]).resolve(), sys.prefix
-modules = ["matplotlib", "openai", "ollama", "weave", "wandb", "uuid_utils", "PIL", "yaml",
-           "cv2", "IPython", "ipdb", "networkx", "plotly", "termcolor", "tqdm", "requests"]
+modules = ["matplotlib", "openai", "ollama", "weave", "wandb", "uuid_utils", "PIL", "yaml"]
 for name in modules:
     importlib.import_module(name)
-from cv2.typing import MatLike
-from virtualhome.simulation.unity_simulator import UnityCommunication
-from virtualhome.simulation.evolving_graph.execution import ScriptExecutor
-import virtual_home.environment
 for command in (["ffmpeg", "-version"], ["rustc", "--version"]):
     result = subprocess.run(command, check=True, capture_output=True, text=True)
     print(result.stdout.splitlines()[0])
 versions = {d.metadata["Name"]: d.version for d in importlib.metadata.distributions() if d.metadata["Name"]}
 (pathlib.Path(sys.argv[2]) / "dependency-versions.json").write_text(json.dumps(versions, indent=2, sort_keys=True))
-print(f"PASS: Python {sys.version.split()[0]}, dependency imports, bundled VirtualHome, ffmpeg and Rust.")
+print(f"PASS: Python {sys.version.split()[0]}, declared dependency imports, ffmpeg and Rust.")
 print(f"Environment: {sys.prefix}")
 PY
 conda list --prefix "$ENV_PREFIX" --explicit > "$RESULTS_DIR/conda-explicit.txt"
