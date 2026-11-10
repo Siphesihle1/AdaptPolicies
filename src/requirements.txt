@@ -1,4 +1,6 @@
-setuptools
+# Match environment.yml and keep wheel compatible with packaging==21.3.
+setuptools<71
+wheel<0.46
 matplotlib
 openai>=1.0.0
 ollama
