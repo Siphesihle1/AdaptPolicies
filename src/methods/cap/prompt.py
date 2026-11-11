@@ -24,7 +24,7 @@ RULES = """- Use the available APIs for actions and observations; do not redefin
 - Visibility does not establish proximity or action applicability.
 - Use Python control flow and helpers where useful. Undefined helper calls trigger helper generation; avoid dependency cycles.
 - Keep each helper focused on one responsibility. Decompose complex helpers into smaller helpers and compose them through nested calls.
-- Sequence actions according to their preconditions and dependencies. Before leaving a location, acquire any objects needed elsewhere and complete prerequisites that require access to that location. Recheck visibility and state after moving.
+- Order actions by their preconditions. Acquire objects before travelling somewhere they are needed. After movement, query current visibility and state before using unheld objects.
 - Use parse_objects for object selection and parse_question for observation-based questions.
 - Do not import modules, access private attributes, or perform external I/O."""
 
@@ -34,7 +34,10 @@ grab(item): pick up the specified item.
 open(container), close(container): change the container's open state; they do not pick it up.
 putin(item, container): place a held item inside a different, accessible container. Open an openable container first.
 putback(item, surface): place a held item onto the destination surface.
-ObjectRef exposes id and name; a reference identifies an instance, not its current state.
+find(target), walk(destination), run(destination): navigate to a target; run is faster movement.
+switchon(device), switchoff(device): activate or deactivate a compatible device.
+apply(item, target): supports held toothpaste applied to a held toothbrush; the toothpaste cap must be open.
+ObjectRef exposes id and name; a reference identifies an instance, not its current visibility, accessibility or state. Held objects remain available after movement.
 Environment objects lists known class names; observation describes the current room, visible states and relations.
 get_visible_objects() -> list[ObjectRef], excluding rooms and the character
 get_object_states(ref) -> frozenset[str] or None

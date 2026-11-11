@@ -36,6 +36,14 @@ contains only the requested goal. Dynamic content is escaped to preserve section
 Rules encourage focused helpers with nested composition for complex functions, and
 action ordering that satisfies preconditions before leaving a location and rechecks
 visibility and state after movement.
+Primitive actions return `ActionResult` and require explicit `.status` comparisons.
+Generated helpers define their own return contracts; the current helper demonstrations
+document boolean success/failure. The salmon, fruit, washing and heating policy examples
+show direct action checks alongside boolean helper checks, and verify holding the item
+before travelling to its destination. Destination selection uses the current observation.
+The API prompt identifies `run` as navigation, `switchon`/`switchoff` as device activation,
+and `apply` as the supported held toothpaste-to-brush interaction with an open tube cap.
+Object references preserve identity without guaranteeing current visibility or accessibility.
 Examples are loaded from `src/methods/cap/examples/*.json`, independently of the short
 instruction templates in `prompts/`. Policy examples retain ProgPrompt's configured
 default identities, count, or seeded random selection; nested LMPs load their own examples.
@@ -123,6 +131,9 @@ ground-truth mappings, task augmentation, action checks and class-based scoring.
 execution completion; it is not goal success. Failed and zero-action tasks remain in
 headline denominators, with conditional metrics reported separately. Failed workers
 are scored only when the parent's final state remains trustworthy.
+The current `heat_some_pie` reference can score SR = 1 for an unheated pie held near
+the microwave: its changed conditions omit `HEATED`. Report execution status and
+captured physical effects alongside that score; it does not establish successful heating.
 
 Run artifacts include `configuration.json`, `task-accounting.json`, `results.json`
 and `tasks/<task-id>/{policy.py,helpers.py,dependencies.json,generation.json,execution.json,
