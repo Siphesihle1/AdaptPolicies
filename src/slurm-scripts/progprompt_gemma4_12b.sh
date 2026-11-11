@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+#SBATCH --account=general
+#SBATCH --job-name=progprompt_gemma4_12b
+#SBATCH --partition=bigbatch
+#SBATCH --time=20:00:00
+#SBATCH --signal=B:TERM@300
+#SBATCH --output=/home-mscluster/%u/slurm-logs/progprompt_gemma4_12b/%j.out
+#SBATCH --error=/home-mscluster/%u/slurm-logs/progprompt_gemma4_12b/%j.err
+# adaptpolicies: self-submit
+#
+# ProgPrompt temperature x reasoning sweep for Gemma 4 12B Q4_K_M, the mid-size
+# model between Qwen3.5-9B and Qwen3.8-27B, with the same six conditions,
+# datasets and settings (8192 plan tokens / 600 s; 16384 / 1200 s for ambiguous
+# goals). Submit from the login node with bash (not sbatch); this checks node
+# availability and submits one job per dataset (all five by default):
+#   bash src/slurm-scripts/progprompt_gemma4_12b.sh [DATASET ...]
+# Inside each job, helper-scripts/progprompt_sweep.sh does the work.
+# bigbatch only: at 64k context the model needs ~16.8 GiB to sit entirely on the
+# GPU, which the 24 GB RTX 3090 holds but a batch node's 12 GB RTX 3060 does not.
+# Results: ~/outputs/experiments/$SWEEP_CAMPAIGN/<dataset>/<run>.
+set -euo pipefail
+export SWEEP_MODEL_TAG=gemma4-12b
+export SWEEP_MODEL_ID=google/gemma-4-12b
+export SWEEP_PLAN_TOKENS=8192   # config/dev-<tag>-<temp>-m8192-<reasoning>.yaml
+# Open-ended goals get a larger budget (configs set a 1200 s timeout for m16384).
+export SWEEP_PLAN_TOKENS_BY_DATASET="test_unseen_ambiguous_goals=16384"
+export SWEEP_GGUF="/datasets/$(id -un)/lmstudio/models/lmstudio-community/gemma-4-12B-it-GGUF/gemma-4-12B-it-Q4_K_M.gguf"
+export SWEEP_CAMPAIGN="${SWEEP_CAMPAIGN:-cluster_gemma4_12b_001}"
+export SWEEP_PARTITIONS="bigbatch"
+export SWEEP_TIME=20:00:00
+# Known-faulty nodes, skipped at submission. mscluster76: GPU not found by
+# nvidia-smi (2026-11-11), so LM Studio fell back to the CPU.
+export SWEEP_EXCLUDE_NODES=mscluster76
+PROJECT_ROOT="${PROJECT_ROOT:-$HOME/AdaptPolicies}"
+
+if [[ -z ${SLURM_JOB_ID:-} ]]; then
+  exec bash "$PROJECT_ROOT/helper-scripts/submit_progprompt_sweep.sh" "$(realpath -- "$0")" "$@"
+fi
+exec bash "$PROJECT_ROOT/helper-scripts/progprompt_sweep.sh" "$@"

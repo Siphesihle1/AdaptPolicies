@@ -29,7 +29,7 @@ Usage: lmstudio_setup.sh [--update] [--download-model | --download-only] [--mode
   --update          Update llmster using the current official installer.
   --download-model  Also download the pinned Q4_K_M model selected by --model.
   --download-only   Download weights without installing or running LM Studio.
-  --model NAME      qwen3.8-27b (default) or qwen3.5-9b; also LMSTUDIO_MODEL.
+  --model NAME      qwen3.8-27b (default), qwen3.5-9b or gemma-4-12b; also LMSTUDIO_MODEL.
 
 Run downloads on the datasets transfer node (cluster guide section 8.1):
   ssh <username>@10.100.14.250
@@ -82,7 +82,14 @@ case "$model_name" in
     model_filename="Qwen3.5-9B-Q4_K_M.gguf"
     model_sha256="cd76ec205963b3b33350093e6904d9de16c4e666fd104e1f632d25c7f15f2a13"
     model_bytes=5627044256 ;;
-  *) echo "Unknown model: $model_name (expected qwen3.8-27b or qwen3.5-9b)" >&2; exit 2 ;;
+  gemma-4-12b)
+    # https://huggingface.co/lmstudio-community/gemma-4-12B-it-GGUF
+    model_repo="lmstudio-community/gemma-4-12B-it-GGUF"
+    model_revision="40b870babe39398ce917bbf4b4ff9b5a1f12710e"
+    model_filename="gemma-4-12B-it-Q4_K_M.gguf"
+    model_sha256="95d83ba36642b1f385fb906b5962a71763361be3bac930a709945f72d97473f8"
+    model_bytes=7381382944 ;;
+  *) echo "Unknown model: $model_name (expected qwen3.8-27b, qwen3.5-9b or gemma-4-12b)" >&2; exit 2 ;;
 esac
 
 download_master_model() (
