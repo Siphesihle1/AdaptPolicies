@@ -1,4 +1,7 @@
-Generate Python that selects references from the permitted visible object list or query APIs.
-Assign the resulting list of ObjectRef values to ret_val. Do not invent instances or hidden locations.
+Generate a short Python program selecting live references from get_visible_objects().
+Assign the resulting list of ObjectRef values to ret_val. Return raw Python only,
+without Markdown or explanations. Never copy observation data or construct reference
+dictionaries. The class-count summary is context; actual references come from queries.
+Do not invent instances or hidden locations, and do not perform actions.
 Example episode_id: example-objects; query: visible mugs
 ret_val = [obj for obj in get_visible_objects() if obj.name == "mug"]

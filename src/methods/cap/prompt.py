@@ -1,12 +1,19 @@
 """Episode-scoped request construction; query results are input only when supplied."""
 
 import json
+from collections import Counter
 from pathlib import Path
-from .runtime import serialize
 from .environment import ACTION_CLASSES
 
 PROMPTS = {"cap_policy": "policy", "cap_function": "function_gen",
            "cap_objects": "parse_objects", "cap_question": "parse_question"}
+OUTPUT_FORMATS = {
+    "cap_policy": "Start with the exact line def policy(): and indent all task statements "
+                  "inside that function. Only function definitions are allowed at module scope.",
+    "cap_function": "Return exactly one definition of the requested helper function.",
+    "cap_objects": "Return Python statements assigning the resulting list of live ObjectRef values to ret_val.",
+    "cap_question": "Return Python statements assigning the computed answer to ret_val.",
+}
 
 CONTRACT = """Use ordinary Python only, without imports, Markdown, external I/O or private attributes.
 ObjectRef is immutable with episode_id, id, name. Obtain references from queries;
@@ -24,6 +31,9 @@ parse_objects(description) generates and executes code returning list[ObjectRef]
 parse_question(question) generates and executes code returning an accessible answer.
 Nested LMP calls consume the same task and generation budgets. Unknown facts use None.
 Unknown direct function calls request generated helpers. Do not invent simulator actions.
+Observation context summarizes visible class counts; obtain actual ObjectRef values with
+get_visible_objects(). Read states, containment and possession using query functions.
+Do not copy observation data into code or infer unknown states from the summary.
 Allowed builtins: abs all any bool dict enumerate float frozenset int len list max min
 range reversed round set sorted str sum tuple zip isinstance ValueError TypeError.
 """
@@ -42,8 +52,17 @@ def build_prompt(episode_id, purpose, query, context=None, examples="", inventor
     if context is not None:
         if context["episode_id"] != episode_id or "observation_revision" not in context:
             raise ValueError("Unscoped observation context")
-        parts.append("Permitted observation:\n" + json.dumps(serialize(context)))
+        counts = Counter(obj.name for obj in context["visible_objects"])
+        summary = {
+            "episode_id": context["episode_id"],
+            "observation_revision": context["observation_revision"],
+            "visible_object_counts": dict(sorted(counts.items())),
+        }
+        parts.append("Permitted observation:\n" + json.dumps(summary))
     parts.append("Request:\n" + query)
+    parts.append("Output raw Python only. " + OUTPUT_FORMATS[purpose] +
+                 " No Markdown fences, explanations, or copied observation lists. "
+                 "Use the registered query APIs for current facts.")
     return "\n\n".join(parts)
 
 

@@ -1,4 +1,6 @@
+import json
 import unittest
+from methods.cap.prompt import build_prompt
 from methods.cap.lmp import Session
 from methods.cap.runtime import Limits
 from virtual_home.virtualhome_types import ObjectRef
@@ -6,6 +8,35 @@ from cap_fakes import FakeProvider
 
 
 class LMPTests(unittest.TestCase):
+    def test_prompt_groups_duplicate_objects_without_serializing_references(self):
+        objects = [ObjectRef("active-episode", index, "mug") for index in range(200)]
+        context = {"episode_id": "active-episode", "observation_revision": 12,
+                   "visible_objects": objects}
+        prompt = build_prompt("active-episode", "cap_question", "How many mugs?", context)
+        summary = json.JSONDecoder().raw_decode(prompt.split("Permitted observation:\n")[1])[0]
+        self.assertEqual(summary, {"episode_id": "active-episode", "observation_revision": 12,
+                                  "visible_object_counts": {"mug": 200}})
+        self.assertNotIn('"id":', prompt)
+        self.assertNotIn('"visible_objects":', prompt)
+        self.assertIn("Output raw Python only", prompt)
+        self.assertEqual(context["visible_objects"], objects)
+
+    def test_compact_context_keeps_runtime_references_and_duplicate_selection(self):
+        objects = [ObjectRef("episode", 20, "mug"), ObjectRef("episode", 21, "mug")]
+        session = self.session({"cap_objects": "ret_val = [obj for obj in get_visible_objects() if obj.id == 21]"},
+                               bindings={"get_visible_objects": lambda: objects})
+        session.context = {"episode_id": "episode", "observation_revision": 7,
+                           "visible_objects": objects}
+        session.context_query = lambda: session.context
+        self.assertEqual(session.parse_objects("second mug"), [objects[1]])
+
+    def test_output_contract_follows_the_task_and_matches_program_role(self):
+        policy = build_prompt("episode", "cap_policy", "Open a fridge")
+        self.assertGreater(policy.index("Start with the exact line def policy():"),
+                           policy.index("Request:\nOpen a fridge"))
+        question = build_prompt("episode", "cap_question", "Is it open?")
+        self.assertIn("assigning the computed answer to ret_val", question.split("Request:\n")[1])
+
     def session(self, responses, bindings=None, limits=None):
         self.events = []
         self.ref = ObjectRef("episode", 20, "mug")

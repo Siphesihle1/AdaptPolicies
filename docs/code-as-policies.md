@@ -52,8 +52,13 @@ state unavailable and requires simulator restart. A native call already in progr
 cannot be safely cancelled; the owned launcher cleans up the simulator on exit.
 
 Each generation request has an episode header; supplied observations carry episode
-and revision. Queries alone never make model calls. Specialized programs receive
-an explicit fresh visible-object context. Helper/session state resets for each task.
+and revision. Prompt observations group visible objects by class with occurrence
+counts instead of repeating instance references and episode IDs. Generated programs
+fetch actual references, states and possession through the same query APIs; instance
+selection and observation access remain available at execution time. Queries alone
+never make model calls. Specialized programs receive a fresh class-count summary,
+and their results are validated against the full permitted observation retained by
+the runtime. Helper/session state resets for each task.
 Training examples use CaP representations of training identities, the established
 default identities and random seed 42. No held-out plans or target states enter prompts.
 
