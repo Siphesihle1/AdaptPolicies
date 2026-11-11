@@ -126,7 +126,7 @@ class EvaluationTests(unittest.TestCase):
     def test_generation_exception_does_not_lose_later_tasks_or_raw_rejections(self):
         prompts = [
             SimpleNamespace(task_instruction=name, text=f"prompt {name}")
-            for name in ["api_failure", "bad_format", "valid"]
+            for name in ["api_failure", "bad_format", "fenced", "valid"]
         ]
         self.agent.prompt_builder = prompts
         self.agent.plans = {prompt.task_instruction: [] for prompt in prompts}
@@ -135,18 +135,43 @@ class EvaluationTests(unittest.TestCase):
             "methods.progprompt.agent.generate",
             side_effect=[
                 RuntimeError("connection failed"),
-                "```python\ndef bad_format():\n pass\n```",
+                "Here is the plan:\ndef bad_format():\n pass",
+                "```python\ndef fenced():\n pass\n```",
                 "def valid():\n pass",
             ],
         ):
             self.agent.generate_task_plans()
         saved = json.loads((Path(self.directory.name) / "results.json").read_text())
-        self.assertEqual(saved["summary"]["num_tasks"], 3)
-        self.assertEqual(saved["tasks"]["api_failure"]["status"], "generation_failed")
-        self.assertEqual(saved["tasks"]["bad_format"]["status"], "parse_failed")
-        self.assertTrue(saved["tasks"]["bad_format"]["plan"].startswith("```"))
-        self.assertEqual(saved["tasks"]["valid"]["status"], "generated")
-        self.assertEqual(saved["tasks"]["valid"]["prompt"], "prompt valid")
+        tasks = saved["tasks"]
+        self.assertEqual(saved["summary"]["num_tasks"], 4)
+        self.assertEqual(tasks["api_failure"]["status"], "generation_failed")
+        self.assertEqual(tasks["bad_format"]["status"], "parse_failed")
+        self.assertTrue(tasks["bad_format"]["plan"].startswith("Here is"))
+        self.assertFalse(tasks["bad_format"]["raw_format_compliant"])
+        # A single wrapping code fence is removed; the raw response stays recorded.
+        self.assertEqual(tasks["fenced"]["status"], "generated")
+        self.assertEqual(tasks["fenced"]["plan"], "def fenced():\n pass")
+        self.assertTrue(tasks["fenced"]["raw_plan"].startswith("```python"))
+        self.assertTrue(tasks["fenced"]["fence_stripped"])
+        self.assertFalse(tasks["fenced"]["raw_format_compliant"])
+        self.assertEqual(self.agent.plans["fenced"][0], "def fenced():\n pass")
+        self.assertEqual(tasks["valid"]["status"], "generated")
+        self.assertEqual(tasks["valid"]["prompt"], "prompt valid")
+        self.assertTrue(tasks["valid"]["raw_format_compliant"])
+        self.assertFalse(tasks["valid"]["fence_stripped"])
+        self.assertNotIn("raw_plan", tasks["valid"])
+
+    def test_strip_code_fence_only_unwraps_a_single_whole_block(self):
+        strip = importlib.import_module("methods.progprompt.agent").strip_code_fence
+        self.assertEqual(strip("```python\ndef a():\n\tb()\n```"), ("def a():\n\tb()", True))
+        self.assertEqual(strip("```\ndef a():\n\tb()\n```\n"), ("def a():\n\tb()", True))
+        unchanged = "def a():\n\tb()"
+        self.assertEqual(strip(unchanged), (unchanged, False))
+        # Text outside the block, or several blocks, are left for the format checks.
+        prose = "Plan:\n```python\ndef a():\n\tb()\n```"
+        self.assertEqual(strip(prose), (prose, False))
+        two = "```python\ndef a():\n```\n```python\ndef b():\n```"
+        self.assertEqual(strip(two), (two, False))
 
     def test_single_task_uses_its_named_graph(self):
         def graph(state):

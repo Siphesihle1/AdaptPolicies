@@ -51,7 +51,7 @@ cleanup() {
   set +e
   # Keep a run that was interrupted (e.g. by the time limit), never as a result.
   if [[ -n $current_run ]]; then
-    cp -r "$WORK/runs/$current_run" "$RESULTS/$current_run.incomplete-$SLURM_JOB_ID"
+    copy_home "$WORK/runs/$current_run" "$RESULTS/$current_run.incomplete-$SLURM_JOB_ID"
   fi
   declare -F stop_lmstudio_model >/dev/null && stop_lmstudio_model
   declare -F remove_staged_simulator >/dev/null && remove_staged_simulator
@@ -152,7 +152,7 @@ run_condition() {  # run_condition TEMP REASONING, e.g. t06 ron
   child=""
 
   # Copy results home; exit-code.txt is written last and marks the run complete.
-  cp -r "$run_dir" "$final"
+  copy_home "$run_dir" "$final"
   echo "$status" > "$final/exit-code.txt"
   rm -rf -- "$run_dir"
   current_run=""
@@ -177,6 +177,13 @@ make_home_dir() {  # make_home_dir DIR (inside $HOME)
     path+="/$part"
     [[ -d $path ]] || mkdir "$path" 2>/dev/null || { ls "${path%/*}" > /dev/null; [[ -d $path ]]; }
   done
+}
+
+copy_home() {  # copy_home SRC DEST: copy a node-local folder into home storage
+  # tar instead of cp -r: the nodes' cp (uutils) failed with "File exists" on a
+  # destination folder it had just created on NFS.
+  make_home_dir "$2"
+  tar -C "$1" -cf - . | tar -C "$2" -xf -
 }
 
 # ---- main ----

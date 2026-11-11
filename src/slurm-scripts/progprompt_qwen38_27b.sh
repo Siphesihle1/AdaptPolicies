@@ -26,7 +26,7 @@ export SWEEP_PLAN_TOKENS=8192   # config/dev-<tag>-<temp>-m8192-<reasoning>.yaml
 # Open-ended goals get a larger budget (configs set a 1200 s timeout for m16384).
 export SWEEP_PLAN_TOKENS_BY_DATASET="test_unseen_ambiguous_goals=16384"
 export SWEEP_GGUF="/datasets/$(id -un)/lmstudio/models/ggml-org/Qwen3.8-27B-GGUF/Qwen3.8-27B-Q4_K_M.gguf"
-export SWEEP_CAMPAIGN="${SWEEP_CAMPAIGN:-cluster_qwen38_27b_001}"
+export SWEEP_CAMPAIGN="${SWEEP_CAMPAIGN:-cluster_qwen38_27b_002}"
 export SWEEP_PARTITIONS="bigbatch"
 export SWEEP_TIME=2-00:00:00
 PROJECT_ROOT="${PROJECT_ROOT:-$HOME/AdaptPolicies}"

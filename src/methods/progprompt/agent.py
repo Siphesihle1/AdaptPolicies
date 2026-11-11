@@ -30,6 +30,24 @@ from typing import Any, Dict, List, Optional, Set, TypedDict
 sys.path.insert(0, os.getenv("JOB_OUTPUT_DIR", ""))
 
 
+def strip_code_fence(plan: str) -> tuple[str, bool]:
+    """Remove one Markdown code block wrapping the whole response.
+
+    Returns the plan and whether a wrapper was removed. Only a response that is a
+    single ```...``` block is unwrapped; anything else is returned unchanged, so
+    the format checks still reject stray or multiple fences.
+    """
+    lines = plan.strip().splitlines()
+    if (
+        len(lines) >= 2
+        and lines[0].strip().startswith("```")
+        and lines[-1].strip() == "```"
+        and not any(line.strip().startswith("```") for line in lines[1:-1])
+    ):
+        return "\n".join(lines[1:-1]), True
+    return plan, False
+
+
 def get_object_relations(state: Dict[str, Any]) -> Set[str]:
     obj_ids = dict(N(state).select("id", "class_name"))
 
@@ -59,6 +77,9 @@ class TaskRecord(TaskRecordFields, total=False):
     states_file: str
     chat_file: str
     chat_call_id: str
+    raw_plan: str
+    raw_format_compliant: bool
+    fence_stripped: bool
 
 
 class ProgPromptAgent:
@@ -248,7 +269,20 @@ class ProgPromptAgent:
                 self.export_results()
                 continue
 
-            record.update(plan=plan, status="generated")
+            # Contract compliance is judged on the raw response, before cleanup.
+            raw_plan = plan
+            raw_format_compliant = (
+                raw_plan.strip().startswith("def") and "```" not in raw_plan
+            )
+            plan, fence_stripped = strip_code_fence(raw_plan)
+            record.update(
+                plan=plan,
+                status="generated",
+                raw_format_compliant=raw_format_compliant,
+                fence_stripped=fence_stripped,
+            )
+            if fence_stripped:
+                record.update(raw_plan=raw_plan)
 
             if not plan.strip().startswith("def"):
                 print(
