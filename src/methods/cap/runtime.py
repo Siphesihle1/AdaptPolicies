@@ -129,7 +129,8 @@ def _rpc(connection, name, args, kwargs, call_id=None):
     return value
 
 
-def _worker(connection, task, episode_id, names, context, limits, generator, examples, inventory, thread_id):
+def _worker(connection, task, episode_id, names, context, limits, generator, examples, inventory, thread_id,
+            exclude_example_tasks):
     from .lmp import Session
     from methods import telemetry
     from methods.chat_transcript import PlanChatTranscript, capture_transcript
@@ -142,7 +143,8 @@ def _worker(connection, task, episode_id, names, context, limits, generator, exa
             connection.send(("event", kind, serialize(value)))
         with capture_transcript(transcript), telemetry.thread(thread_id=thread_id):
             session = Session(episode_id, bindings, context, limits, generator, emit, examples, inventory,
-                              context_query=lambda: _rpc(connection, "observation_context", (), {}, session.current_call))
+                              context_query=lambda: _rpc(connection, "observation_context", (), {}, session.current_call),
+                              exclude_example_tasks=exclude_example_tasks)
             result = session.policy(task)
             import json
             if len(json.dumps(serialize(result)).encode()) > limits.max_output_bytes:
@@ -164,7 +166,7 @@ class PolicyRuntime:
         self.chat = []
         self.native_pending = False
 
-    def run(self, task, examples="", inventory=(), thread_id="cap"):
+    def run(self, task, examples="", inventory=(), thread_id="cap", *, exclude_example_tasks=()):
         from .environment import ACTION_CLASSES
         from methods import telemetry
         from methods.chat_transcript import append_message, record_request, record_response
@@ -172,7 +174,7 @@ class PolicyRuntime:
         parent, child = ctx.Pipe()
         process = ctx.Process(target=_worker, args=(child, task, self.adapter.episode_id,
                     tuple(self.adapter.registry), self.adapter.context(), self.limits,
-                    self.generator, examples, inventory, thread_id))
+                    self.generator, examples, inventory, thread_id, tuple(exclude_example_tasks)))
         budget = Budget(self.limits)
         outcome = {"status": "execution_failed", "error": "worker_exited"}
         process.start()

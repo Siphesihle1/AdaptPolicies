@@ -29,7 +29,7 @@ def write_json(path, value):
 class CaPAgent(ExperimentMixin, EvaluationMixin):
     def __init__(self, env_id, test_set, examples_type="default", examples_num=3,
                  num_tasks=None, *, environment_factory=VHEnvironment, generator=None,
-                 limits=None):
+                 limits=None, example_tasks=None, exclude_example_tasks=()):
         config = get_config()
         if generator is None:
             require_method_profiles("cap")
@@ -43,7 +43,9 @@ class CaPAgent(ExperimentMixin, EvaluationMixin):
         self.instructions = {normalize_task_name(t): t for t in selected}
         if len(self.plans) != len(selected):
             raise ValueError("Duplicate task identity")
-        self.examples = select_examples(examples_type, examples_num)
+        self.exclude_example_tasks = tuple(exclude_example_tasks)
+        self.examples = select_examples(examples_type, examples_num, task_names=example_tasks,
+                                        exclude_tasks=self.exclude_example_tasks)
         self.final_states, self.initial_states = [], []
         self.exec_per_task, self.results, self.task_records, self.chat_transcripts = {}, {}, {}, {}
         self.num_tasks_parsed = self.num_tasks_executed = 0
@@ -55,6 +57,7 @@ class CaPAgent(ExperimentMixin, EvaluationMixin):
         self.output.mkdir(parents=True, exist_ok=True)
         write_json(self.output / "configuration.json", {**config, "resolved_cap": self.limits,
                    "examples_type": examples_type, "examples_num": examples_num,
+                   "example_tasks": example_tasks, "excluded_example_tasks": self.exclude_example_tasks,
                    "example_seed": 42, "instance_selection": "episode_scoped_explicit_id_or_legacy_class"})
 
     def execute_tasks(self):
@@ -92,7 +95,8 @@ class CaPAgent(ExperimentMixin, EvaluationMixin):
                         "room_names": sorted({n["class_name"] for n in env.graph["nodes"] if n.get("category") == "Rooms"}),
                     }
                     runtime = PolicyRuntime(adapter, self.limits, self.generator)
-                    execution = runtime.run(self.instructions[task], self.examples, inventory, thread_id)
+                    execution = runtime.run(self.instructions[task], self.examples, inventory, thread_id,
+                                            exclude_example_tasks=self.exclude_example_tasks)
                     record.update(status=execution["status"], error=execution.get("error"),
                                   final_state_available=execution["final_state_available"])
                     self.save_execution(directory, runtime, execution, record)

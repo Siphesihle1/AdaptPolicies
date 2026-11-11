@@ -11,7 +11,8 @@ from .prompt import build_prompt
 
 class Session:
     def __init__(self, episode_id, bindings, context, limits, generator=None,
-                 emit=lambda *args: None, examples="", inventory=(), context_query=None):
+                 emit=lambda *args: None, examples="", inventory=(), context_query=None,
+                 exclude_example_tasks=()):
         self.episode_id, self.limits = episode_id, limits
         self.context = context
         self.context_query = context_query or (lambda: context)
@@ -19,6 +20,7 @@ class Session:
         self.emit = emit
         self.generator = generator
         self.examples, self.inventory = examples, inventory
+        self.exclude_example_tasks = tuple(exclude_example_tasks)
         self.current_call = None
         self.nesting = 0
         self.namespace = {"__builtins__": BUILTINS, **bindings,
@@ -29,7 +31,8 @@ class Session:
     def generate(self, purpose, query, context=None, call_id=None):
         self.budget.consume("model_requests")
         prompt = build_prompt(self.episode_id, purpose, query, context,
-                              self.examples if purpose == "cap_policy" else "", self.inventory)
+                              self.examples if purpose == "cap_policy" else "", self.inventory,
+                              self.exclude_example_tasks)
         call_id = call_id or str(uuid4())
         parent = self.current_call
         started = time.monotonic()

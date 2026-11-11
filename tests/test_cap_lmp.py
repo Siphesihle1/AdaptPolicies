@@ -70,6 +70,18 @@ class LMPTests(unittest.TestCase):
             prompt = build_prompt("episode", "cap_question", "answer")
         self.assertIn("# request: new query\nret_val = 42", prompt)
 
+    def test_nested_generation_omits_held_out_task_helper_examples(self):
+        session = self.session({"cap_policy": "def policy():\n    return count_items()",
+                                "cap_function": "def count_items():\n    return 1"})
+        session.exclude_example_tasks = ("heat_some_pie",)
+        self.assertEqual(session.policy("heat some pie"), 1)
+        requests = [value for kind, value in self.events if kind == "generation_request"]
+        helper_prompt = ET.fromstring("<prompt>" + requests[-1]["prompt"] + "</prompt>")
+        self.assertNotIn("load_microwave", helper_prompt.findtext("examples"))
+        self.assertNotIn("run_heating_cycle", helper_prompt.findtext("examples"))
+        self.assertIn("load_washing_machine", helper_prompt.findtext("examples"))
+
+
     def test_unscoped_context_is_rejected_before_prompting(self):
         for context in ({"episode_id": "old", "observation_revision": 1, "visible_objects": []},
                         {"episode_id": "episode", "visible_objects": []}):

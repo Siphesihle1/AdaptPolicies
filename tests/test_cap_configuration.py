@@ -8,11 +8,25 @@ from unittest.mock import patch
 
 from methods import config, telemetry
 from methods.cap import run_eval
-from methods.cap.prompt import select_examples
+from methods.cap.prompt import load_examples, select_examples
 from methods.cap.runtime import Limits
 
 
 class ConfigurationTests(unittest.TestCase):
+    def test_explicit_training_folds_exclude_target_and_its_helpers(self):
+        pool = ("refrigerate_the_salmon", "wash_clothes", "heat_some_pie", "bring_me_some_fruit")
+        for target in ("wash_clothes", "heat_some_pie"):
+            with self.subTest(target=target):
+                examples = select_examples(number=3, task_names=pool, exclude_tasks=(target,))
+                names = [line.split("# task: ", 1)[1] for line in examples.splitlines() if line.startswith("# task:")]
+                self.assertEqual(len(names), 3)
+                self.assertNotIn(target, names)
+                helpers = load_examples("cap_function", (target,))
+                self.assertFalse(any(row.get("task") == target for row in helpers))
+                self.assertTrue(any(row["request"].startswith("place_held_in_container(") for row in helpers))
+        with self.assertRaisesRegex(ValueError, "Not enough examples"):
+            select_examples(number=4, task_names=pool, exclude_tasks=("heat_some_pie",))
+
     def test_cap_cli_uses_cap_only_experiment_metadata(self):
         args = SimpleNamespace(expt_name="cap-smoke", test_set="train", env_id=0,
                                examples_type="default", examples_num=3, num_tasks=1)

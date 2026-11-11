@@ -30,6 +30,10 @@ RULES = """- Use the available APIs for actions and observations; do not redefin
 
 API = """Actions accept ObjectRef values or class-name strings and return ActionResult with status and error.
 {actions}
+grab(item): pick up the specified item.
+open(container), close(container): change the container's open state; they do not pick it up.
+putin(item, container): place a held item inside a different, accessible container. Open an openable container first.
+putback(item, surface): place a held item onto the destination surface.
 ObjectRef exposes id and name; a reference identifies an instance, not its current state.
 Environment objects lists known class names; observation describes the current room, visible states and relations.
 get_visible_objects() -> list[ObjectRef], excluding rooms and the character
@@ -43,15 +47,18 @@ Allowed builtins: abs all any bool dict enumerate float frozenset int len list m
 range reversed round set sorted str sum tuple zip isinstance ValueError TypeError."""
 
 
-def load_examples(purpose):
-    return json.loads((ROOT / "examples" / f"{PROMPTS[purpose]}.json").read_text(encoding="utf-8"))
+def load_examples(purpose, exclude_tasks=()):
+    examples = json.loads((ROOT / "examples" / f"{PROMPTS[purpose]}.json").read_text(encoding="utf-8"))
+    if isinstance(examples, dict):
+        return {task: code for task, code in examples.items() if task not in exclude_tasks}
+    return [row for row in examples if row.get("task") not in exclude_tasks]
 
 
 def section(name, content):
     return f"<{name}>\n{escape(content)}\n</{name}>"
 
 
-def build_prompt(episode_id, purpose, query, context=None, examples="", inventory=()):
+def build_prompt(episode_id, purpose, query, context=None, examples="", inventory=(), exclude_tasks=()):
     template = (ROOT / "prompts" / f"{PROMPTS[purpose]}.txt").read_text(encoding="utf-8").strip()
     classes = inventory.get("object_classes", []) if isinstance(inventory, dict) else list(inventory)
     rooms = inventory.get("room_names", []) if isinstance(inventory, dict) else []
@@ -60,9 +67,10 @@ def build_prompt(episode_id, purpose, query, context=None, examples="", inventor
         rules += "\n- Use queries only; do not perform actions."
     if purpose == "cap_question":
         rules += "\n- Return None for an answer that cannot currently be observed."
-    actions = ", ".join(f"{name}(obj, target)" if name in {"putin", "putback", "apply"}
-                        else f"{name}()" if name == "standup" else f"{name}(obj)"
-                        for name in ACTION_CLASSES)
+    parameters = {"putin": "item, container", "putback": "item, surface", "apply": "item, target",
+                  "grab": "item", "open": "container", "close": "container",
+                  "walk": "destination", "run": "destination", "find": "target", "standup": ""}
+    actions = ", ".join(f"{name}({parameters.get(name, 'target')})" for name in ACTION_CLASSES)
     parts = [section("instructions", template), section("rules", rules),
              section("api", API.format(actions=actions))]
     environment = [section("objects", json.dumps(classes)), section("rooms", json.dumps(rooms))]
@@ -84,7 +92,8 @@ def build_prompt(episode_id, purpose, query, context=None, examples="", inventor
         environment.append(section("observation", text))
     parts.append("<environment>\n" + "\n".join(environment) + "\n</environment>")
     if purpose != "cap_policy":
-        examples = "\n\n".join(f"# request: {row['request']}\n{row['code']}" for row in load_examples(purpose))
+        examples = "\n\n".join(f"# request: {row['request']}\n{row['code']}"
+                               for row in load_examples(purpose, exclude_tasks))
     parts.append(section("examples", examples))
     parts.append(section("task" if purpose == "cap_policy" else "request", query))
     parts.append(section("output-format", OUTPUT_FORMATS[purpose] +
@@ -92,22 +101,29 @@ def build_prompt(episode_id, purpose, query, context=None, examples="", inventor
     return "\n\n".join(parts)
 
 
-def select_examples(example_type="default", number=3, seed=42):
+def select_examples(example_type="default", number=3, seed=42, *, task_names=None, exclude_tasks=()):
     """Select external CaP examples with ProgPrompt's identities and seed policy."""
     import random
     from methods.progprompt.constants import DEFAULT_EXAMPLES
 
-    examples = load_examples("cap_policy")
+    examples = load_examples("cap_policy", exclude_tasks)
     if not 1 <= number <= 6:
         raise ValueError("examples_num must be between 1 and 6")
-    if example_type == "random":
+    if task_names is not None:
+        if example_type != "default" or len(set(task_names)) != len(task_names):
+            raise ValueError("Explicit example identities require default selection and no duplicates")
+        keys = [task for task in task_names if task not in exclude_tasks]
+    elif example_type == "random":
         from methods.shared.datasets import dataset_root
         data = json.loads((dataset_root() / "pythonic_plans" / "train_complete_plan_set.json").read_text())
-        keys = random.Random(seed).sample([name for entry in data for name in entry], number)
+        keys = random.Random(seed).sample([name for entry in data for name in entry if name not in exclude_tasks], number)
     elif example_type == "default":
-        keys = DEFAULT_EXAMPLES[:number]
+        keys = [task for task in DEFAULT_EXAMPLES if task not in exclude_tasks]
     else:
         raise ValueError("Unknown example selection")
     if any(key not in examples for key in keys):
         raise ValueError("Selected training identity has no CaP representation")
+    if (exclude_tasks or task_names is not None) and len(keys) < number:
+        raise ValueError("Not enough examples after task exclusions")
+    keys = keys[:number]
     return "\n\n".join(f"# task: {key}\n{examples[key]}" for key in keys)

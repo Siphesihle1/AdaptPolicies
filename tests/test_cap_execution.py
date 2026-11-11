@@ -46,7 +46,8 @@ class ExecutionTests(unittest.TestCase):
         self.assertTrue(any(edge["caller"] == "place_held_in_container" and
                             edge["dependency"] == "ensure_open" for edge in dependencies["edges"]))
 
-    def agent(self, responses, tasks=("open fridge", "bad program"), factory=FakeEnvironment):
+    def agent(self, responses, tasks=("open fridge", "bad program"), factory=FakeEnvironment,
+              exclude_example_tasks=()):
         initial = FakeEnvironment().graph
         final = copy.deepcopy(initial)
         final["nodes"][3]["states"] = ["OPEN"]
@@ -56,7 +57,7 @@ class ExecutionTests(unittest.TestCase):
              patch("methods.cap.agent.load_tasks", return_value=list(tasks)), \
              patch("methods.cap.agent.load_ground_truth_graphs", return_value=graphs):
             agent = CaPAgent(0, "test_seen", generator=FakeProvider(responses), environment_factory=factory,
-                             limits=Limits(task_seconds=30))
+                             limits=Limits(task_seconds=30), exclude_example_tasks=exclude_example_tasks)
             agent.execute_tasks()
         return agent, output
 
@@ -95,7 +96,7 @@ class ExecutionTests(unittest.TestCase):
             "cap_policy": "def policy():\n    objects = parse_objects('visible mugs')\n    return count_mugs(objects)",
             "cap_objects": "ret_val = [o for o in get_visible_objects() if o.name == 'mug']",
             "cap_function": "def count_mugs(objects):\n    return len(objects)",
-        }, tasks=("count mugs",))
+        }, tasks=("count mugs",), exclude_example_tasks=("heat_some_pie",))
         execution = json.loads((output / "tasks" / "count_mugs" / "execution.json").read_text())
         self.assertEqual(execution["result"], 2)
         self.assertEqual(execution["generation_counts"]["model_requests"], 3)
@@ -103,6 +104,9 @@ class ExecutionTests(unittest.TestCase):
         requests = [row for row in generations if row["kind"] == "generation_request"]
         self.assertEqual({r["purpose"] for r in requests}, {"cap_policy", "cap_function", "cap_objects"})
         self.assertEqual(len({r["episode_id"] for r in requests}), 1)
+        helper_prompt = next(r["prompt"] for r in requests if r["purpose"] == "cap_function")
+        self.assertNotIn("run_heating_cycle", helper_prompt)
+        self.assertIn("run_wash_cycle", helper_prompt)
 
     def test_uncertain_native_state_has_no_fabricated_final_and_stops_run(self):
         class UncertainEnvironment(FakeEnvironment):

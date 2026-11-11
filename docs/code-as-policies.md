@@ -20,6 +20,14 @@ the cycle, and unloading. Its loading path composes three helper levels below th
 are few-shot examples, not functions preloaded into the live execution namespace;
 the model must generate or define any helper used by a new policy.
 
+The API hints distinguish the item being moved from its destination: `grab(item)`
+picks up the item, `open(container)` changes access without picking it up,
+`putin(item, container)` places a held item inside a different accessible container,
+and `putback(item, surface)` places it on a surface. These are prompt contracts;
+the action adapter has no additional placement guard or automatic repair.
+The heating training example similarly separates loading a microwave, running its
+cycle, and retrieving the heated food, reusing the placement and opening helpers.
+
 All four LMPs use XML sections: `<instructions>`, `<rules>`, `<api>`,
 `<environment>`, `<examples>`, `<task>` (or `<request>` for nested programs), and
 `<output-format>`. Environment data has separate `<objects>`, `<rooms>`, and optional
@@ -31,6 +39,14 @@ visibility and state after movement.
 Examples are loaded from `src/methods/cap/examples/*.json`, independently of the short
 instruction templates in `prompts/`. Policy examples retain ProgPrompt's configured
 default identities, count, or seeded random selection; nested LMPs load their own examples.
+Task-specific helper examples carry a `task` provenance field. For target-excluded
+training diagnostics, `CaPAgent(example_tasks=pool, exclude_example_tasks=(target,))`
+selects policy examples from the explicit pool and excludes helpers tagged with the
+target throughout recursive generation. Shared generic helpers remain available.
+The selected pool and exclusions are saved in configuration artifacts. Normal default
+and seeded random selection are unchanged when these optional arguments are omitted.
+Literal example replay validates supplied code; target-excluded model generation and
+execution separately assess whether the model can construct a policy from other tasks.
 
 Install the repository's Python 3.10 environment and activate its existing environment
 hooks. Point `ADAPT_DATASET_DIR` (or the compatible `PROGPROMPT_DATASET_DIR`) at
