@@ -23,6 +23,8 @@ RULES = """- Use the available APIs for actions and observations; do not redefin
 - Query current states and relations when needed. None means unknown, not empty or false.
 - Visibility does not establish proximity or action applicability.
 - Use Python control flow and helpers where useful. Undefined helper calls trigger helper generation; avoid dependency cycles.
+- Keep each helper focused on one responsibility. Decompose complex helpers into smaller helpers and compose them through nested calls.
+- Sequence actions according to their preconditions and dependencies. Before leaving a location, acquire any objects needed elsewhere and complete prerequisites that require access to that location. Recheck visibility and state after moving.
 - Use parse_objects for object selection and parse_question for observation-based questions.
 - Do not import modules, access private attributes, or perform external I/O."""
 

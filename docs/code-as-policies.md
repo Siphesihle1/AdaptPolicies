@@ -23,6 +23,9 @@ All four LMPs use XML sections: `<instructions>`, `<rules>`, `<api>`,
 `<output-format>`. Environment data has separate `<objects>`, `<rooms>`, and optional
 `<observation>` sections. Rules describe API use and execution constraints; the task
 contains only the requested goal. Dynamic content is escaped to preserve section boundaries.
+Rules encourage focused helpers with nested composition for complex functions, and
+action ordering that satisfies preconditions before leaving a location and rechecks
+visibility and state after movement.
 Examples are loaded from `src/methods/cap/examples/*.json`, independently of the short
 instruction templates in `prompts/`. Policy examples retain ProgPrompt's configured
 default identities, count, or seeded random selection; nested LMPs load their own examples.
