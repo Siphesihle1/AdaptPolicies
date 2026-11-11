@@ -18,7 +18,7 @@ OUTPUT_FORMATS = {
 }
 
 RULES = """- Use the available APIs for actions and observations; do not redefine them.
-- Check action outcomes through result.status: 'succeeded', 'failed', or 'skipped'; never test result truthiness.
+- Actions return ActionResult: check result.status explicitly ('succeeded', 'failed', or 'skipped'), never result truthiness. Helpers may return booleans; check them according to their return contract.
 - Obtain object references through queries; never construct them or copy observation data into code.
 - Query current states and relations when needed. None means unknown, not empty or false.
 - Visibility does not establish proximity or action applicability.

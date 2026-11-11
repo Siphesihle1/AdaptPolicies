@@ -1,44 +1,44 @@
 [
   {
     "request": "acquire_object(item)",
-    "code": "def acquire_object(item):\n    if is_holding(item):\n        return True\n    if walk(item).status != 'succeeded':\n        return False\n    return grab(item).status == 'succeeded'"
+    "code": "def acquire_object(item):\n    \"\"\"Return True on success and False when a prerequisite or action fails.\"\"\"\n    if is_holding(item):\n        return True\n    if walk(item).status != 'succeeded':\n        return False\n    return grab(item).status == 'succeeded'"
   },
   {
     "request": "ensure_open(container)",
-    "code": "def ensure_open(container):\n    if walk(container).status != 'succeeded':\n        return False\n    states = get_object_states(container)\n    if states is None:\n        return False\n    return 'OPEN' in states or open(container).status == 'succeeded'"
+    "code": "def ensure_open(container):\n    \"\"\"Return True on success and False when a prerequisite or action fails.\"\"\"\n    if walk(container).status != 'succeeded':\n        return False\n    states = get_object_states(container)\n    if states is None:\n        return False\n    return 'OPEN' in states or open(container).status == 'succeeded'"
   },
   {
     "request": "place_held_in_container(item, container)",
-    "code": "def place_held_in_container(item, container):\n    if not is_holding(item):\n        return False\n    if not ensure_open(container):\n        return False\n    return putin(item, container).status == 'succeeded'"
+    "code": "def place_held_in_container(item, container):\n    \"\"\"Return True on success and False when a prerequisite or action fails.\"\"\"\n    if not is_holding(item):\n        return False\n    if not ensure_open(container):\n        return False\n    return putin(item, container).status == 'succeeded'"
   },
   {
     "request": "load_washing_machine(clothes, machine)",
-    "code": "def load_washing_machine(clothes, machine):\n    if not place_held_in_container(clothes, machine):\n        return False\n    return close(machine).status == \"succeeded\"",
+    "code": "def load_washing_machine(clothes, machine):\n    \"\"\"Return True on success and False when a prerequisite or action fails.\"\"\"\n    if not place_held_in_container(clothes, machine):\n        return False\n    return close(machine).status == \"succeeded\"",
     "task": "wash_clothes"
   },
   {
     "request": "run_wash_cycle(machine)",
-    "code": "def run_wash_cycle(machine):\n    if switchon(machine).status != \"succeeded\":\n        return False\n    return switchoff(machine).status == \"succeeded\"",
+    "code": "def run_wash_cycle(machine):\n    \"\"\"Return True on success and False when a prerequisite or action fails.\"\"\"\n    if switchon(machine).status != \"succeeded\":\n        return False\n    return switchoff(machine).status == \"succeeded\"",
     "task": "wash_clothes"
   },
   {
     "request": "unload_washing_machine(clothes, machine)",
-    "code": "def unload_washing_machine(clothes, machine):\n    if not ensure_open(machine):\n        return False\n    if grab(clothes).status != \"succeeded\":\n        return False\n    return close(machine).status == \"succeeded\"",
+    "code": "def unload_washing_machine(clothes, machine):\n    \"\"\"Return True on success and False when a prerequisite or action fails.\"\"\"\n    if not ensure_open(machine):\n        return False\n    if grab(clothes).status != \"succeeded\":\n        return False\n    return close(machine).status == \"succeeded\"",
     "task": "wash_clothes"
   },
   {
     "task": "heat_some_pie",
     "request": "load_microwave(food, microwave)",
-    "code": "def load_microwave(food, microwave):\n    if not place_held_in_container(food, microwave):\n        return False\n    return close(microwave).status == \"succeeded\""
+    "code": "def load_microwave(food, microwave):\n    \"\"\"Return True on success and False when a prerequisite or action fails.\"\"\"\n    if not place_held_in_container(food, microwave):\n        return False\n    return close(microwave).status == \"succeeded\""
   },
   {
     "task": "heat_some_pie",
     "request": "run_heating_cycle(microwave)",
-    "code": "def run_heating_cycle(microwave):\n    if switchon(microwave).status != \"succeeded\":\n        return False\n    return switchoff(microwave).status == \"succeeded\""
+    "code": "def run_heating_cycle(microwave):\n    \"\"\"Return True on success and False when a prerequisite or action fails.\"\"\"\n    if switchon(microwave).status != \"succeeded\":\n        return False\n    return switchoff(microwave).status == \"succeeded\""
   },
   {
     "task": "heat_some_pie",
     "request": "retrieve_heated_food(food, microwave)",
-    "code": "def retrieve_heated_food(food, microwave):\n    if not ensure_open(microwave):\n        return False\n    if grab(food).status != \"succeeded\":\n        return False\n    return close(microwave).status == \"succeeded\""
+    "code": "def retrieve_heated_food(food, microwave):\n    \"\"\"Return True on success and False when a prerequisite or action fails.\"\"\"\n    if not ensure_open(microwave):\n        return False\n    if grab(food).status != \"succeeded\":\n        return False\n    return close(microwave).status == \"succeeded\""
   }
 ]
