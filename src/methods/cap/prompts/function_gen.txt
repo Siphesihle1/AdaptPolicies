@@ -2,6 +2,27 @@ Generate exactly the requested helper function definition with a compatible sign
 Compose permitted APIs and ordinary Python. Other helpers can be generated recursively.
 Do not implement new physical actions, import libraries, or recurse in dependency cycles.
 Example episode_id: example-helper
-def observed_open(obj):
-    states = get_object_states(obj)
-    return None if states is None else "OPEN" in states
+# define function: acquire_object(ref)
+def acquire_object(ref):
+    if is_holding(ref):
+        return True
+    if walk(ref).status != "succeeded":
+        return False
+    return grab(ref).status == "succeeded"
+
+# define function: ensure_open(container)
+def ensure_open(container):
+    if walk(container).status != "succeeded":
+        return False
+    states = get_object_states(container)
+    if states is None:
+        return False
+    return "OPEN" in states or open(container).status == "succeeded"
+
+# define function: place_held_in_container(obj, container)
+def place_held_in_container(obj, container):
+    if not is_holding(obj):
+        return False
+    if not ensure_open(container):
+        return False
+    return putin(obj, container).status == "succeeded"

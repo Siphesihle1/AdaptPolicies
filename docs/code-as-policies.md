@@ -12,6 +12,11 @@ task does not prescribe function names, helper definitions, action order or LMP
 calls. The model chooses its decomposition; a direct action program is valid.
 Specialized LMPs and recursive helper generation run only if the policy uses them.
 Evaluate the resulting state independently of the policy's return value.
+The three default example policies demonstrate `parse_objects`, `parse_question`,
+and calls to reusable helpers. The function-generation prompt demonstrates acquisition,
+opening, and a placement helper that composes the opening helper. These definitions
+are few-shot examples, not functions preloaded into the live execution namespace;
+the model must generate or define any helper used by a new policy.
 
 Install the repository's Python 3.10 environment and activate its existing environment
 hooks. Point `ADAPT_DATASET_DIR` (or the compatible `PROGPROMPT_DATASET_DIR`) at

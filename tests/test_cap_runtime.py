@@ -83,9 +83,12 @@ weave:
     def test_native_call_deadline_invalidates_episode(self):
         from threading import Event
         release = Event()
-        self.api.registry["walk"] = lambda *args: release.wait(30)
+        self.api.registry["walk"] = lambda *args: release.wait()
         try:
-            result = self.run_policy("def policy():\n    walk('mug')", task_seconds=10)
+            # Allow the same worker startup budget as the other execution tests.
+            # Keep the native call blocked until cleanup so only its deadline
+            # can end the run, even on a slower mounted checkout.
+            result = self.run_policy("def policy():\n    walk('mug')")
             self.assertIn("native_action_deadline", result["error"])
             self.assertFalse(result["final_state_available"])
             self.assertTrue(self.env.execution_failed)

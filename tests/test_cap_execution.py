@@ -1,3 +1,4 @@
+import ast
 import copy
 import json
 import os
@@ -9,11 +10,40 @@ import test_cap_runtime as runtime_tests
 from cap_fakes import FakeEnvironment, FakeProvider
 from methods.cap.agent import CaPAgent
 from methods.cap.runtime import Limits
+from methods.cap.prompt import select_examples
 from methods.shared.evaluation import EvaluationMixin
 
 
 class ExecutionTests(unittest.TestCase):
     setUp = runtime_tests.RuntimeTests.setUp
+
+    def test_few_shot_helper_bodies_compose_with_specialized_lmps(self):
+        prompt = Path(__file__).parents[1] / "src/methods/cap/prompts/function_gen.txt"
+        text = prompt.read_text()
+        tree = ast.parse(text[text.index("def acquire_object"):])
+        helpers = {node.name + "(": ast.unparse(node) for node in tree.body}
+        examples = select_examples("default", 3)
+        self.assertIn("place_held_in_container(", examples)
+        self.assertIn("parse_question(", examples)
+        self.assertNotIn("def acquire_object", examples)
+        agent, output = self.agent({
+            "cap_policy": '''def policy():
+    mugs = parse_objects('visible mugs')
+    fridges = parse_objects('visible fridge')
+    if acquire_object(mugs[0]):
+        return place_held_in_container(mugs[0], fridges[0])''',
+            "cap_objects": {
+                "visible mugs": "ret_val = [o for o in get_visible_objects() if o.name == 'mug']",
+                "visible fridge": "ret_val = [o for o in get_visible_objects() if o.name == 'fridge']",
+            },
+            "cap_function": helpers,
+        }, tasks=("store mug",))
+        execution = json.loads((output / "tasks/store_mug/execution.json").read_text())
+        self.assertEqual(execution["status"], "executed", execution)
+        self.assertIs(execution["result"], True)
+        dependencies = json.loads((output / "tasks/store_mug/dependencies.json").read_text())
+        self.assertTrue(any(edge["caller"] == "place_held_in_container" and
+                            edge["dependency"] == "ensure_open" for edge in dependencies["edges"]))
 
     def agent(self, responses, tasks=("open fridge", "bad program"), factory=FakeEnvironment):
         initial = FakeEnvironment().graph

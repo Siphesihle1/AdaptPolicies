@@ -73,30 +73,37 @@ def select_examples(example_type="default", number=3, seed=42):
         "refrigerate_the_salmon": '''def policy():
     walk("kitchen")
     find("salmon")
-    if grab("salmon").status == "succeeded":
-        find("fridge")
-        if open("fridge").status == "succeeded":
-            putin("salmon", "fridge")
-            close("fridge")''',
+    salmon = parse_objects("visible salmon")
+    if not salmon or not acquire_object(salmon[0]):
+        return
+    find("fridge")
+    fridges = parse_objects("visible fridges")
+    if fridges and place_held_in_container(salmon[0], fridges[0]):
+        close(fridges[0])''',
         "bring_me_some_fruit": '''def policy():
     walk("kitchen")
     fruit = parse_objects("visible fruit")
-    for obj in fruit:
-        if walk(obj).status == "succeeded":
-            if grab(obj).status == "succeeded":
-                walk("livingroom")
-                find("coffeetable")
-                putback(obj, "coffeetable")''',
+    if not fruit or not acquire_object(fruit[0]):
+        return
+    walk("livingroom")
+    return parse_question("Am I holding any currently visible fruit?")''',
         "wash_clothes": '''def policy():
-    walk("bedroom")
+    walk("livingroom")
     find("clothespile")
-    if grab("clothespile").status == "succeeded":
-        walk("bathroom")
-        find("washingmachine")
-        open("washingmachine")
-        putin("clothespile", "washingmachine")
-        close("washingmachine")
-        switchon("washingmachine")''',
+    clothes = parse_objects("visible piles of clothes")
+    if not clothes or not acquire_object(clothes[0]):
+        return
+    find("washingmachine")
+    machines = parse_objects("visible washing machines")
+    if not machines or not place_held_in_container(clothes[0], machines[0]):
+        return
+    close(machines[0])
+    switchon(machines[0])
+    switchoff(machines[0])
+    if ensure_open(machines[0]):
+        acquire_object(clothes[0])
+        close(machines[0])
+    return parse_question("Am I holding washed clothes?")''',
         "put_apple_in_fridge": '''def policy():
     walk("kitchen")
     apples = [o for o in get_visible_objects() if o.name == "apple"]
