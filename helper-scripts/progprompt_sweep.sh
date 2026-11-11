@@ -101,8 +101,12 @@ snapshot_code() {
 }
 
 load_model() {
+  # Without a working GPU the loader falls back to the CPU engine (the 27B ran at
+  # ~0.6 tok/s on mscluster76), and every run would time out. Stop instead.
+  nvidia-smi -L > /dev/null 2>&1 || { echo "No working GPU on $(hostname -s)." >&2; exit 1; }
   export LMSTUDIO_MODEL_ID="$SWEEP_MODEL_ID" LMSTUDIO_CONTEXT_LENGTH=64000 LMSTUDIO_PORT=1234
   source "$REPO/helper-scripts/load_lmstudio_model.sh" "$SWEEP_GGUF"
+  [[ $LMSTUDIO_ENGINE == *cuda* ]] || { echo "Not a CUDA engine: $LMSTUDIO_ENGINE" >&2; exit 1; }
 }
 
 record_provenance() {

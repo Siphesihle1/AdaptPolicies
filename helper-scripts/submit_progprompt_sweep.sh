@@ -73,8 +73,10 @@ for dataset in "${datasets[@]}"; do
     target=$(IFS=,; echo "${partitions[*]}")
     placement="queued; first free node"
   fi
-  submit=(sbatch --parsable --partition="$target" --time="$SWEEP_TIME"
-    --job-name="$name" "$job_script" "$dataset")
+  submit=(sbatch --parsable --partition="$target" --time="$SWEEP_TIME" --job-name="$name")
+  # Nodes with known hardware faults (SWEEP_EXCLUDE_NODES, comma-separated).
+  [[ -n ${SWEEP_EXCLUDE_NODES:-} ]] && submit+=(--exclude="$SWEEP_EXCLUDE_NODES")
+  submit+=("$job_script" "$dataset")
   if [[ ${SWEEP_DRY_RUN:-0} == 1 ]]; then
     echo "$dataset: would run on $target ($placement): ${submit[*]}"
     continue

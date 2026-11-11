@@ -29,6 +29,9 @@ export SWEEP_GGUF="/datasets/$(id -un)/lmstudio/models/ggml-org/Qwen3.8-27B-GGUF
 export SWEEP_CAMPAIGN="${SWEEP_CAMPAIGN:-cluster_qwen38_27b_002}"
 export SWEEP_PARTITIONS="bigbatch"
 export SWEEP_TIME=2-00:00:00
+# Known-faulty nodes, skipped at submission. mscluster76: GPU not found by
+# nvidia-smi (2026-11-11), so LM Studio fell back to the CPU.
+export SWEEP_EXCLUDE_NODES=mscluster76
 PROJECT_ROOT="${PROJECT_ROOT:-$HOME/AdaptPolicies}"
 
 if [[ -z ${SLURM_JOB_ID:-} ]]; then
