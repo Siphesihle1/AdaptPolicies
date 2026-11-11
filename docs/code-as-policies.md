@@ -6,6 +6,13 @@ execute specialized programs assigning `ret_val`. Unresolved direct function cal
 trigger depth-first helper generation. Generated code is never run through the
 ProgPrompt parser, and notebooks are not executed.
 
+Task input is the natural-language goal, such as `Open the fridge.` API hints,
+few-shot examples and observation context describe the available interface. The
+task does not prescribe function names, helper definitions, action order or LMP
+calls. The model chooses its decomposition; a direct action program is valid.
+Specialized LMPs and recursive helper generation run only if the policy uses them.
+Evaluate the resulting state independently of the policy's return value.
+
 Install the repository's Python 3.10 environment and activate its existing environment
 hooks. Point `ADAPT_DATASET_DIR` (or the compatible `PROGPROMPT_DATASET_DIR`) at
 `src/methods/progprompt/data`. Set `JOB_OUTPUT_DIR`, `EXPERIMENT_NAME` and `SIM_PORT`

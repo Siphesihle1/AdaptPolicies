@@ -1,3 +1,5 @@
 Generate a complete def policy(): function, invoked exactly once by the runner.
 Use branches, loops, local variables and helper composition as needed for the task.
+Choose the action sequence and abstractions from the task and examples. Direct API
+calls are valid; helper generation and specialized LMP calls are optional.
 Return only Python. Execution completing does not establish goal success.
