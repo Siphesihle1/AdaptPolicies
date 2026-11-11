@@ -1,1 +1,0 @@
-Write a Python policy to complete the task in VirtualHome.

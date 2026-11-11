@@ -45,7 +45,7 @@ The API prompt identifies `run` as navigation, `switchon`/`switchoff` as device 
 and `apply` as the supported held toothpaste-to-brush interaction with an open tube cap.
 Object references preserve identity without guaranteeing current visibility or accessibility.
 Examples are loaded from `src/methods/cap/examples/*.json`, independently of the short
-instruction templates in `prompts/`. Policy examples retain ProgPrompt's configured
+instruction constants in `prompt.py`. Policy examples retain ProgPrompt's configured
 default identities, count, or seeded random selection; nested LMPs load their own examples.
 Task-specific helper examples carry a `task` provenance field. For target-excluded
 training diagnostics, `CaPAgent(example_tasks=pool, exclude_example_tasks=(target,))`

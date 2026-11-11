@@ -9,6 +9,12 @@ from .environment import ACTION_CLASSES
 ROOT = Path(__file__).parent
 PROMPTS = {"cap_policy": "policy", "cap_function": "function_gen",
            "cap_objects": "parse_objects", "cap_question": "parse_question"}
+INSTRUCTIONS = {
+    "cap_policy": "Write a Python policy to complete the task in VirtualHome.",
+    "cap_function": "Implement the requested helper for its call site and originating program.",
+    "cap_objects": "Write Python code selecting currently visible objects matching the description.",
+    "cap_question": "Write Python code computing the answer from current observations.",
+}
 OUTPUT_FORMATS = {
     "cap_policy": "Define policy() with no arguments. Additional helper definitions are allowed. "
                   "Only function definitions are allowed at module scope.",
@@ -62,7 +68,7 @@ def section(name, content):
 
 
 def build_prompt(episode_id, purpose, query, context=None, examples="", inventory=(), exclude_tasks=()):
-    template = (ROOT / "prompts" / f"{PROMPTS[purpose]}.txt").read_text(encoding="utf-8").strip()
+    template = INSTRUCTIONS[purpose]
     classes = inventory.get("object_classes", []) if isinstance(inventory, dict) else list(inventory)
     rooms = inventory.get("room_names", []) if isinstance(inventory, dict) else []
     rules = RULES

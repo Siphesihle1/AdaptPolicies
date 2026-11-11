@@ -1,1 +1,0 @@
-Write Python code selecting currently visible objects matching the description.
