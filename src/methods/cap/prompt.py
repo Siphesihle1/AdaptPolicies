@@ -31,7 +31,7 @@ RULES = """- Use the available APIs for actions and observations; do not redefin
 API = """Actions accept ObjectRef values or class-name strings and return ActionResult with status and error.
 {actions}
 ObjectRef exposes id and name; a reference identifies an instance, not its current state.
-Environment objects lists known class names; observation lists visible class counts.
+Environment objects lists known class names; observation describes the current room, visible states and relations.
 get_visible_objects() -> list[ObjectRef], excluding rooms and the character
 get_object_states(ref) -> frozenset[str] or None
 get_objects_in(ref), get_objects_on(ref) -> direct observed list[ObjectRef] or None when inaccessible
@@ -69,8 +69,19 @@ def build_prompt(episode_id, purpose, query, context=None, examples="", inventor
     if context is not None:
         if context["episode_id"] != episode_id or "observation_revision" not in context:
             raise ValueError("Unscoped observation context")
-        counts = Counter(obj.name for obj in context["visible_objects"])
-        environment.append(section("observation", json.dumps(dict(sorted(counts.items())))))
+        observation = context.get("observation")
+        if observation is None:
+            # Minimal contexts remain useful for embedding and offline sessions.
+            counts = Counter(obj.name for obj in context["visible_objects"])
+            observation = {"current_room": None,
+                           "visible_objects": [name + (f" ({count})" if count > 1 else "")
+                                               for name, count in sorted(counts.items())],
+                           "relations": [], "held_objects": []}
+        text = (f"Current room: {observation['current_room'] or 'unknown'}\n"
+                + "You see: " + ", ".join(observation["visible_objects"]) + "\n"
+                + "Relations: " + ", ".join(observation["relations"]) + "\n"
+                + "You hold: " + (", ".join(observation["held_objects"]) or "nothing"))
+        environment.append(section("observation", text))
     parts.append("<environment>\n" + "\n".join(environment) + "\n</environment>")
     if purpose != "cap_policy":
         examples = "\n\n".join(f"# request: {row['request']}\n{row['code']}" for row in load_examples(purpose))

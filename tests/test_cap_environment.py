@@ -54,3 +54,40 @@ class EnvironmentTests(unittest.TestCase):
         self.env.execution_failed = True
         with self.assertRaisesRegex(RuntimeError, "uncertain_native_state"):
             self.api.action("open", "fridge")
+
+    def test_context_describes_only_visible_states_and_relations(self):
+        context = self.api.context()
+        observation = context["observation"]
+        self.assertEqual(observation["current_room"], "kitchen")
+        self.assertIn("fridge is CLOSED", observation["visible_objects"])
+        self.assertIn("mug (2)", observation["visible_objects"])
+        self.assertIn("fridge INSIDE kitchen", observation["relations"])
+        self.assertFalse(any("apple" in fact for fact in observation["visible_objects"] + observation["relations"]))
+        self.assertFalse(any("bedroom" in fact for fact in observation["relations"]))
+        self.api.action("open", "fridge")
+        fresh = self.api.context()["observation"]
+        self.assertIn("apple INSIDE fridge", fresh["relations"])
+        self.assertIn("fridge is OPEN", fresh["visible_objects"])
+        self.assertIn("fridge is CLOSED", observation["visible_objects"])
+
+    def test_context_tracks_room_and_possession_after_moving(self):
+        mug = self.api.get_visible_objects()[1]
+        self.api.action("grab", mug)
+        for edge in self.env.graph["edges"]:
+            if edge["from_id"] == self.env.agent and edge["relation_type"] == "INSIDE":
+                edge["to_id"] = 2
+        self.env.get_current_state()
+        observation = self.api.context()["observation"]
+        self.assertEqual(observation["current_room"], "bedroom")
+        self.assertEqual(observation["held_objects"], ["mug"])
+        self.assertIn("character HOLDS_RH mug", observation["relations"])
+        self.assertNotIn("fridge is CLOSED", observation["visible_objects"])
+
+    def test_derived_effects_persist_but_hidden_state_is_not_disclosed(self):
+        apple = ObjectRef(self.env.episode_id, 30, "apple")
+        self.env.nodes_with_additonal_states[30] = {"states": ["OPEN", "WASHED"]}
+        self.assertIsNone(self.api.get_object_states(apple))
+        self.assertFalse(any("WASHED" in fact for fact in self.api.context()["observation"]["visible_objects"]))
+        self.api.action("open", "fridge")
+        self.assertEqual(self.api.get_object_states(apple), frozenset({"WASHED"}))
+        self.assertIn("apple is WASHED", self.api.context()["observation"]["visible_objects"])

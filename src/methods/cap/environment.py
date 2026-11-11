@@ -1,6 +1,7 @@
 """Trusted observation and action adapter. The worker never receives this object."""
 
 from functools import partial
+from collections import Counter
 from virtual_home import actions
 from virtual_home.virtualhome_types import ObjectRef, ActionResult, validate_object_ref
 
@@ -43,7 +44,13 @@ class CaPEnvironment:
 
     def get_object_states(self, obj):
         node = self.observed(obj)
-        return frozenset(node["states"]) if node is not None and "states" in node else None
+        if node is None or "states" not in node:
+            return None
+        # Derived effects persist across native graph refreshes, like scoring.
+        # Expose them only after this instance is actually visible again.
+        cached = self.env.nodes_with_additonal_states.get(obj.id, {}).get("states", [])
+        derived = set(cached) & {"WASHED", "HEATED", "USED"}
+        return frozenset(node["states"]) | derived
 
     def relations(self, obj, relation):
         node = self.observed(obj)
@@ -85,5 +92,27 @@ class CaPEnvironment:
                             self.revision, None if outcome is True else "action_rejected" if outcome is False else "execution_skipped")
 
     def context(self):
+        visible = self.get_visible_objects()
+        nodes = {node["id"]: node for node in self.env.partial_graph["nodes"]}
+        room = self.get_current_room()
+        counts = Counter((obj.name, tuple(sorted(self.get_object_states(obj) or []))) for obj in visible)
+        descriptions = []
+        for (name, states), count in sorted(counts.items()):
+            description = name + (" is " + " and ".join(states) if states else "")
+            descriptions.append(description + (f" ({count})" if count > 1 else ""))
+        # The partial graph has already removed inaccessible objects. Its room
+        # metadata includes every room; expose relations only to the current one.
+        allowed = {obj.id for obj in visible} | {self.env.agent}
+        if room is not None:
+            allowed.add(room.id)
+        relations = sorted({
+            f"{nodes[edge['from_id']]['class_name']} {edge['relation_type']} {nodes[edge['to_id']]['class_name']}"
+            for edge in self.env.partial_graph["edges"]
+            if edge["from_id"] in allowed and edge["to_id"] in allowed
+            and edge["relation_type"] not in {"CLOSE", "FACING"}
+        })
+        observation = {"current_room": room.name if room else None,
+                       "visible_objects": descriptions, "relations": relations,
+                       "held_objects": sorted(obj.name for obj in visible if obj.id in self.env.obj_ids_in_hand)}
         return {"episode_id": self.episode_id, "observation_revision": self.revision,
-                "visible_objects": self.get_visible_objects()}
+                "visible_objects": visible, "observation": observation}

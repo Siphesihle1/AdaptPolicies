@@ -284,7 +284,9 @@ class VHEnvironment:
         self.observation_revision = getattr(self, "observation_revision", 0) + 1
 
         self.nodes_with_additonal_states = add_additional_obj_states(
-            self.partial_graph,
+            # Physical effects also apply to contents hidden behind closed doors.
+            # This is trusted state bookkeeping, not the model's observation.
+            self.graph,
             self.obj_ids_for_adding_states,
             self.nodes_with_additonal_states,
         )

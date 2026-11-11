@@ -30,7 +30,7 @@ class ExecutionTests(unittest.TestCase):
     mugs = parse_objects('visible mugs')
     fridges = parse_objects('visible fridge')
     if acquire_object(mugs[0]):
-        return place_held_in_container(mugs[0], fridges[0])''',
+        return load_washing_machine(mugs[0], fridges[0])''',
             "cap_objects": {
                 "visible mugs": "ret_val = [o for o in get_visible_objects() if o.name == 'mug']",
                 "visible fridge": "ret_val = [o for o in get_visible_objects() if o.name == 'fridge']",
@@ -41,6 +41,8 @@ class ExecutionTests(unittest.TestCase):
         self.assertEqual(execution["status"], "executed", execution)
         self.assertIs(execution["result"], True)
         dependencies = json.loads((output / "tasks/store_mug/dependencies.json").read_text())
+        self.assertTrue(any(edge["caller"] == "load_washing_machine" and
+                            edge["dependency"] == "place_held_in_container" for edge in dependencies["edges"]))
         self.assertTrue(any(edge["caller"] == "place_held_in_container" and
                             edge["dependency"] == "ensure_open" for edge in dependencies["edges"]))
 

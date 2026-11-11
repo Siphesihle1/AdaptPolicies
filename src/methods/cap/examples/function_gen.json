@@ -10,5 +10,17 @@
   {
     "request": "place_held_in_container(obj, container)",
     "code": "def place_held_in_container(obj, container):\n    if not is_holding(obj):\n        return False\n    if not ensure_open(container):\n        return False\n    return putin(obj, container).status == 'succeeded'"
+  },
+  {
+    "request": "load_washing_machine(clothes, machine)",
+    "code": "def load_washing_machine(clothes, machine):\n    if not place_held_in_container(clothes, machine):\n        return False\n    return close(machine).status == \"succeeded\""
+  },
+  {
+    "request": "run_wash_cycle(machine)",
+    "code": "def run_wash_cycle(machine):\n    if switchon(machine).status != \"succeeded\":\n        return False\n    return switchoff(machine).status == \"succeeded\""
+  },
+  {
+    "request": "unload_washing_machine(clothes, machine)",
+    "code": "def unload_washing_machine(clothes, machine):\n    if not ensure_open(machine):\n        return False\n    if grab(clothes).status != \"succeeded\":\n        return False\n    return close(machine).status == \"succeeded\""
   }
 ]

@@ -16,8 +16,8 @@ class LMPTests(unittest.TestCase):
                    "visible_objects": objects}
         prompt = build_prompt("active-episode", "cap_question", "How many mugs?", context)
         root = ET.fromstring("<prompt>" + prompt + "</prompt>")
-        summary = json.loads(root.findtext("environment/observation"))
-        self.assertEqual(summary, {"mug": 200})
+        summary = root.findtext("environment/observation")
+        self.assertIn("You see: mug (200)", summary)
         self.assertNotIn('"id":', prompt)
         self.assertNotIn('"visible_objects":', prompt)
         self.assertNotIn("active-episode", prompt)

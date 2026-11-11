@@ -13,8 +13,10 @@ calls. The model chooses its decomposition; a direct action program is valid.
 Specialized LMPs and recursive helper generation run only if the policy uses them.
 Evaluate the resulting state independently of the policy's return value.
 The three default example policies demonstrate `parse_objects`, `parse_question`,
-and calls to reusable helpers. The function-generation prompt demonstrates acquisition,
-opening, and a placement helper that composes the opening helper. These definitions
+and calls to reusable helpers. Salmon and fruit selection inspect current visibility
+before using navigation as a fallback. The laundry example separates loading, running
+the cycle, and unloading. Its loading path composes three helper levels below the policy:
+`load_washing_machine -> place_held_in_container -> ensure_open`. These definitions
 are few-shot examples, not functions preloaded into the live execution namespace;
 the model must generate or define any helper used by a new policy.
 
@@ -75,12 +77,23 @@ revision. Uncertain or interrupted native execution stops the run, leaves the fi
 state unavailable and requires simulator restart. A native call already in progress
 cannot be safely cancelled; the owned launcher cleans up the simulator on exit.
 
+Derived appliance effects are computed from the trusted simulator graph, including
+contents hidden by closed doors. Visibility filtering still controls every model
+observation and query. Persistent `WASHED`, `HEATED`, and `USED` labels are merged
+into a visible instance's queried states after native graph refreshes; hidden instance
+states remain unavailable. This keeps completed physical effects separate from visibility.
+
 Episode IDs and observation revisions remain in internal validation and generation
 records, and are omitted from model-facing prompts. Prompt observations group visible
-objects by class with occurrence counts. Generated programs
+objects by class and observed state with occurrence counts. The observation uses the
+same kinds of facts as ProgPrompt's state text: current room, visible objects and states,
+relations, and held objects. It is built only from CaP's existing visibility-filtered
+graph; inaccessible contents and relations to hidden endpoints remain excluded.
+`CLOSE` and `FACING` edges are omitted as in ProgPrompt's formatter. Relations use
+class names, so programs must query references when selecting exact instances. Generated programs
 fetch actual references, states and possession through the same query APIs; instance
 selection and observation access remain available at execution time. Queries alone
-never make model calls. Specialized programs receive a fresh class-count summary,
+never make model calls. Specialized programs receive fresh observation facts,
 and their results are validated against the full permitted observation retained by
 the runtime. Helper/session state resets for each task.
 Training examples use CaP representations of training identities, the established
