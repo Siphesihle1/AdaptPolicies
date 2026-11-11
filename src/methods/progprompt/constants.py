@@ -246,8 +246,9 @@ TASK_FUNCTION_PROMPT_PREAMBLE_QWEN = """You are an action-planning code generato
 
 Task: You are given a function header that describes a virtual home household task. You must generate the complete function body that accomplishes the task (with the function header included) in a python-like syntax.
 
-IMPORTANT: 
+IMPORTANT:
 - Output only the function code and nothing else.
+- Output plain Python code only. Do NOT wrap the function in Markdown code fences (```python ... ```); start your response directly with `def`.
 - Follow the example task function structure and style.
 - Use ONLY the provided actions and objects (actions provided via imports at the top and availables objects as a list).
 - All actions provided via imports at the top are functions that can be called with the appropriate objects as arguments. Some actions don't take in any arguments.

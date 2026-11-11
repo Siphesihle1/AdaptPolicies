@@ -9,7 +9,7 @@
 
 # No CPU, memory, GPU, node-count, or exclusive-allocation directives.
 # Before submission: mkdir -p "$HOME/slurm-logs/lmstudio_test"
-# sbatch src/slurm-scripts/lmstudio_test.sh [/absolute/path/to/model.gguf]
+# sbatch src/slurm-scripts/lmstudio_test.sh.old [/absolute/path/to/model.gguf]
 set -euo pipefail
 : "${SLURM_JOB_ID:?Submit this script using sbatch}"
 

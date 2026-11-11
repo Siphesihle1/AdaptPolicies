@@ -221,6 +221,7 @@ outputs
 **/*.db
 **/*.txt
 !**/requirements.txt
+!src/constraints-experiments.txt
 Dockerfile
 docker-compose.yml
 virtualhome.zip
