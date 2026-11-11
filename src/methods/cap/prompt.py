@@ -1,162 +1,100 @@
-"""Episode-scoped request construction; query results are input only when supplied."""
+"""XML prompts with external examples and internally validated observation context."""
 
 import json
 from collections import Counter
 from pathlib import Path
+from xml.sax.saxutils import escape
 from .environment import ACTION_CLASSES
 
+ROOT = Path(__file__).parent
 PROMPTS = {"cap_policy": "policy", "cap_function": "function_gen",
            "cap_objects": "parse_objects", "cap_question": "parse_question"}
 OUTPUT_FORMATS = {
-    "cap_policy": "Start with the exact line def policy(): and indent all task statements "
-                  "inside that function. Only function definitions are allowed at module scope.",
+    "cap_policy": "Define policy() with no arguments. Additional helper definitions are allowed. "
+                  "Only function definitions are allowed at module scope.",
     "cap_function": "Return exactly one definition of the requested helper function.",
     "cap_objects": "Return Python statements assigning the resulting list of live ObjectRef values to ret_val.",
     "cap_question": "Return Python statements assigning the computed answer to ret_val.",
 }
 
-CONTRACT = """Use ordinary Python only, without imports, Markdown, external I/O or private attributes.
-ObjectRef is immutable with episode_id, id, name. Obtain references from queries;
-never construct them. References identify an instance, not remembered current state.
-get_visible_objects() returns references excluding rooms and character.
-get_object_states(ref) returns frozenset[str] or None (unknown); empty differs from unknown.
-get_objects_in(ref), get_objects_on(ref) return observed direct relation lists or None
-when inaccessible; None never establishes empty contents. is_holding(ref) returns bool.
-get_current_room() returns room reference or None. Queries make no model requests.
-Actions accept references (exact instance) or class-name strings (existing resolver).
-Actions return ActionResult with status 'succeeded', 'failed', or 'skipped', error,
-and observation_revision. Never test result truthiness; compare status explicitly.
-Visibility does not establish proximity or admissibility. No new physical primitives.
-parse_objects(description) generates and executes code returning list[ObjectRef].
-parse_question(question) generates and executes code returning an accessible answer.
-Nested LMP calls consume the same task and generation budgets. Unknown facts use None.
-Unknown direct function calls request generated helpers. Do not invent simulator actions.
-Observation context summarizes visible class counts; obtain actual ObjectRef values with
-get_visible_objects(). Read states, containment and possession using query functions.
-Do not copy observation data into code or infer unknown states from the summary.
+RULES = """- Use the available APIs for actions and observations; do not redefine them.
+- Check action outcomes through result.status: 'succeeded', 'failed', or 'skipped'; never test result truthiness.
+- Obtain object references through queries; never construct them or copy observation data into code.
+- Query current states and relations when needed. None means unknown, not empty or false.
+- Visibility does not establish proximity or action applicability.
+- Use Python control flow and helpers where useful. Undefined helper calls trigger helper generation; avoid dependency cycles.
+- Use parse_objects for object selection and parse_question for observation-based questions.
+- Do not import modules, access private attributes, or perform external I/O."""
+
+API = """Actions accept ObjectRef values or class-name strings and return ActionResult with status and error.
+{actions}
+ObjectRef exposes id and name; a reference identifies an instance, not its current state.
+Environment objects lists known class names; observation lists visible class counts.
+get_visible_objects() -> list[ObjectRef], excluding rooms and the character
+get_object_states(ref) -> frozenset[str] or None
+get_objects_in(ref), get_objects_on(ref) -> direct observed list[ObjectRef] or None when inaccessible
+is_holding(ref) -> bool
+get_current_room() -> room ObjectRef or None
+parse_objects(description) -> list[ObjectRef], computed by generated query code
+parse_question(question) -> answer, computed by generated query code
 Allowed builtins: abs all any bool dict enumerate float frozenset int len list max min
-range reversed round set sorted str sum tuple zip isinstance ValueError TypeError.
-"""
+range reversed round set sorted str sum tuple zip isinstance ValueError TypeError."""
+
+
+def load_examples(purpose):
+    return json.loads((ROOT / "examples" / f"{PROMPTS[purpose]}.json").read_text(encoding="utf-8"))
+
+
+def section(name, content):
+    return f"<{name}>\n{escape(content)}\n</{name}>"
 
 
 def build_prompt(episode_id, purpose, query, context=None, examples="", inventory=()):
-    template = (Path(__file__).parent / "prompts" / f"{PROMPTS[purpose]}.txt").read_text(encoding="utf-8")
+    template = (ROOT / "prompts" / f"{PROMPTS[purpose]}.txt").read_text(encoding="utf-8").strip()
     classes = inventory.get("object_classes", []) if isinstance(inventory, dict) else list(inventory)
     rooms = inventory.get("room_names", []) if isinstance(inventory, dict) else []
-    parts = [f"Active episode_id: {episode_id}", template, CONTRACT,
-             "Actions: " + ", ".join(ACTION_CLASSES),
-             "Class inventory (global class names only): " + json.dumps(classes),
-             "Room navigation metadata (not observed household objects): " + json.dumps(rooms)]
-    if examples:
-        parts.append("Training examples (independent example episodes):\n" + examples)
+    rules = RULES
+    if purpose in {"cap_objects", "cap_question"}:
+        rules += "\n- Use queries only; do not perform actions."
+    if purpose == "cap_question":
+        rules += "\n- Return None for an answer that cannot currently be observed."
+    actions = ", ".join(f"{name}(obj, target)" if name in {"putin", "putback", "apply"}
+                        else f"{name}()" if name == "standup" else f"{name}(obj)"
+                        for name in ACTION_CLASSES)
+    parts = [section("instructions", template), section("rules", rules),
+             section("api", API.format(actions=actions))]
+    environment = [section("objects", json.dumps(classes)), section("rooms", json.dumps(rooms))]
     if context is not None:
         if context["episode_id"] != episode_id or "observation_revision" not in context:
             raise ValueError("Unscoped observation context")
         counts = Counter(obj.name for obj in context["visible_objects"])
-        summary = {
-            "episode_id": context["episode_id"],
-            "observation_revision": context["observation_revision"],
-            "visible_object_counts": dict(sorted(counts.items())),
-        }
-        parts.append("Permitted observation:\n" + json.dumps(summary))
-    parts.append("Request:\n" + query)
-    parts.append("Output raw Python only. " + OUTPUT_FORMATS[purpose] +
-                 " No Markdown fences, explanations, or copied observation lists. "
-                 "Use the registered query APIs for current facts.")
+        environment.append(section("observation", json.dumps(dict(sorted(counts.items())))))
+    parts.append("<environment>\n" + "\n".join(environment) + "\n</environment>")
+    if purpose != "cap_policy":
+        examples = "\n\n".join(f"# request: {row['request']}\n{row['code']}" for row in load_examples(purpose))
+    parts.append(section("examples", examples))
+    parts.append(section("task" if purpose == "cap_policy" else "request", query))
+    parts.append(section("output-format", OUTPUT_FORMATS[purpose] +
+                         " Return Python code only, without Markdown fences or explanations."))
     return "\n\n".join(parts)
 
 
 def select_examples(example_type="default", number=3, seed=42):
-    """Use the established training identity/seed policy with CaP representations."""
+    """Select external CaP examples with ProgPrompt's identities and seed policy."""
     import random
-    examples = {
-        "refrigerate_the_salmon": '''def policy():
-    walk("kitchen")
-    find("salmon")
-    salmon = parse_objects("visible salmon")
-    if not salmon or not acquire_object(salmon[0]):
-        return
-    find("fridge")
-    fridges = parse_objects("visible fridges")
-    if fridges and place_held_in_container(salmon[0], fridges[0]):
-        close(fridges[0])''',
-        "bring_me_some_fruit": '''def policy():
-    walk("kitchen")
-    fruit = parse_objects("visible fruit")
-    if not fruit or not acquire_object(fruit[0]):
-        return
-    walk("livingroom")
-    return parse_question("Am I holding any currently visible fruit?")''',
-        "wash_clothes": '''def policy():
-    walk("livingroom")
-    find("clothespile")
-    clothes = parse_objects("visible piles of clothes")
-    if not clothes or not acquire_object(clothes[0]):
-        return
-    find("washingmachine")
-    machines = parse_objects("visible washing machines")
-    if not machines or not place_held_in_container(clothes[0], machines[0]):
-        return
-    close(machines[0])
-    switchon(machines[0])
-    switchoff(machines[0])
-    if ensure_open(machines[0]):
-        acquire_object(clothes[0])
-        close(machines[0])
-    return parse_question("Am I holding washed clothes?")''',
-        "put_apple_in_fridge": '''def policy():
-    walk("kitchen")
-    apples = [o for o in get_visible_objects() if o.name == "apple"]
-    for apple in apples:
-        if walk(apple).status == "succeeded" and grab(apple).status == "succeeded":
-            find("fridge")
-            open("fridge")
-            putin(apple, "fridge")
-            close("fridge")
-            break''',
-    }
-    # Additional training identities retain their existing task/action vocabulary.
-    # These examples are ordinary Python, never executed as notebook cells and
-    # never sourced from held-out plans or ground-truth final states.
-    training_actions = {
-        "read_book_under_table_lamp": [('walk', 'tablelamp'), ('find', 'book'), ('grab', 'book'), ('find', 'tablelamp'), ('read', 'book')],
-        "put_clothes_in_closet": [('walk', 'bedroom'), ('find', 'clothespile'), ('grab', 'clothespile'), ('find', 'closet'), ('open', 'closet'), ('putin', 'clothespile', 'closet')],
-        "put_papers_in_the_folder": [('walk', 'livingroom'), ('find', 'paper'), ('grab', 'paper'), ('find', 'folder'), ('open', 'folder'), ('putin', 'paper', 'folder'), ('close', 'folder')],
-        "call_a_friend": [('walk', 'bedroom'), ('find', 'cellphone'), ('grab', 'cellphone'), ('talk', 'cellphone'), ('find', 'coffeetable'), ('putback', 'cellphone', 'coffeetable')],
-        "heat_some_pie": [('walk', 'kitchen'), ('find', 'pie'), ('grab', 'pie'), ('find', 'microwave'), ('open', 'microwave'), ('putin', 'pie', 'microwave'), ('close', 'microwave'), ('switchon', 'microwave'), ('switchoff', 'microwave'), ('open', 'microwave'), ('grab', 'pie'), ('close', 'microwave')],
-        "sit_on_the_bench": [('find', 'bench'), ('sit', 'bench')],
-        "work_on_computer": [('find', 'computer'), ('switchon', 'computer')],
-        "put_my_slippers_near_the_bed": [('find', 'slippers'), ('grab', 'slippers'), ('find', 'bed'), ('putback', 'slippers', 'bed')],
-        "take_out_the_trash": [('find', 'garbagecan'), ('grab', 'garbagecan'), ('walk', 'kitchen')],
-        "open_the_curtains": [('find', 'curtains'), ('open', 'curtains')],
-        "wash_the_frying_pan": [('walk', 'kitchen'), ('find', 'fryingpan'), ('grab', 'fryingpan'), ('find', 'sink'), ('putin', 'fryingpan', 'sink'), ('switchon', 'faucet'), ('switchoff', 'faucet')],
-        "bring_my_book_to_the_sofa": [('find', 'book'), ('grab', 'book'), ('find', 'sofa'), ('putback', 'book', 'sofa')],
-        "get_my_pants_and_shirt_and_place_on_the_bed": [('find', 'clothespants'), ('grab', 'clothespants'), ('find', 'bed'), ('putback', 'clothespants', 'bed'), ('find', 'clothesshirt'), ('grab', 'clothesshirt'), ('find', 'bed'), ('putback', 'clothesshirt', 'bed')],
-        "take_off_pictureframe": [('find', 'photoframe'), ('grab', 'photoframe')],
-        "bring_an_apple_to_the_sofa": [('find', 'apple'), ('grab', 'apple'), ('find', 'sofa'), ('putback', 'apple', 'sofa')],
-        "bring_my_cellphone_to_the_bed": [('find', 'cellphone'), ('grab', 'cellphone'), ('find', 'bed'), ('putback', 'cellphone', 'bed')],
-        "put_book_back_in_the_bookshelf": [('find', 'book'), ('grab', 'book'), ('find', 'bookshelf'), ('putback', 'book', 'bookshelf')],
-        "turn_off_the_table_lamp": [('find', 'tablelamp'), ('switchoff', 'tablelamp')],
-        "get_some_coffee_from_the_coffee_maker_to_the_coffeetable": [('walk', 'kitchen'), ('find', 'coffeemaker'), ('switchon', 'coffeemaker'), ('switchoff', 'coffeemaker'), ('find', 'coffeepot'), ('grab', 'coffeepot'), ('find', 'coffeetable'), ('putback', 'coffeepot', 'coffeetable')],
-        "put_the_soap_in_the_bathroomcabinet": [('walk', 'bathroom'), ('find', 'barsoap'), ('grab', 'barsoap'), ('find', 'bathroomcabinet'), ('open', 'bathroomcabinet'), ('putin', 'barsoap', 'bathroomcabinet'), ('close', 'bathroomcabinet')],
-    }
-    for name, actions in training_actions.items():
-        examples[name] = "def policy():\n" + "\n".join(
-            "    " + action[0] + "(" + ", ".join(repr(arg) for arg in action[1:]) + ")"
-            for action in actions)
+    from methods.progprompt.constants import DEFAULT_EXAMPLES
+
+    examples = load_examples("cap_policy")
     if not 1 <= number <= 6:
         raise ValueError("examples_num must be between 1 and 6")
-    keys = list(examples)
     if example_type == "random":
-        # Match ProgPrompt's exact training ordering and seeded sample.
         from methods.shared.datasets import dataset_root
         data = json.loads((dataset_root() / "pythonic_plans" / "train_complete_plan_set.json").read_text())
         keys = random.Random(seed).sample([name for entry in data for name in entry], number)
-        if any(key not in examples for key in keys):
-            raise ValueError("Selected training identity has no CaP representation")
-    elif example_type != "default":
-        raise ValueError("Unknown example selection")
+    elif example_type == "default":
+        keys = DEFAULT_EXAMPLES[:number]
     else:
-        keys = keys[:4]  # Same DEFAULT_EXAMPLES limit as ProgPrompt.
-    return "\n\n".join(f"# example episode_id: example-{i}; task: {key}\n{examples[key]}"
-                          for i, key in enumerate(keys[:number]))
+        raise ValueError("Unknown example selection")
+    if any(key not in examples for key in keys):
+        raise ValueError("Selected training identity has no CaP representation")
+    return "\n\n".join(f"# task: {key}\n{examples[key]}" for key in keys)

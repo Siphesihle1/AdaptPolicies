@@ -53,5 +53,5 @@ class ConfigurationTests(unittest.TestCase):
         expected = random.Random(42).sample([name for entry in data for name in entry], 6)
         with patch.dict(os.environ, {"ADAPT_DATASET_DIR": str(root)}):
             examples = select_examples("random", 6)
-        names = [line.split("task: ")[1] for line in examples.splitlines() if line.startswith("# example episode_id:")]
+        names = [line.split("task: ")[1] for line in examples.splitlines() if line.startswith("# task:")]
         self.assertEqual(names, expected)

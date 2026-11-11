@@ -18,6 +18,15 @@ opening, and a placement helper that composes the opening helper. These definiti
 are few-shot examples, not functions preloaded into the live execution namespace;
 the model must generate or define any helper used by a new policy.
 
+All four LMPs use XML sections: `<instructions>`, `<rules>`, `<api>`,
+`<environment>`, `<examples>`, `<task>` (or `<request>` for nested programs), and
+`<output-format>`. Environment data has separate `<objects>`, `<rooms>`, and optional
+`<observation>` sections. Rules describe API use and execution constraints; the task
+contains only the requested goal. Dynamic content is escaped to preserve section boundaries.
+Examples are loaded from `src/methods/cap/examples/*.json`, independently of the short
+instruction templates in `prompts/`. Policy examples retain ProgPrompt's configured
+default identities, count, or seeded random selection; nested LMPs load their own examples.
+
 Install the repository's Python 3.10 environment and activate its existing environment
 hooks. Point `ADAPT_DATASET_DIR` (or the compatible `PROGPROMPT_DATASET_DIR`) at
 `src/methods/progprompt/data`. Set `JOB_OUTPUT_DIR`, `EXPERIMENT_NAME` and `SIM_PORT`
@@ -63,9 +72,9 @@ revision. Uncertain or interrupted native execution stops the run, leaves the fi
 state unavailable and requires simulator restart. A native call already in progress
 cannot be safely cancelled; the owned launcher cleans up the simulator on exit.
 
-Each generation request has an episode header; supplied observations carry episode
-and revision. Prompt observations group visible objects by class with occurrence
-counts instead of repeating instance references and episode IDs. Generated programs
+Episode IDs and observation revisions remain in internal validation and generation
+records, and are omitted from model-facing prompts. Prompt observations group visible
+objects by class with occurrence counts. Generated programs
 fetch actual references, states and possession through the same query APIs; instance
 selection and observation access remain available at execution time. Queries alone
 never make model calls. Specialized programs receive a fresh class-count summary,

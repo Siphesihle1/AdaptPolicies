@@ -1,0 +1,14 @@
+[
+  {
+    "request": "acquire_object(ref)",
+    "code": "def acquire_object(ref):\n    if is_holding(ref):\n        return True\n    if walk(ref).status != 'succeeded':\n        return False\n    return grab(ref).status == 'succeeded'"
+  },
+  {
+    "request": "ensure_open(container)",
+    "code": "def ensure_open(container):\n    if walk(container).status != 'succeeded':\n        return False\n    states = get_object_states(container)\n    if states is None:\n        return False\n    return 'OPEN' in states or open(container).status == 'succeeded'"
+  },
+  {
+    "request": "place_held_in_container(obj, container)",
+    "code": "def place_held_in_container(obj, container):\n    if not is_holding(obj):\n        return False\n    if not ensure_open(container):\n        return False\n    return putin(obj, container).status == 'succeeded'"
+  }
+]

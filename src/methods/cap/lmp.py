@@ -34,7 +34,8 @@ class Session:
         parent = self.current_call
         started = time.monotonic()
         self.emit("generation_request", {"call_id": call_id, "parent_call_id": parent,
-                  "purpose": purpose, "prompt": prompt, "episode_id": self.episode_id})
+                  "purpose": purpose, "prompt": prompt, "episode_id": self.episode_id,
+                  "observation_revision": context["observation_revision"] if context is not None else None})
         from methods.chat_transcript import record_request, record_response
         try:
             if self.generator is None:

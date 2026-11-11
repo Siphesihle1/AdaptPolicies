@@ -10,7 +10,7 @@ import test_cap_runtime as runtime_tests
 from cap_fakes import FakeEnvironment, FakeProvider
 from methods.cap.agent import CaPAgent
 from methods.cap.runtime import Limits
-from methods.cap.prompt import select_examples
+from methods.cap.prompt import load_examples, select_examples
 from methods.shared.evaluation import EvaluationMixin
 
 
@@ -18,9 +18,8 @@ class ExecutionTests(unittest.TestCase):
     setUp = runtime_tests.RuntimeTests.setUp
 
     def test_few_shot_helper_bodies_compose_with_specialized_lmps(self):
-        prompt = Path(__file__).parents[1] / "src/methods/cap/prompts/function_gen.txt"
-        text = prompt.read_text()
-        tree = ast.parse(text[text.index("def acquire_object"):])
+        text = "\n\n".join(row["code"] for row in load_examples("cap_function"))
+        tree = ast.parse(text)
         helpers = {node.name + "(": ast.unparse(node) for node in tree.body}
         examples = select_examples("default", 3)
         self.assertIn("place_held_in_container(", examples)
@@ -73,7 +72,8 @@ class ExecutionTests(unittest.TestCase):
                      "initial_state.json", "final_state.json", "chat.json"):
             self.assertTrue((output / "tasks" / "open_fridge" / name).is_file(), name)
         generation = json.loads((output / "tasks" / "open_fridge" / "generation.json").read_text())
-        self.assertTrue(generation[0]["prompt"].startswith("Active episode_id:"))
+        self.assertTrue(generation[0]["prompt"].startswith("<instructions>"))
+        self.assertNotIn("episode_id", generation[0]["prompt"])
         chat = (output / "tasks" / "open_fridge" / "chat.json").read_text()
         self.assertIn("CaP policy", chat)
         self.assertIn("CaP observation", chat)
@@ -125,8 +125,9 @@ class ExecutionTests(unittest.TestCase):
         }, tasks=("open fridge",))
         events = json.loads((output / "tasks" / "open_fridge" / "generation.json").read_text())
         requests = [e for e in events if e["kind"] == "generation_request"]
-        self.assertIn('"observation_revision": 0', requests[0]["prompt"])
-        self.assertIn('"observation_revision": 1', requests[1]["prompt"])
+        self.assertEqual(requests[0]["observation_revision"], 0)
+        self.assertEqual(requests[1]["observation_revision"], 1)
+        self.assertNotIn("observation_revision", requests[1]["prompt"])
         self.assertNotIn("old_states", requests[1]["prompt"])
         self.assertEqual(requests[1]["parent_call_id"], requests[0]["call_id"])
         execution = json.loads((output / "tasks" / "open_fridge" / "execution.json").read_text())

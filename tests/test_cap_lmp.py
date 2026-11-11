@@ -1,6 +1,8 @@
 import json
 import unittest
-from methods.cap.prompt import build_prompt
+from unittest.mock import patch
+from xml.etree import ElementTree as ET
+from methods.cap.prompt import build_prompt, load_examples, select_examples
 from methods.cap.lmp import Session
 from methods.cap.runtime import Limits
 from virtual_home.virtualhome_types import ObjectRef
@@ -13,12 +15,14 @@ class LMPTests(unittest.TestCase):
         context = {"episode_id": "active-episode", "observation_revision": 12,
                    "visible_objects": objects}
         prompt = build_prompt("active-episode", "cap_question", "How many mugs?", context)
-        summary = json.JSONDecoder().raw_decode(prompt.split("Permitted observation:\n")[1])[0]
-        self.assertEqual(summary, {"episode_id": "active-episode", "observation_revision": 12,
-                                  "visible_object_counts": {"mug": 200}})
+        root = ET.fromstring("<prompt>" + prompt + "</prompt>")
+        summary = json.loads(root.findtext("environment/observation"))
+        self.assertEqual(summary, {"mug": 200})
         self.assertNotIn('"id":', prompt)
         self.assertNotIn('"visible_objects":', prompt)
-        self.assertIn("Output raw Python only", prompt)
+        self.assertNotIn("active-episode", prompt)
+        self.assertNotIn("observation_revision", prompt)
+        self.assertIn("Return Python code only", root.findtext("output-format"))
         self.assertEqual(context["visible_objects"], objects)
 
     def test_compact_context_keeps_runtime_references_and_duplicate_selection(self):
@@ -32,10 +36,45 @@ class LMPTests(unittest.TestCase):
 
     def test_output_contract_follows_the_task_and_matches_program_role(self):
         policy = build_prompt("episode", "cap_policy", "Open a fridge")
-        self.assertGreater(policy.index("Start with the exact line def policy():"),
-                           policy.index("Request:\nOpen a fridge"))
+        self.assertGreater(policy.index("<output-format>"), policy.index("<task>"))
+        root = ET.fromstring("<prompt>" + policy + "</prompt>")
+        self.assertIn("Define policy() with no arguments", root.findtext("output-format"))
         question = build_prompt("episode", "cap_question", "Is it open?")
-        self.assertIn("assigning the computed answer to ret_val", question.split("Request:\n")[1])
+        root = ET.fromstring("<prompt>" + question + "</prompt>")
+        self.assertIn("assigning the computed answer to ret_val", root.findtext("output-format"))
+
+    def test_xml_sections_and_dynamic_examples_for_each_role(self):
+        for purpose in ("cap_policy", "cap_function", "cap_objects", "cap_question"):
+            with self.subTest(purpose=purpose):
+                prompt = build_prompt("internal-episode", purpose, 'Check x < 2 & "a"',
+                                      examples=select_examples())
+                root = ET.fromstring("<prompt>" + prompt + "</prompt>")
+                request_tag = "task" if purpose == "cap_policy" else "request"
+                self.assertEqual([node.tag for node in root],
+                                 ["instructions", "rules", "api", "environment", "examples", request_tag, "output-format"])
+                self.assertEqual(root.findtext(request_tag).strip(), 'Check x < 2 & "a"')
+                self.assertTrue(root.findtext("examples").strip())
+                self.assertNotIn("internal-episode", prompt)
+                self.assertNotIn("episode_id", prompt)
+                self.assertNotIn("observation_revision", prompt)
+                if purpose != "cap_policy":
+                    self.assertNotIn("refrigerate_the_salmon", root.findtext("examples"))
+
+    def test_examples_are_loaded_at_prompt_construction(self):
+        examples = load_examples("cap_policy")
+        examples["refrigerate_the_salmon"] = "def policy():\n    return 'new example'"
+        with patch("methods.cap.prompt.load_examples", return_value=examples):
+            selected = select_examples(number=1)
+        self.assertIn("new example", selected)
+        with patch("methods.cap.prompt.load_examples", return_value=[{"request": "new query", "code": "ret_val = 42"}]):
+            prompt = build_prompt("episode", "cap_question", "answer")
+        self.assertIn("# request: new query\nret_val = 42", prompt)
+
+    def test_unscoped_context_is_rejected_before_prompting(self):
+        for context in ({"episode_id": "old", "observation_revision": 1, "visible_objects": []},
+                        {"episode_id": "episode", "visible_objects": []}):
+            with self.subTest(context=context), self.assertRaisesRegex(ValueError, "Unscoped"):
+                build_prompt("episode", "cap_policy", "task", context)
 
     def session(self, responses, bindings=None, limits=None):
         self.events = []
@@ -53,8 +92,10 @@ class LMPTests(unittest.TestCase):
         requests = [v for k, v in self.events if k == "generation_request"]
         self.assertEqual([r["purpose"] for r in requests], ["cap_policy", "cap_question"])
         for request in requests:
-            self.assertTrue(request["prompt"].startswith("Active episode_id: episode"))
-            self.assertIn('"observation_revision": 7', request["prompt"])
+            self.assertTrue(request["prompt"].startswith("<instructions>"))
+            self.assertNotIn("episode_id", request["prompt"])
+            self.assertEqual(request["episode_id"], "episode")
+            self.assertEqual(request["observation_revision"], 7)
 
     def test_missing_return_and_invalid_objects_explicit(self):
         for source, error in [("x = 1", "missing_return"), ("ret_val = ['mug']", "invalid_object")]:

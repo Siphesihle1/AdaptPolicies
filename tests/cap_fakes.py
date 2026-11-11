@@ -3,6 +3,7 @@ import copy
 from dataclasses import dataclass
 import re
 import time
+from xml.etree import ElementTree as ET
 from virtual_home.environment import VHEnvironment
 
 
@@ -13,7 +14,9 @@ class FakeProvider:
     def __call__(self, prompt, purpose):
         response = self.responses[purpose]
         if isinstance(response, dict):
-            response = next(value for key, value in response.items() if key in prompt.split("Request:\n")[-1].splitlines()[0])
+            root = ET.fromstring("<prompt>" + prompt + "</prompt>")
+            request = root.findtext("task") or root.findtext("request")
+            response = next(value for key, value in response.items() if key in request.strip().splitlines()[0])
         if response == "BLOCK":
             time.sleep(30)
         return response
