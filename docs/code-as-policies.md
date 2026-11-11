@@ -27,6 +27,9 @@ with the same arguments. Configuration is validated before connecting. The sampl
 and its native options explicitly. All four `cap_policy`, `cap_function`, `cap_objects`,
 and `cap_question` profiles are required. Existing ProgPrompt configurations still use
 `plan` and `assertion`. `cap` contains runtime limits, never provider parameters.
+The local-model sample allows 300 seconds per request and 600 seconds per task;
+the live smoke policy required about 128 seconds for generation. Adjust both budgets
+explicitly for the serving speed and number of nested requests in your experiment.
 
 The parent owns the live simulator and supervises a fresh spawned worker per task.
 Queries/actions use a validated RPC registry. The task deadline covers generation,

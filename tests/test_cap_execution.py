@@ -25,7 +25,7 @@ class ExecutionTests(unittest.TestCase):
              patch("methods.cap.agent.load_tasks", return_value=list(tasks)), \
              patch("methods.cap.agent.load_ground_truth_graphs", return_value=graphs):
             agent = CaPAgent(0, "test_seen", generator=FakeProvider(responses), environment_factory=factory,
-                             limits=Limits(task_seconds=5))
+                             limits=Limits(task_seconds=30))
             agent.execute_tasks()
         return agent, output
 

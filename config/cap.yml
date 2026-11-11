@@ -5,7 +5,7 @@ llm:
   providers:
     lm_studio:
       base_url: http://127.0.0.1:1234/v1
-      timeout: 30
+      timeout: 300
       models:
         qwen/qwen3.5-9b:
           cap_policy:
@@ -27,7 +27,7 @@ llm:
 weave:
   enabled: false
 cap:
-  task_seconds: 120
+  task_seconds: 600
   max_helpers: 24
   max_depth: 8
   max_model_requests: 32

@@ -27,10 +27,11 @@ def experiment_attributes() -> dict[str, Any]:
         "experiment_name": name,
         "provider": settings["provider"],
         "model": settings["model"],
-        "plan_temperature": settings["plan"].get("temperature"),
-        "plan_max_tokens": settings["plan"].get("max_tokens"),
-        "plan_reasoning_effort": settings["plan"].get("reasoning_effort"),
     }
+    for purpose in ("plan", "cap_policy", "cap_function", "cap_objects", "cap_question"):
+        if purpose in settings:
+            for parameter in ("temperature", "max_tokens", "reasoning_effort"):
+                values[f"{purpose}_{parameter}"] = settings[purpose].get(parameter)
     if os.getenv("EXPERIMENT_RUN_ID"):
         values["run_id"] = os.environ["EXPERIMENT_RUN_ID"]
     if os.getenv("EXPERIMENT_REPEAT"):

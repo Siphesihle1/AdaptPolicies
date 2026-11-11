@@ -2,15 +2,35 @@ import json
 import os
 from pathlib import Path
 import random
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from methods import config
+from methods import config, telemetry
+from methods.cap import run_eval
 from methods.cap.prompt import select_examples
 from methods.cap.runtime import Limits
 
 
 class ConfigurationTests(unittest.TestCase):
+    def test_cap_cli_uses_cap_only_experiment_metadata(self):
+        args = SimpleNamespace(expt_name="cap-smoke", test_set="train", env_id=0,
+                               examples_type="default", examples_num=3, num_tasks=1)
+        with patch.dict(os.environ, {"ADAPT_CONFIG": str(config.ROOT / "config/cap.yml")}):
+            config.get_config.cache_clear()
+            try:
+                with patch.object(run_eval, "parse_args", return_value=args), patch.object(
+                    run_eval, "CaPAgent"
+                ) as agent:
+                    run_eval.main([])
+                    agent.return_value.execute_tasks.assert_called_once_with()
+                    metadata = telemetry.experiment_attributes()
+                    self.assertEqual(metadata["cap_policy_max_tokens"], 4096)
+                    self.assertEqual(metadata["cap_function_temperature"], 0)
+                    self.assertNotIn("plan_max_tokens", metadata)
+            finally:
+                config.get_config.cache_clear()
+
     def test_cap_profiles_and_runtime_section_validate_without_progprompt(self):
         path = config.ROOT / "config" / "cap.yml"
         with patch.dict(os.environ, {"ADAPT_CONFIG": str(path)}):

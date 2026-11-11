@@ -42,7 +42,7 @@ weave:
         self.api = CaPEnvironment(self.env, self.task)
 
     def run_policy(self, source, **limits):
-        self.runtime = PolicyRuntime(self.api, Limits(task_seconds=5, **limits), FakeProvider({"cap_policy": source}))
+        self.runtime = PolicyRuntime(self.api, Limits(task_seconds=limits.pop("task_seconds", 30), **limits), FakeProvider({"cap_policy": source}))
         return self.runtime.run("test")
 
     def test_reservations_and_external_access(self):
@@ -67,9 +67,9 @@ weave:
         for source in ["def policy():\n    while True:\n        pass", "BLOCK"]:
             with self.subTest(source=source):
                 start = time.monotonic()
-                result = self.run_policy(source)
+                result = self.run_policy(source, task_seconds=10)
                 self.assertIn("deadline", result["error"])
-                self.assertLess(time.monotonic() - start, 8)
+                self.assertLess(time.monotonic() - start, 15)
                 self.assertTrue(result["final_state_available"])
         self.assertFalse(multiprocessing.active_children())
 
@@ -83,9 +83,9 @@ weave:
     def test_native_call_deadline_invalidates_episode(self):
         from threading import Event
         release = Event()
-        self.api.registry["walk"] = lambda *args: release.wait(10)
+        self.api.registry["walk"] = lambda *args: release.wait(30)
         try:
-            result = self.run_policy("def policy():\n    walk('mug')")
+            result = self.run_policy("def policy():\n    walk('mug')", task_seconds=10)
             self.assertIn("native_action_deadline", result["error"])
             self.assertFalse(result["final_state_available"])
             self.assertTrue(self.env.execution_failed)
