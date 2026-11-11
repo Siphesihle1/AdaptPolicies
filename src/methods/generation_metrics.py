@@ -5,6 +5,19 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from contextlib import contextmanager
+from contextvars import ContextVar
+
+_sink = ContextVar("generation_metrics_sink", default=None)
+
+
+@contextmanager
+def capture_completions(sink):
+    token = _sink.set(sink)
+    try:
+        yield
+    finally:
+        _sink.reset(token)
 
 
 def record_completion(
@@ -16,11 +29,12 @@ def record_completion(
     error: Exception | None = None,
 ) -> None:
     destination = os.getenv("LLM_METRICS_FILE")
-    if not destination:
+    if not destination and _sink.get() is None:
         return
     from . import telemetry
 
-    choice = response.choices[0] if response is not None else None
+    choices = getattr(response, "choices", None)
+    choice = choices[0] if choices else None
     usage = getattr(response, "usage", None)
     row = {
         **telemetry.experiment_attributes(),
@@ -30,9 +44,12 @@ def record_completion(
         "request_parameters": options,
         "elapsed_seconds": elapsed,
         "finish_reason": getattr(choice, "finish_reason", None),
-        "usage": usage.model_dump() if usage is not None else None,
+        "usage": (usage.model_dump() if hasattr(usage, "model_dump") else usage),
         "output": choice.message.content if choice is not None else None,
         "error": f"{type(error).__name__}: {error}" if error else None,
     }
-    with Path(destination).open("a", encoding="utf-8") as stream:
-        stream.write(json.dumps(row) + "\n")
+    if _sink.get() is not None:
+        _sink.get()(row)
+    if destination:
+        with Path(destination).open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(row) + "\n")

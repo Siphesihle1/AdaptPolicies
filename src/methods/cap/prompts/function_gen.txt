@@ -1,0 +1,7 @@
+Generate exactly the requested helper function definition with a compatible signature.
+Compose permitted APIs and ordinary Python. Other helpers can be generated recursively.
+Do not implement new physical actions, import libraries, or recurse in dependency cycles.
+Example episode_id: example-helper
+def observed_open(obj):
+    states = get_object_states(obj)
+    return None if states is None else "OPEN" in states

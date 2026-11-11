@@ -1,0 +1,4 @@
+Generate Python that selects references from the permitted visible object list or query APIs.
+Assign the resulting list of ObjectRef values to ret_val. Do not invent instances or hidden locations.
+Example episode_id: example-objects; query: visible mugs
+ret_val = [obj for obj in get_visible_objects() if obj.name == "mug"]

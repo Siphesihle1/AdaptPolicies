@@ -1,0 +1,3 @@
+Generate a complete def policy(): function, invoked exactly once by the runner.
+Use branches, loops, local variables and helper composition as needed for the task.
+Return only Python. Execution completing does not establish goal success.

@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Any, Optional
+from types import SimpleNamespace
 
 import json
 import os
@@ -37,6 +38,7 @@ class LLMProvider(ABC):
 class LMOllama(LLMProvider):
     def generate(self, prompt: str, options: dict[str, Any], purpose: str) -> str:
         settings = self.settings
+        started = perf_counter()
 
         headers = None
         if urlparse(settings["base_url"]).hostname == "ollama.com":
@@ -51,17 +53,23 @@ class LMOllama(LLMProvider):
                 base_url=settings["base_url"].rstrip("/") + "/v1",
                 api_key=key,
                 timeout=settings["timeout"],
+                max_retries=0,
             ) as chat:
                 response = chat.chat.completions.create(
                     model=settings["model"],
                     messages=[{"role": "user", "content": prompt}],
                     **options,
                 )
+            record_completion(purpose, prompt, options, perf_counter() - started, response=response)
             return response.choices[0].message.content or ""
         client = Client(
             host=settings["base_url"], headers=headers, timeout=settings["timeout"]
         )
         response = client.generate(model=settings["model"], prompt=prompt, **options)
+        record_completion(purpose, prompt, options, perf_counter() - started,
+                          response=SimpleNamespace(usage={
+                              "input_tokens": getattr(response, "prompt_eval_count", None),
+                              "output_tokens": getattr(response, "eval_count", None)}))
         return response.response or ""
 
 
@@ -101,6 +109,7 @@ class LLMOpenAI(LLMProvider):
 class LLMAnthropic(LLMProvider):
     def generate(self, prompt: str, options: dict[str, Any], purpose: str) -> str:
         settings = self.settings
+        started = perf_counter()
         payload = {
             "model": settings["model"],
             "messages": [{"role": "user", "content": prompt}],
@@ -127,6 +136,8 @@ class LLMAnthropic(LLMProvider):
             raise RuntimeError(
                 "Could not connect to the configured Anthropic endpoint"
             ) from None
+        record_completion(purpose, prompt, options, perf_counter() - started,
+                          response=SimpleNamespace(usage=result.get("usage")))
         return "".join(
             block["text"] for block in result["content"] if block["type"] == "text"
         )

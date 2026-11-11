@@ -1,3 +1,4 @@
+from methods.shared.datasets import load_tasks_from_dir, load_tasks_from_file, dataset_root
 import os
 import re
 import json
@@ -22,7 +23,7 @@ def init_simulator(env_id: int) -> Dict[str, Any]:
 
 def load_task_prompt_examples() -> Dict[str, str]:
     with open(
-        f"{os.getenv('PROGPROMPT_DATASET_DIR')}/pythonic_plans/train_complete_plan_set.json",
+        dataset_root() / "pythonic_plans" / "train_complete_plan_set.json",
         "r",
     ) as f:
         return {
@@ -30,21 +31,8 @@ def load_task_prompt_examples() -> Dict[str, str]:
         }
 
 
-def load_tasks_from_file(file_path: str) -> List[str]:
-    with open(file_path, "r") as f:
-        return [next(iter(task)) for task in json.load(f)]
 
 
-def load_tasks_from_dir(dir_path: str) -> List[str]:
-    tasks: List[str] = []
-
-    def sort_key(filename: str) -> int:
-        match = re.search(r"\d+", filename)
-        return int(match.group()) if match else -1
-
-    for file in sorted(os.listdir(dir_path), key=sort_key):
-        tasks.extend(load_tasks_from_file(os.path.join(dir_path, file)))
-    return tasks
 
 
 @dataclass(frozen=True)
@@ -96,10 +84,10 @@ class PromptBuilder:
         tasks: List[str] = []
 
         if self.env_id == 0:
-            dir_path = f"{os.getenv('PROGPROMPT_DATASET_DIR')}/{test_set}"
+            dir_path = str(dataset_root() / test_set)
             tasks = load_tasks_from_dir(dir_path)
         else:
-            file_path = f"{os.getenv('PROGPROMPT_DATASET_DIR')}/new_env/env{self.env_id}_annotated.json"
+            file_path = str(dataset_root() / "new_env" / f"env{self.env_id}_annotated.json")
             tasks = load_tasks_from_file(file_path)
 
         self._tasks = tasks[:num_tasks] if num_tasks else tasks

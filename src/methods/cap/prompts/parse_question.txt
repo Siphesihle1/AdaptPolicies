@@ -1,0 +1,6 @@
+Generate Python computing the answer from accessible facts. Assign it to ret_val.
+Return None when the answer is unknown. Do not answer from invented world state.
+Example episode_id: example-question; query: is a visible mug open?
+mugs = [obj for obj in get_visible_objects() if obj.name == "mug"]
+states = get_object_states(mugs[0]) if mugs else None
+ret_val = None if states is None else "OPEN" in states

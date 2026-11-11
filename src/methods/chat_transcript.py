@@ -110,7 +110,9 @@ def code_block(content: str, language: str) -> str:
 
 
 def record_response(response: str, purpose: str) -> None:
-    label = "Generated plan" if purpose == "plan" else "Assertion answer"
+    label = {"plan": "Generated plan", "assertion": "Assertion answer",
+             "cap_policy": "CaP policy", "cap_function": "CaP helper",
+             "cap_objects": "CaP object program", "cap_question": "CaP question program"}[purpose]
     append_message("assistant", f"**{label}**\n\n{code_block(response, 'python')}")
 
 

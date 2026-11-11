@@ -4,7 +4,7 @@ from methods import telemetry as weave
 from .environment import VHEnvironment
 from .graph_query import N
 from .task import VHTask
-from .virtualhome_types import ObjectClassName
+from .virtualhome_types import ObjectClassName, ObjectRef, validate_object_ref
 
 
 class Action(ABC):
@@ -14,6 +14,11 @@ class Action(ABC):
         self.action_name = ""
 
     def resolve_object(self, name: str, held_only: bool = False) -> int | None:
+        if isinstance(name, ObjectRef):
+            validate_object_ref(name, self.env)
+            if held_only and name.id not in self.env.obj_ids_in_hand:
+                return None
+            return name.id
         nearest_in_room = self.env.find_obj(name)
         candidates = (
             N(self.env.graph).class_name(name).select("id")
@@ -69,6 +74,8 @@ class Action(ABC):
         return identifier
 
     def execute(self, *objects: tuple[str, int]) -> bool:
+        objects = tuple((name.name if isinstance(name, ObjectRef) else name, identifier)
+                        for name, identifier in objects)
         arguments = " ".join(f"<{name}> ({identifier})" for name, identifier in objects)
         success = self.env.execute(f"<char0> [{self.action_name}] {arguments}")
         if success:
@@ -94,7 +101,8 @@ class Action(ABC):
 
         omit_action = any(
             self.action_name == action[0]
-            and all(obj1 == obj2 for (obj1, obj2) in zip(objs, action[1:]))
+            and all((obj1.name if isinstance(obj1, ObjectRef) else obj1) == obj2
+                    for (obj1, obj2) in zip(objs, action[1:]))
             for action in self.env.actions_to_omit
         )
 
@@ -139,7 +147,7 @@ class PutIn(Action):
         self.action_name = "putin"
 
     def __call__(self, obj: ObjectClassName, receptable: ObjectClassName):
-        super().run(obj, receptable)
+        return super().run(obj, receptable)
 
     def action(self, *objs: str) -> bool:
         obj, receptacle = objs
@@ -170,7 +178,7 @@ class Find(Action):
         self.action_name = "find"
 
     def __call__(self, obj: ObjectClassName):
-        super().run(obj)
+        return super().run(obj)
 
     def action(self, *objs: str) -> bool:
         (obj,) = objs
@@ -321,7 +329,7 @@ class StandUp(Action):
         self.action_name = "standup"
 
     def __call__(self):
-        super().run()
+        return super().run()
 
     def action(self, *_: str):
         return self.env.execute(f"<char0> [{self.action_name}]")
