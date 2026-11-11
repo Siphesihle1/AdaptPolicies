@@ -226,3 +226,8 @@ Offline configuration/adapter checks do not need a simulator or credentials:
 ```bash
 PYTHONPATH=src python -m unittest discover -s tests -v
 ```
+# Code as Policies
+
+CaP uses four explicit code profiles and an optional `cap` runtime-limits section.
+See [Code as Policies usage](code-as-policies.md) and [`config/cap.yml`](../config/cap.yml).
+Existing ProgPrompt configurations remain supported.

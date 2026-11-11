@@ -28,6 +28,9 @@ class VHEnvironment:
     def __init__(
         self, env_id: int, initial_room: str, task: VHTask, log_file: TextIOWrapper
     ):
+        from uuid import uuid4
+        self.episode_id = str(uuid4())
+        self.observation_revision = 0
         self.env_id = env_id
         self.comm = UnityCommunication(
             file_name=None, port=os.getenv("SIM_PORT", "8082")
@@ -189,7 +192,12 @@ class VHEnvironment:
         with weave.thread(thread_id=self.task.thread_id), weave.span(
             "simulator_action", {"script_instruction": script_instruction}
         ) as output:
-            success = self._execute(script_instruction, output)
+            try:
+                success = self._execute(script_instruction, output)
+            except Exception:
+                if getattr(self, "native_in_flight", False):
+                    self.execution_failed = True
+                raise
             output["success"] = success
             return success
 
@@ -224,6 +232,7 @@ class VHEnvironment:
             )
             return False
 
+        self.native_in_flight = True
         try:
             response = self.comm.render_script(
                 [script_instruction],
@@ -272,9 +281,12 @@ class VHEnvironment:
             self.get_observation()
 
         self.get_current_state()
+        self.observation_revision = getattr(self, "observation_revision", 0) + 1
 
         self.nodes_with_additonal_states = add_additional_obj_states(
-            self.partial_graph,
+            # Physical effects also apply to contents hidden behind closed doors.
+            # This is trusted state bookkeeping, not the model's observation.
+            self.graph,
             self.obj_ids_for_adding_states,
             self.nodes_with_additonal_states,
         )
@@ -286,6 +298,7 @@ class VHEnvironment:
                     phone["states"].append("USED")
                 self.nodes_with_additonal_states[phone["id"]] = phone
 
+        self.native_in_flight = False
         return True
 
 

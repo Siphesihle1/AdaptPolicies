@@ -23,6 +23,7 @@ class UnityExecutionTests(unittest.TestCase):
         env.get_observation = Mock()
         env.get_current_state = Mock()
         env.partial_graph = {"nodes": [], "edges": []}
+        env.graph = env.partial_graph
         env.obj_ids_for_adding_states = ([], [], [], [], [], [], [])
         env.nodes_with_additonal_states = {}
         return env
@@ -85,6 +86,21 @@ class UnityExecutionTests(unittest.TestCase):
             skip_animation=True,
             find_solution=False,
         )
+
+    def test_closed_washer_derives_effects_without_exposing_hidden_contents(self):
+        env = self.environment()
+        washer = {"id": 72, "class_name": "washingmachine", "category": "Appliances",
+                  "states": ["CLOSED", "ON"], "properties": ["CAN_OPEN"]}
+        clothes = {"id": 286, "class_name": "clothespile", "category": "Props",
+                   "states": ["CLOSED"], "properties": []}
+        env.graph = {"nodes": [washer, clothes],
+                     "edges": [{"from_id": 286, "to_id": 72, "relation_type": "INSIDE"}]}
+        env.partial_graph = {"nodes": [washer], "edges": []}
+        env.obj_ids_for_adding_states = ([], [], [], [], [72], [], [])
+        with patch("virtual_home.environment.weave.thread"):
+            self.assertTrue(env.execute("<char0> [switchon] <washingmachine> (72)"))
+        self.assertIn("WASHED", env.nodes_with_additonal_states[286]["states"])
+        self.assertEqual([node["id"] for node in env.partial_graph["nodes"]], [72])
 
     def test_navigation_refreshes_resolution_distances_from_native_pose(self):
         env = self.environment()

@@ -7,7 +7,7 @@ from methods.progprompt.agent import ProgPromptAgent
 from methods.progprompt.datasets import Dataset, validate_dataset
 from methods.progprompt.prompt import ExamplesType
 
-from methods.config import get_config
+from methods.config import get_config, require_method_profiles
 from methods import telemetry
 
 
@@ -24,6 +24,7 @@ class ProgramArgs:
 def execute_progprompt_agent(args: ProgramArgs):
     validate_dataset(args.env_id, args.test_set)
     get_config()  # Validate before connecting to the simulator.
+    require_method_profiles("progprompt")
     progprompt_agent = ProgPromptAgent(
         env_id=args.env_id,
         test_set=args.test_set,

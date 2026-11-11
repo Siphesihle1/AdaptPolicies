@@ -10,6 +10,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 PROVIDERS = {"ollama", "openai", "lm_studio", "anthropic"}
+CAP_PURPOSES = {"cap_policy", "cap_function", "cap_objects", "cap_question"}
 
 
 @lru_cache(maxsize=1)
@@ -22,8 +23,16 @@ def get_config() -> dict[str, Any]:
     )
     with path.open(encoding="utf-8") as stream:
         config = yaml.safe_load(stream)
-    if not isinstance(config, dict) or set(config) != {"llm", "weave"}:
-        raise ValueError("Configuration must contain only llm and weave sections")
+    if not isinstance(config, dict) or not {"llm", "weave"} <= set(config) or set(config) - {"llm", "weave", "cap"}:
+        raise ValueError("Configuration requires llm and weave; optional cap section")
+    if "cap" in config:
+        from .cap.runtime import Limits
+        if not isinstance(config["cap"], dict):
+            raise ValueError("cap must be a runtime limits mapping")
+        try:
+            Limits(**config["cap"])
+        except TypeError as error:
+            raise ValueError(f"Invalid cap runtime settings: {error}") from error
     llm = config["llm"]
     if not isinstance(llm, dict) or set(llm) != {"provider", "model", "providers"}:
         raise ValueError("llm requires provider, model and providers settings")
@@ -64,10 +73,9 @@ def get_config() -> dict[str, Any]:
         for model, model_settings in models.items():
             if not isinstance(model, str) or not model.strip():
                 raise ValueError("Model names must be nonempty strings")
-            if not isinstance(model_settings, dict) or set(model_settings) != {
-                "plan",
-                "assertion",
-            }:
+            if (not isinstance(model_settings, dict)
+                or not ({"plan", "assertion"} <= set(model_settings) or CAP_PURPOSES <= set(model_settings))
+                or set(model_settings) - ({"plan", "assertion"} | CAP_PURPOSES)):
                 raise ValueError(
                     f"{provider}/{model} requires plan and assertion settings"
                 )
@@ -121,6 +129,13 @@ def get_llm_settings() -> dict[str, Any]:
         "timeout": provider["timeout"],
         **provider["models"][llm["model"]],
     }
+
+
+def require_method_profiles(method: str) -> None:
+    required = CAP_PURPOSES if method == "cap" else {"plan", "assertion"}
+    missing = required - get_llm_settings().keys()
+    if missing:
+        raise ValueError(f"{method} requires explicit model profiles: {sorted(missing)}")
 
 
 if __name__ == "__main__":

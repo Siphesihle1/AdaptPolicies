@@ -1,4 +1,32 @@
 from typing import Literal
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class ObjectRef:
+    episode_id: str
+    id: int
+    name: str
+
+
+def validate_object_ref(ref: ObjectRef, env) -> None:
+    if ref.episode_id != getattr(env, "episode_id", None):
+        raise ValueError("stale_object_reference")
+    if type(ref.id) is not int:
+        raise ValueError("invalid_object_reference")
+    nodes = [n for n in env.graph["nodes"] if n["id"] == ref.id]
+    if len(nodes) != 1 or nodes[0]["class_name"] != ref.name:
+        raise ValueError("invalid_object_reference")
+
+
+@dataclass(frozen=True)
+class ActionResult:
+    status: str
+    observation_revision: int
+    error: str | None = None
+
+    def __bool__(self):
+        raise TypeError("Compare ActionResult.status explicitly")
 
 ObjectClassName = Literal[
     "wall",

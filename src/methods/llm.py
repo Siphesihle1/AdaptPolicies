@@ -29,6 +29,8 @@ def generate(
     """Generate text; the telemetry decorator consumes optional __weave metadata."""
     provider = get_provider()
     settings = provider.settings
-    if purpose not in {"plan", "assertion"}:
-        raise ValueError("purpose must be plan or assertion")
+    if purpose not in {"plan", "assertion", "cap_policy", "cap_function", "cap_objects", "cap_question"}:
+        raise ValueError("Unsupported generation purpose")
+    if purpose not in settings:
+        raise ValueError(f"Missing configured generation profile: {purpose}")
     return provider.generate(prompt, settings[purpose], purpose)

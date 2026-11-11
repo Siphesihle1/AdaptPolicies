@@ -220,6 +220,7 @@ alfred/data
 outputs
 **/*.db
 **/*.txt
+!src/methods/cap/prompts/*.txt
 !**/requirements.txt
 !src/constraints-experiments.txt
 Dockerfile
