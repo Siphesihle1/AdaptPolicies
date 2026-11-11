@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Submit one Slurm job per dataset for a ProgPrompt sweep job script, placing
-# jobs by current node availability. Runs on the login node (sbatch/squeue/sinfo
-# only); the deploy workflow calls it through the job script:
-#   bash src/slurm-scripts/progprompt_<model>.sh [DATASET ...]
+# Submit one Slurm job per dataset for a ProgPrompt or CaP sweep job script,
+# placing jobs by current node availability. Runs on the login node
+# (sbatch/squeue/sinfo only); the deploy workflow calls it through the job script:
+#   bash src/slurm-scripts/<method>_<model>.sh [DATASET ...]
 # Expects SWEEP_CAMPAIGN, SWEEP_MODEL_TAG, SWEEP_PARTITIONS (preference order,
 # space-separated) and SWEEP_TIME from the job script. Datasets default to all five.
 #
@@ -53,7 +53,9 @@ for dataset in "${datasets[@]}"; do
     if [[ ${pair%%=*} == "$dataset" ]]; then plan_tokens=${pair#*=}; fi
   done
   done_runs=0
-  for code in "$HOME/outputs/experiments/$SWEEP_CAMPAIGN/$dataset/$SWEEP_MODEL_TAG"-*-m"$plan_tokens"-*-"$dataset"-r1/exit-code.txt; do
+  run_prefix=""
+  [[ ${SWEEP_METHOD:-progprompt} == cap ]] && run_prefix="cap-"
+  for code in "$HOME/outputs/experiments/$SWEEP_CAMPAIGN/$dataset/$run_prefix$SWEEP_MODEL_TAG"-*-m"$plan_tokens"-*-"$dataset"-r1/exit-code.txt; do
     [[ -f $code && $(<"$code") == 0 ]] && done_runs=$(( done_runs + 1 ))
   done
   if (( done_runs >= 6 )); then

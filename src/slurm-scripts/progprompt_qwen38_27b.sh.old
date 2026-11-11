@@ -14,7 +14,7 @@
 # Submit from the login node with bash (not sbatch); this checks node availability
 # and submits one job per dataset (all five by default):
 #   bash src/slurm-scripts/progprompt_qwen38_27b.sh [DATASET ...]
-# Inside each job, helper-scripts/progprompt_sweep.sh does the work.
+# Inside each job, helper-scripts/sweep.sh does the work.
 # bigbatch only: the 19.4 GB model needs the 24 GB RTX 3090. A batch node's 12 GB
 # RTX 3060 would push most layers onto 6 CPU cores, making generation far slower
 # than the 600 s request timeout allows and confounding the comparison.
@@ -35,6 +35,6 @@ export SWEEP_EXCLUDE_NODES=mscluster76
 PROJECT_ROOT="${PROJECT_ROOT:-$HOME/AdaptPolicies}"
 
 if [[ -z ${SLURM_JOB_ID:-} ]]; then
-  exec bash "$PROJECT_ROOT/helper-scripts/submit_progprompt_sweep.sh" "$(realpath -- "$0")" "$@"
+  exec bash "$PROJECT_ROOT/helper-scripts/submit_sweep.sh" "$(realpath -- "$0")" "$@"
 fi
-exec bash "$PROJECT_ROOT/helper-scripts/progprompt_sweep.sh" "$@"
+exec bash "$PROJECT_ROOT/helper-scripts/sweep.sh" "$@"

@@ -1,0 +1,39 @@
+# CaP sweep: every code-generating LMP uses the condition's temperature,
+# reasoning and token budget. Runtime limits match config/cap.yml except the task
+# deadline, which covers all generation and execution for one task.
+llm:
+  provider: lm_studio
+  model: qwen/qwen3.5-9b
+  providers:
+    lm_studio:
+      base_url: http://127.0.0.1:1234/v1
+      timeout: 1200
+      models:
+        qwen/qwen3.5-9b:
+          cap_policy:
+            temperature: 0
+            max_tokens: 16384
+            reasoning_effort: none
+          cap_function:
+            temperature: 0
+            max_tokens: 16384
+            reasoning_effort: none
+          cap_objects:
+            temperature: 0
+            max_tokens: 16384
+            reasoning_effort: none
+          cap_question:
+            temperature: 0
+            max_tokens: 16384
+            reasoning_effort: none
+weave:
+  enabled: true
+cap:
+  task_seconds: 2400
+  max_helpers: 24
+  max_depth: 8
+  max_model_requests: 32
+  max_actions: 100
+  max_queries: 1000
+  max_source_bytes: 65536
+  max_output_bytes: 1048576
