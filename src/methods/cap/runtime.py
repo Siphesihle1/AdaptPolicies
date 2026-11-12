@@ -200,7 +200,8 @@ class PolicyRuntime:
                         budget.consume("model_requests")
                         record_request(message[2]["prompt"], message[2]["purpose"])
                     elif message[1] == "generation":
-                        record_response(message[2]["source"], message[2]["purpose"])
+                        # The transcript keeps what the model sent, fences included.
+                        record_response(message[2].get("raw_source", message[2]["source"]), message[2]["purpose"])
                 elif kind == "rpc":
                     _, name, args, kwargs, call_id = message
                     if name not in self.adapter.registry and name != "observation_context":

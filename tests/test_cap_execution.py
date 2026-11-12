@@ -120,6 +120,19 @@ class ExecutionTests(unittest.TestCase):
         self.assertEqual(results["summary"]["num_tasks"], 2)
         self.assertEqual(results["summary"]["SR"], 0)
 
+    def test_single_fenced_response_is_unwrapped_and_recorded(self):
+        fenced = "```python\ndef policy():\n    return open('fridge').status\n```"
+        agent, output = self.agent({"cap_policy": fenced})
+        record = agent.task_record("open_fridge")
+        self.assertEqual(record["status"], "evaluated")
+        self.assertTrue(record["fence_stripped"])
+        self.assertFalse(record["raw_format_compliant"])
+        self.assertEqual(record["fenced_generations"], 1)
+        self.assertNotIn("```", (output / "tasks" / "open_fridge" / "policy.py").read_text())
+        generations = json.loads((output / "tasks" / "open_fridge" / "generation.json").read_text())
+        completed = [g for g in generations if g["kind"] == "generation"]
+        self.assertEqual(completed[0]["raw_source"], fenced)
+
     def test_clean_native_rejection_fails_the_action_but_not_the_run(self):
         class RejectingEnvironment(FakeEnvironment):
             def execute(self, script):

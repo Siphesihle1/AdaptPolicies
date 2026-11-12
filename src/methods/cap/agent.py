@@ -144,6 +144,9 @@ class CaPAgent(ExperimentMixin, EvaluationMixin):
         record["code_valid"] = any(e["kind"] == "code_validation" and e["program"] == "policy" for e in events)
         record["dependency_resolution_succeeded"] = any(e["kind"] == "validated" and e["program"] == "policy" for e in events)
         self.num_tasks_parsed += int(record["dependency_resolution_succeeded"])
+        # Fenced responses were unwrapped before validation (see strip_code_fence).
+        fenced = sum(bool(e.get("fence_stripped")) for e in events if e["kind"] == "generation")
+        record.update(fenced_generations=fenced, fence_stripped=fenced > 0, raw_format_compliant=fenced == 0)
         sources = [e for e in events if e["kind"] == "helper_source"]
         (directory / "helpers.py").write_text("\n\n".join(h["source"] for h in sources), encoding="utf-8")
         write_json(directory / "dependencies.json", {"resolved_helpers": helpers, "sources": sources,

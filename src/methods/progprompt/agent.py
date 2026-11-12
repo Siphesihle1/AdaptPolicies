@@ -1,5 +1,6 @@
 from methods.shared.evaluation import EvaluationMixin, get_object_relations, get_object_states
 from methods.shared.experiment import ExperimentMixin, TaskRecord
+from methods.shared.code_fence import strip_code_fence
 from importlib import invalidate_caches
 import json
 import os
@@ -32,22 +33,6 @@ from typing import Any, Dict, List, Optional, Set, TypedDict
 sys.path.insert(0, os.getenv("JOB_OUTPUT_DIR", ""))
 
 
-def strip_code_fence(plan: str) -> tuple[str, bool]:
-    """Remove one Markdown code block wrapping the whole response.
-
-    Returns the plan and whether a wrapper was removed. Only a response that is a
-    single ```...``` block is unwrapped; anything else is returned unchanged, so
-    the format checks still reject stray or multiple fences.
-    """
-    lines = plan.strip().splitlines()
-    if (
-        len(lines) >= 2
-        and lines[0].strip().startswith("```")
-        and lines[-1].strip() == "```"
-        and not any(line.strip().startswith("```") for line in lines[1:-1])
-    ):
-        return "\n".join(lines[1:-1]), True
-    return plan, False
 
 
 
