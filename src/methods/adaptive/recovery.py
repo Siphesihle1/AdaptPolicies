@@ -198,4 +198,3 @@ def check_entry(tree, name):
     if len(entries) != 1 or entries[0].args.args or entries[0].args.posonlyargs or entries[0].args.kwonlyargs \
             or entries[0].args.vararg or entries[0].args.kwarg:
         raise ValueError(f"Missing zero-argument {name}() entry point")
-
