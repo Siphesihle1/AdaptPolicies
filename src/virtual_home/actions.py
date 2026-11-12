@@ -17,6 +17,7 @@ class Action(ABC):
         if isinstance(name, ObjectRef):
             validate_object_ref(name, self.env)
             if held_only and name.id not in self.env.obj_ids_in_hand:
+                self.env.last_action_error = f"Object {name.name} ({name.id}) not in hand"
                 return None
             return name.id
         nearest_in_room = self.env.find_obj(name)
@@ -34,9 +35,9 @@ class Action(ABC):
         if held_only:
             candidates = held
         if not candidates:
-            self.env.log_file.write(
-                f"Object {name} {'not in hand' if held_only else 'not found'}\n"
-            )
+            message = f"Object {name} {'not in hand' if held_only else 'not found'}"
+            self.env.log_file.write(message + "\n")
+            self.env.last_action_error = message
             return None
         eligible = held or candidates
         bound = bindings.get(name)
@@ -125,7 +126,10 @@ class Action(ABC):
             )
             return None
 
+        self.env.last_action_error = None
         result = self.action(*objs)
+        if result is False and not self.env.last_action_error:
+            self.env.last_action_error = f"{self.action_name} could not be executed"
         output.update(
             result=result,
             status=(

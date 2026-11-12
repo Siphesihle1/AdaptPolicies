@@ -25,6 +25,13 @@ from PIL import Image
 
 
 class VHEnvironment:
+    # ProgPrompt and CaP skip the rest of a task after Unity rejects an action.
+    # Adaptive Policies continues: a rejected script did not run, so the state is
+    # still known, and the rejection is reported as a failed action.
+    stop_after_unity_rejection = True
+    # Why the most recent action failed, for methods that report it to the model.
+    last_action_error = None
+
     def __init__(
         self, env_id: int, initial_room: str, task: VHTask, log_file: TextIOWrapper
     ):
@@ -208,6 +215,7 @@ class VHEnvironment:
         # Adapted from https://github.com/NVlabs/progprompt-vh/blob/main/scripts/utils_execute.py#L224
         if self.execution_failed:
             output["error"] = "Task stopped after Unity failure"
+            self.last_action_error = "Task stopped after Unity failure"
             self.log_file.write(
                 "act_success: False, message: Task stopped after Unity failure\n"
             )
@@ -221,6 +229,7 @@ class VHEnvironment:
             script = parse_script_line(script, 0)
         except Exception:
             output["error"] = f"Failed to parse script line {script}"
+            self.last_action_error = output["error"]
             self.log_file.write(
                 f"act_success: False, message: Failed to parse script line {script}\n"
             )
@@ -230,6 +239,7 @@ class VHEnvironment:
 
         if not success:
             output["error"] = self.executor.info.get_error_string()
+            self.last_action_error = output["error"]
             self.log_file.write(
                 f"act_success: False, message: {self.executor.info.get_error_string()}\n"
             )
@@ -251,9 +261,12 @@ class VHEnvironment:
         output["unity_response"] = response
         if not unity_execution_succeeded(response):
             # Unity refused the script, so nothing ran and the state is known.
-            # Later actions in this task are still skipped, as for ProgPrompt.
-            self.execution_failed = True
+            # Later actions in this task are skipped, as for ProgPrompt, unless
+            # the method recovers from rejections.
+            if self.stop_after_unity_rejection:
+                self.execution_failed = True
             self.native_in_flight = False
+            self.last_action_error = f"Unity rejected action: {response!r}"
             self.log_file.write(
                 f"act_success: False, message: Unity rejected action: {response!r}\n"
             )
@@ -266,6 +279,7 @@ class VHEnvironment:
                 output["error"] = (
                     "Native navigation completed but its room could not be read"
                 )
+                self.last_action_error = output["error"]
                 self.execution_failed = self.native_state_uncertain = True
                 self.log_file.write(
                     "Native navigation completed but its room could not be read\n"
