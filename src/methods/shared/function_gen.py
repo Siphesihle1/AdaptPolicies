@@ -94,7 +94,7 @@ class FunctionGenerator:
     def resolve(self, source, depth=0):
         session = self.session
         session.budget.check()
-        validate(source, session.reserved, session.limits.max_source_bytes)
+        validate(source, session.reserved, session.limits.max_source_bytes, session.attributes)
         # Active helpers are deliberately excluded from lexical module bindings
         # below so self-recursion in synthesized dependencies is rejected.
         calls = unresolved_calls(source, session.reserved | set(self.sources))
@@ -118,7 +118,7 @@ class FunctionGenerator:
             generated = session.generate(session.purposes["function"], f"Implement helper {name} for call: {site}\nOriginating program:\n{source}", call_id=call_id)
             session.emit("helper_source", {"name": name, "source": generated, "call_id": call_id,
                                            "call_site": site, "parent_call_id": session.current_call})
-            tree = validate(generated, session.reserved, session.limits.max_source_bytes)
+            tree = validate(generated, session.reserved, session.limits.max_source_bytes, session.attributes)
             if len(tree.body) != 1 or not isinstance(tree.body[0], ast.FunctionDef) or tree.body[0].name != name:
                 raise ValueError("Helper must contain exactly its requested function definition")
             validate_signature(tree.body[0], call)

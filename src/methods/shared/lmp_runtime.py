@@ -78,7 +78,7 @@ def serialize(value):
     raise TypeError(f"Unsupported result type: {type(value).__name__}")
 
 
-def validate(source, reserved=(), limit=65536):
+def validate(source, reserved=(), limit=65536, attributes=ATTRIBUTES):
     if not isinstance(source, str) or len(source.encode()) > limit:
         raise ValueError("source_size_limit")
     tree = ast.parse(source)
@@ -107,7 +107,7 @@ def validate(source, reserved=(), limit=65536):
             if name and (name in reserved or name.startswith('_') or name in DENIED_NAMES):
                 raise ValueError(f"Reserved name: {name}")
         if isinstance(node, ast.Attribute):
-            if not isinstance(node.ctx, ast.Load) or node.attr not in ATTRIBUTES:
+            if not isinstance(node.ctx, ast.Load) or node.attr not in attributes:
                 raise ValueError(f"Forbidden attribute: {node.attr}")
     return tree
 

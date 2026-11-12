@@ -10,12 +10,14 @@ from uuid import uuid4
 from methods.shared.code_fence import strip_code_fence
 from virtual_home.virtualhome_types import ObjectRef
 from .function_gen import FunctionGenerator
-from .lmp_runtime import Budget, BUILTINS, validate, serialize
+from .lmp_runtime import ATTRIBUTES, Budget, BUILTINS, validate, serialize
 
 
 class Session:
     # Model purposes by role: policy, function, objects, question.
     purposes = None
+    # Attribute names generated code may read (validated before execution).
+    attributes = ATTRIBUTES
 
     @staticmethod
     def build_prompt(episode_id, purpose, query, context=None, examples="", inventory=(),
@@ -83,7 +85,7 @@ class Session:
             raise
 
     def execute(self, source, result_name=None, policy=False):
-        tree = validate(source, self.reserved, self.limits.max_source_bytes)
+        tree = validate(source, self.reserved, self.limits.max_source_bytes, self.attributes)
         if policy:
             if not tree.body or any(not isinstance(n, ast.FunctionDef) for n in tree.body):
                 raise ValueError("Policy output must contain function definitions only")

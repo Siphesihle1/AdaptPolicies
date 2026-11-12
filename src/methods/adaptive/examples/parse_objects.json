@@ -1,0 +1,6 @@
+[
+  {
+    "request": "visible mugs",
+    "code": "ret_val = [obj for obj in get_visible_objects() if obj.name == \"mug\"]"
+  }
+]

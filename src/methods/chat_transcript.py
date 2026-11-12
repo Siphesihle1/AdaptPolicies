@@ -112,7 +112,10 @@ def code_block(content: str, language: str) -> str:
 def record_response(response: str, purpose: str) -> None:
     label = {"plan": "Generated plan", "assertion": "Assertion answer",
              "cap_policy": "CaP policy", "cap_function": "CaP helper",
-             "cap_objects": "CaP object program", "cap_question": "CaP question program"}[purpose]
+             "cap_objects": "CaP object program", "cap_question": "CaP question program",
+             "ap_policy": "AP policy", "ap_function": "AP helper",
+             "ap_objects": "AP object program", "ap_question": "AP question program",
+             "ap_recover": "AP recovery", "ap_replan": "AP continuation policy"}[purpose]
     append_message("assistant", f"**{label}**\n\n{code_block(response, 'python')}")
 
 
