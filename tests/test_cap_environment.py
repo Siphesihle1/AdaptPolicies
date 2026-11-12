@@ -51,9 +51,17 @@ class EnvironmentTests(unittest.TestCase):
             self.api.action("grab", apple)
 
     def test_native_failure_is_terminal(self):
-        self.env.execution_failed = True
+        self.env.execution_failed = self.env.native_state_uncertain = True
         with self.assertRaisesRegex(RuntimeError, "uncertain_native_state"):
             self.api.action("open", "fridge")
+
+    def test_clean_native_rejection_is_a_failed_action(self):
+        def reject(script):
+            self.env.execution_failed = True
+            return False
+        self.env.execute = reject
+        self.assertEqual(self.api.action("open", "fridge").status, "failed")
+        self.assertEqual(self.api.action("open", "fridge").status, "skipped")
 
     def test_context_describes_only_visible_states_and_relations(self):
         context = self.api.context()

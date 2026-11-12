@@ -86,7 +86,7 @@ class CaPEnvironment:
             elif not isinstance(arg, str):
                 raise TypeError("Actions accept object references or class names")
         outcome = getattr(actions, ACTION_CLASSES[name])(self.env, self.task)(*args)
-        if self.env.execution_failed:
+        if self.env.native_state_uncertain:
             raise RuntimeError("uncertain_native_state")
         return ActionResult("succeeded" if outcome is True else "failed" if outcome is False else "skipped",
                             self.revision, None if outcome is True else "action_rejected" if outcome is False else "execution_skipped")

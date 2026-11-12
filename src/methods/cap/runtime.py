@@ -65,8 +65,13 @@ def serialize(value):
         return {str(k): serialize(v) for k, v in value.items()}
     if isinstance(value, (tuple, list, set, frozenset)):
         return [serialize(v) for v in value]
-    if value is None or type(value) in (str, bool, int, float):
+    if value is None:
         return value
+    # Subclasses become their plain base type: with Weave enabled, traced calls
+    # return boxed values such as weave's BoxedStr. bool precedes int (its base).
+    for base in (bool, int, float, str):
+        if isinstance(value, base):
+            return base(value)
     raise TypeError(f"Unsupported result type: {type(value).__name__}")
 
 
@@ -223,7 +228,8 @@ class PolicyRuntime:
                         response = output.get(timeout=max(0, budget.deadline - time.monotonic()))
                     except Empty:
                         if action:
-                            self.adapter.env.execution_failed = True
+                            env = self.adapter.env
+                            env.execution_failed = env.native_state_uncertain = True
                         raise TimeoutError("native_action_deadline" if action else "query_deadline")
                     self.native_pending = False
                     budget.check()
@@ -237,7 +243,7 @@ class PolicyRuntime:
                     self.events.append(event)
                     append_message("user", "CaP observation: " + str(event))
                     parent.send(response)
-                    if self.adapter.env.execution_failed:
+                    if self.adapter.env.native_state_uncertain:
                         raise RuntimeError("uncertain_native_state")
                 elif kind == "done":
                     outcome = {"status": "executed", "result": message[1], "generation_counts": message[2], "error": None}
@@ -257,5 +263,5 @@ class PolicyRuntime:
                 process.join()
             parent.close()
         outcome.update(counts=budget.counts, events=self.events, limits=asdict(self.limits),
-                       final_state_available=not (self.native_pending or self.adapter.env.execution_failed))
+                       final_state_available=not (self.native_pending or self.adapter.env.native_state_uncertain))
         return outcome

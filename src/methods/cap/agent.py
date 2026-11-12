@@ -114,7 +114,7 @@ class CaPAgent(ExperimentMixin, EvaluationMixin):
                 record.update(status="execution_failed", error=f"{type(error).__name__}: {error}")
                 # Initialization or finalization may have contacted Unity. Never
                 # initialize another task after an unverified native failure.
-                if env is None or getattr(env, "execution_failed", False):
+                if env is None or getattr(env, "native_state_uncertain", False):
                     terminal_error = "Run stopped after simulator initialization/native failure"
             finally:
                 # Pending native calls may still reference their log. The launcher

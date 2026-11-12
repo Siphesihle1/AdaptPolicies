@@ -46,6 +46,9 @@ class VHEnvironment:
         self.object_distances: dict[int, float] = {}
         self.last_action: Tuple[str, ...] = tuple()
         self.execution_failed = False
+        # Set only when Unity may have partly applied an action or its result
+        # could not be read back. A clean rejection leaves state unchanged.
+        self.native_state_uncertain = False
 
         self.comm.reset(self.env_id)
         self.comm.add_character("Chars/Male2", initial_room=initial_room)
@@ -196,7 +199,7 @@ class VHEnvironment:
                 success = self._execute(script_instruction, output)
             except Exception:
                 if getattr(self, "native_in_flight", False):
-                    self.execution_failed = True
+                    self.execution_failed = self.native_state_uncertain = True
                 raise
             output["success"] = success
             return success
@@ -242,12 +245,15 @@ class VHEnvironment:
             )
         except Exception:
             # Unity may have partially executed the request before losing contact.
-            self.execution_failed = True
+            self.execution_failed = self.native_state_uncertain = True
             raise
 
         output["unity_response"] = response
         if not unity_execution_succeeded(response):
+            # Unity refused the script, so nothing ran and the state is known.
+            # Later actions in this task are still skipped, as for ProgPrompt.
             self.execution_failed = True
+            self.native_in_flight = False
             self.log_file.write(
                 f"act_success: False, message: Unity rejected action: {response!r}\n"
             )
@@ -260,7 +266,7 @@ class VHEnvironment:
                 output["error"] = (
                     "Native navigation completed but its room could not be read"
                 )
-                self.execution_failed = True
+                self.execution_failed = self.native_state_uncertain = True
                 self.log_file.write(
                     "Native navigation completed but its room could not be read\n"
                 )
@@ -273,7 +279,7 @@ class VHEnvironment:
             else:
                 self.update_executor(final_state, native_navigation)
         except Exception:
-            self.execution_failed = True
+            self.execution_failed = self.native_state_uncertain = True
             raise
         self.task.executable_steps += 1
 

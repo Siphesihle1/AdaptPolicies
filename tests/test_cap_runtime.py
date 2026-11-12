@@ -7,10 +7,10 @@ import time
 import unittest
 from unittest.mock import patch
 from methods import config, telemetry
-from methods.cap.runtime import PolicyRuntime, Limits, validate
+from methods.cap.runtime import PolicyRuntime, Limits, serialize, validate
 from methods.cap.environment import CaPEnvironment
 from virtual_home.task import VHTask
-from cap_fakes import FakeEnvironment, FakeProvider
+from cap_fakes import BoxedStr, FakeEnvironment, FakeProvider
 
 
 class RuntimeTests(unittest.TestCase):
@@ -50,6 +50,15 @@ weave:
                        "def walk():\n    pass", "def f(walk):\n    pass"]:
             with self.subTest(source=source), self.assertRaises(ValueError):
                 validate(source, {"walk"})
+
+    def test_traced_str_subclasses_serialize_as_plain_values(self):
+        values = serialize({"source": BoxedStr("x"), "flag": True, "count": 3})
+        self.assertEqual(values, {"source": "x", "flag": True, "count": 3})
+        self.assertIs(type(values["source"]), str)
+        self.assertIs(type(values["flag"]), bool)
+        # With Weave enabled, generation returns a str subclass; it must not fail the task.
+        result = self.run_policy(BoxedStr("def policy():\n    return 'done'"))
+        self.assertEqual(result["status"], "executed", result)
 
     def test_spawned_policy_observations_and_actions(self):
         result = self.run_policy('''def policy():
@@ -92,5 +101,6 @@ weave:
             self.assertIn("native_action_deadline", result["error"])
             self.assertFalse(result["final_state_available"])
             self.assertTrue(self.env.execution_failed)
+            self.assertTrue(self.env.native_state_uncertain)
         finally:
             release.set()
