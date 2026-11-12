@@ -26,7 +26,7 @@ def get_config() -> dict[str, Any]:
     if not isinstance(config, dict) or not {"llm", "weave"} <= set(config) or set(config) - {"llm", "weave", "cap"}:
         raise ValueError("Configuration requires llm and weave; optional cap section")
     if "cap" in config:
-        from .cap.runtime import Limits
+        from .shared.lmp_runtime import Limits
         if not isinstance(config["cap"], dict):
             raise ValueError("cap must be a runtime limits mapping")
         try:
