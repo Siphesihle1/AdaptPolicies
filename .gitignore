@@ -230,3 +230,5 @@ virtualhome.zip
 rsync_copy_output
 
 .codex
+
+report/**
