@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from .config import get_llm_settings
+from .config import ALL_PURPOSES, get_llm_settings
 from . import telemetry
 from .providers import LLMProvider, LMOllama, LLMOpenAI, LLMAnthropic
 
@@ -29,7 +29,7 @@ def generate(
     """Generate text; the telemetry decorator consumes optional __weave metadata."""
     provider = get_provider()
     settings = provider.settings
-    if purpose not in {"plan", "assertion", "cap_policy", "cap_function", "cap_objects", "cap_question"}:
+    if purpose not in ALL_PURPOSES:
         raise ValueError("Unsupported generation purpose")
     if purpose not in settings:
         raise ValueError(f"Missing configured generation profile: {purpose}")

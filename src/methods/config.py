@@ -11,6 +11,12 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 PROVIDERS = {"ollama", "openai", "lm_studio", "anthropic"}
 CAP_PURPOSES = {"cap_policy", "cap_function", "cap_objects", "cap_question"}
+ADAPTIVE_PURPOSES = {"ap_policy", "ap_function", "ap_objects", "ap_question",
+                     "ap_recover", "ap_replan"}
+# A model needs the complete profile set of at least one method.
+METHOD_PURPOSES = {"progprompt": {"plan", "assertion"}, "cap": CAP_PURPOSES,
+                   "adaptive": ADAPTIVE_PURPOSES}
+ALL_PURPOSES = set().union(*METHOD_PURPOSES.values())
 
 
 @lru_cache(maxsize=1)
@@ -23,16 +29,25 @@ def get_config() -> dict[str, Any]:
     )
     with path.open(encoding="utf-8") as stream:
         config = yaml.safe_load(stream)
-    if not isinstance(config, dict) or not {"llm", "weave"} <= set(config) or set(config) - {"llm", "weave", "cap"}:
-        raise ValueError("Configuration requires llm and weave; optional cap section")
+    if (not isinstance(config, dict) or not {"llm", "weave"} <= set(config)
+            or set(config) - {"llm", "weave", "cap", "adaptive"}):
+        raise ValueError("Configuration requires llm and weave; optional cap and adaptive sections")
     if "cap" in config:
-        from .cap.runtime import Limits
+        from .shared.lmp_runtime import Limits
         if not isinstance(config["cap"], dict):
             raise ValueError("cap must be a runtime limits mapping")
         try:
             Limits(**config["cap"])
         except TypeError as error:
             raise ValueError(f"Invalid cap runtime settings: {error}") from error
+    if "adaptive" in config:
+        from .adaptive.settings import AdaptiveLimits
+        if not isinstance(config["adaptive"], dict):
+            raise ValueError("adaptive must be a settings mapping")
+        try:
+            AdaptiveLimits(**config["adaptive"])
+        except TypeError as error:
+            raise ValueError(f"Invalid adaptive settings: {error}") from error
     llm = config["llm"]
     if not isinstance(llm, dict) or set(llm) != {"provider", "model", "providers"}:
         raise ValueError("llm requires provider, model and providers settings")
@@ -74,10 +89,10 @@ def get_config() -> dict[str, Any]:
             if not isinstance(model, str) or not model.strip():
                 raise ValueError("Model names must be nonempty strings")
             if (not isinstance(model_settings, dict)
-                or not ({"plan", "assertion"} <= set(model_settings) or CAP_PURPOSES <= set(model_settings))
-                or set(model_settings) - ({"plan", "assertion"} | CAP_PURPOSES)):
+                or not any(purposes <= set(model_settings) for purposes in METHOD_PURPOSES.values())
+                or set(model_settings) - ALL_PURPOSES):
                 raise ValueError(
-                    f"{provider}/{model} requires plan and assertion settings"
+                    f"{provider}/{model} requires the complete profile set of a method"
                 )
             for purpose, request in model_settings.items():
                 validate_request_parameters(request, f"{provider}/{model}/{purpose}")
@@ -132,7 +147,7 @@ def get_llm_settings() -> dict[str, Any]:
 
 
 def require_method_profiles(method: str) -> None:
-    required = CAP_PURPOSES if method == "cap" else {"plan", "assertion"}
+    required = METHOD_PURPOSES.get(method, METHOD_PURPOSES["progprompt"])
     missing = required - get_llm_settings().keys()
     if missing:
         raise ValueError(f"{method} requires explicit model profiles: {sorted(missing)}")

@@ -28,7 +28,8 @@ def experiment_attributes() -> dict[str, Any]:
         "provider": settings["provider"],
         "model": settings["model"],
     }
-    for purpose in ("plan", "cap_policy", "cap_function", "cap_objects", "cap_question"):
+    for purpose in ("plan", "cap_policy", "cap_function", "cap_objects", "cap_question",
+                    "ap_policy", "ap_function", "ap_objects", "ap_question", "ap_recover", "ap_replan"):
         if purpose in settings:
             for parameter in ("temperature", "max_tokens", "reasoning_effort"):
                 values[f"{purpose}_{parameter}"] = settings[purpose].get(parameter)

@@ -1,0 +1,38 @@
+[
+  {
+    "request": "acquire_object(item)",
+    "code": "def acquire_object(item):\n    \"\"\"Hold the item.\"\"\"\n    if is_holding(item):\n        return True\n    walk(item)\n    grab(item)\n    return checkpoint(\"holding the item\", lambda: is_holding(item))"
+  },
+  {
+    "request": "ensure_open(container)",
+    "code": "def ensure_open(container):\n    \"\"\"Stand at the container and leave it open.\"\"\"\n    walk(container)\n    if \"OPEN\" not in (get_object_states(container) or ()):\n        open(container)\n    return checkpoint(\"the container is open\", lambda: \"OPEN\" in (get_object_states(container) or ()))"
+  },
+  {
+    "request": "place_held_in_container(item, container)",
+    "code": "def place_held_in_container(item, container):\n    \"\"\"Put the held item inside the container.\"\"\"\n    checkpoint(\"holding the item\", lambda: is_holding(item))\n    ensure_open(container)\n    putin(item, container)\n    return checkpoint(\"the item is inside the container\", lambda: item in (get_objects_in(container) or []))"
+  },
+  {
+    "request": "load_washing_machine(clothes, machine)",
+    "code": "def load_washing_machine(clothes, machine):\n    \"\"\"Put the held clothes in the washing machine and close it.\"\"\"\n    place_held_in_container(clothes, machine)\n    close(machine)\n    return checkpoint(\"the washing machine is closed\", lambda: \"CLOSED\" in (get_object_states(machine) or ()))"
+  },
+  {
+    "request": "run_wash_cycle(machine)",
+    "code": "def run_wash_cycle(machine):\n    \"\"\"Run the washing machine once; the washed state cannot be observed while it is closed.\"\"\"\n    switchon(machine)\n    switchoff(machine)"
+  },
+  {
+    "request": "unload_washing_machine(clothes, machine)",
+    "code": "def unload_washing_machine(clothes, machine):\n    \"\"\"Take the clothes out of the washing machine and close it.\"\"\"\n    ensure_open(machine)\n    grab(clothes)\n    checkpoint(\"holding the clothes\", lambda: is_holding(clothes))\n    close(machine)\n    return checkpoint(\"the washing machine is closed\", lambda: \"CLOSED\" in (get_object_states(machine) or ()))"
+  },
+  {
+    "request": "load_microwave(food, microwave)",
+    "code": "def load_microwave(food, microwave):\n    \"\"\"Put the held food in the microwave and close it.\"\"\"\n    place_held_in_container(food, microwave)\n    close(microwave)\n    return checkpoint(\"the microwave is closed\", lambda: \"CLOSED\" in (get_object_states(microwave) or ()))"
+  },
+  {
+    "request": "run_heating_cycle(microwave)",
+    "code": "def run_heating_cycle(microwave):\n    \"\"\"Run the microwave once; the heated state cannot be observed while it is closed.\"\"\"\n    switchon(microwave)\n    switchoff(microwave)"
+  },
+  {
+    "request": "retrieve_heated_food(food, microwave)",
+    "code": "def retrieve_heated_food(food, microwave):\n    \"\"\"Take the food out of the microwave and close it.\"\"\"\n    ensure_open(microwave)\n    grab(food)\n    checkpoint(\"holding the food\", lambda: is_holding(food))\n    close(microwave)\n    return checkpoint(\"the microwave is closed\", lambda: \"CLOSED\" in (get_object_states(microwave) or ()))"
+  }
+]

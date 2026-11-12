@@ -1,0 +1,49 @@
+# Adaptive Policies local configuration: explicit code-generation profiles,
+# including recovery (ap_recover) and continuation replanning (ap_replan).
+# Runtime limits and checkpoint settings are not provider options.
+llm:
+  provider: lm_studio
+  model: qwen/qwen3.5-9b
+  providers:
+    lm_studio:
+      base_url: http://127.0.0.1:1234/v1
+      timeout: 300
+      models:
+        qwen/qwen3.5-9b:
+          ap_policy:
+            temperature: 0
+            max_tokens: 4096
+            reasoning_effort: none
+          ap_function:
+            temperature: 0
+            max_tokens: 4096
+            reasoning_effort: none
+          ap_objects:
+            temperature: 0
+            max_tokens: 2048
+            reasoning_effort: none
+          ap_question:
+            temperature: 0
+            max_tokens: 2048
+            reasoning_effort: none
+          ap_recover:
+            temperature: 0
+            max_tokens: 4096
+            reasoning_effort: none
+          ap_replan:
+            temperature: 0
+            max_tokens: 4096
+            reasoning_effort: none
+weave:
+  enabled: false
+adaptive:
+  placement: both
+  task_seconds: 900
+  max_helpers: 24
+  max_depth: 8
+  max_model_requests: 64
+  max_actions: 100
+  max_queries: 1000
+  max_source_bytes: 65536
+  max_output_bytes: 1048576
+  max_recoveries_per_checkpoint: 2

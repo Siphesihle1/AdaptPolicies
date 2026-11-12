@@ -1,0 +1,51 @@
+# Adaptive Policies sweep, derived from cap-qwen35-9b-t0-m8192-ron.yaml by helper-scripts/make_ap_configs.py.
+# Every LMP, including recovery and replanning, uses the condition's temperature,
+# reasoning and token budget. Runtime limits match CaP's except the model-request
+# budget (64, since recoveries need model calls) and the task deadline (1.5x CaP's,
+# covering all generation, recovery and execution for one task).
+llm:
+  provider: lm_studio
+  model: qwen/qwen3.5-9b
+  providers:
+    lm_studio:
+      base_url: http://127.0.0.1:1234/v1
+      timeout: 600
+      models:
+        qwen/qwen3.5-9b:
+          ap_policy:
+            temperature: 0
+            max_tokens: 8192
+            reasoning_effort: medium
+          ap_function:
+            temperature: 0
+            max_tokens: 8192
+            reasoning_effort: medium
+          ap_objects:
+            temperature: 0
+            max_tokens: 8192
+            reasoning_effort: medium
+          ap_question:
+            temperature: 0
+            max_tokens: 8192
+            reasoning_effort: medium
+          ap_recover:
+            temperature: 0
+            max_tokens: 8192
+            reasoning_effort: medium
+          ap_replan:
+            temperature: 0
+            max_tokens: 8192
+            reasoning_effort: medium
+weave:
+  enabled: true
+adaptive:
+  placement: both
+  task_seconds: 1800
+  max_helpers: 24
+  max_depth: 8
+  max_model_requests: 64
+  max_actions: 100
+  max_queries: 1000
+  max_source_bytes: 65536
+  max_output_bytes: 1048576
+  max_recoveries_per_checkpoint: 2

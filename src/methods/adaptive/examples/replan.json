@@ -1,0 +1,22 @@
+[
+  {
+    "id": "P1",
+    "task": "put_apple_in_fridge",
+    "trigger": "exception",
+    "failure": "IndexError: list index out of range",
+    "progress": "nothing yet",
+    "bindings": null,
+    "observation": "Current room: kitchen; You see: fridge is CLOSED; Relations: none relevant; You hold: nothing",
+    "code": "def policy():\n    find(\"apple\")\n    grab(\"apple\")\n    apple = checkpoint(\"holding an apple\",\n                       lambda: [obj for obj in get_visible_objects() if obj.name == \"apple\" and is_holding(obj)])[0]\n    find(\"fridge\")\n    fridge = checkpoint(\"a fridge is visible\",\n                        lambda: [obj for obj in get_visible_objects() if obj.name == \"fridge\"])[0]\n    place_held_in_container(apple, fridge)\n    close(fridge)\n    checkpoint(\"the fridge is closed\", lambda: \"CLOSED\" in (get_object_states(fridge) or ()))"
+  },
+  {
+    "id": "P2",
+    "task": "wash_the_frying_pan",
+    "trigger": "action",
+    "failure": "putin('fryingpan', 'sink') failed: Unity rejected the action: Script is impossible to execute",
+    "progress": "walk('kitchen') succeeded; find('fryingpan') succeeded; grab('fryingpan') succeeded; find('sink') succeeded; putin('fryingpan', 'sink') failed: Unity rejected the action: Script is impossible to execute; find('sink') succeeded; putin('fryingpan', 'sink') failed: Unity rejected the action: Script is impossible to execute; walk('sink') succeeded; putin('fryingpan', 'sink') failed: Unity rejected the action: Script is impossible to execute; Earlier recoveries in this episode:; local recovery for putin('fryingpan', 'sink'): failed (condition still fails); local recovery for putin('fryingpan', 'sink'): failed (condition still fails)",
+    "bindings": null,
+    "observation": "Current room: kitchen; You see: fryingpan, sink; Relations: none relevant; You hold: fryingpan",
+    "code": "def policy():\n    find(\"sink\")\n    putback(\"fryingpan\", \"sink\")\n    checkpoint(\"the frying pan is on the sink\",\n               lambda: any(obj.name == \"fryingpan\" for place in get_visible_objects() if place.name == \"sink\"\n                           for obj in (get_objects_on(place) or [])))\n    find(\"faucet\")\n    switchon(\"faucet\")\n    checkpoint(\"the faucet is on\",\n               lambda: any(obj.name == \"faucet\" and \"ON\" in (get_object_states(obj) or ())\n                           for obj in get_visible_objects()))\n    switchoff(\"faucet\")"
+  }
+]
