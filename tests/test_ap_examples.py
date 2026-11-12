@@ -7,7 +7,8 @@ import unittest
 
 from methods.adaptive.session import AdaptiveSession
 from methods.adaptive.settings import AdaptiveLimits
-from methods.adaptive.validate_examples import SCENARIOS, load_rows, strip_checkpoints
+from methods.adaptive.validate_examples import ExampleGenerator, SCENARIOS, load_rows, strip_checkpoints
+from methods.adaptive.prompt import load_examples
 from methods.shared.lmp_environment import ACTION_CLASSES, QUERY_NAMES
 
 ROOT = Path(__file__).parents[1] / "src" / "methods"
@@ -106,6 +107,26 @@ class ExampleTests(unittest.TestCase):
     xs = [o for o in get_visible_objects() if o.name == "x"]
     if xs:
         grab(xs[0])''')
+
+    def test_runtime_only_recovery_examples_validate_without_checkpoint_api(self):
+        for name in ("recover", "regenerate_helper", "replan"):
+            for row in load_examples(name, "implicit"):
+                with self.subTest(file=name, example=row["id"]):
+                    self.assertNotEqual(row["trigger"], "checkpoint")
+                    self.assertNotIn("checkpoint(", row["code"])
+                    session("implicit").validate(row["code"])
+
+    def test_runtime_only_scenario_generator_strips_every_generated_program(self):
+        for scenario in SCENARIOS:
+            if scenario["trigger"] == "checkpoint":
+                continue
+            generator = ExampleGenerator("implicit", scenario)
+            sources = [generator.scenario["program"], *generator.helpers.values(),
+                       *(code for queue in generator.queues.values() for code in queue)]
+            for source in sources:
+                with self.subTest(scenario=scenario["id"], source=source):
+                    self.assertNotIn("checkpoint(", source)
+                    session("implicit").validate(source)
 
 
 if __name__ == "__main__":

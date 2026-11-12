@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "id": "R1",
+    "task": "put_clothes_in_closet",
+    "trigger": "action",
+    "failure": "open(closet) failed: <closet> (112) is not closed when executing \"[OPEN] <closet> (112) [0]\"",
+    "progress": "walk('bedroom') succeeded; find('clothespile') succeeded; grab('clothespile') succeeded; find('closet') succeeded; walk(closet) succeeded; open(closet) failed: <closet> (112) is not closed when executing \"[OPEN] <closet> (112) [0]\"",
+    "bindings": "target = closet",
+    "observation": "Current room: bedroom; You see: closet is OPEN (2); Relations: none relevant; You hold: clothespile",
+    "code": "def recover():\n    return \"OPEN\" in (get_object_states(target) or ())"
+  },
+  {
+    "id": "R2",
+    "task": "refrigerate_the_salmon",
+    "trigger": "action",
+    "failure": "putin('salmon', fridge) failed: <fridge> (305) is not open or is not openable when executing \"[PUTIN] <salmon> (327) <fridge> (305) [0]\"",
+    "progress": "find('salmon') succeeded; grab('salmon') succeeded; find('fridge') succeeded; putin('salmon', fridge) failed: <fridge> (305) is not open or is not openable when executing \"[PUTIN] <salmon> (327) <fridge> (305) [0]\"",
+    "bindings": "fridge = fridge",
+    "observation": "Current room: kitchen; You see: fridge is CLOSED, salmon; Relations: none relevant; You hold: salmon",
+    "code": "def recover():\n    walk(fridge)\n    open(fridge)"
+  },
+  {
+    "id": "R3",
+    "task": "put_apple_in_fridge",
+    "trigger": "checkpoint",
+    "failure": "checkpoint failed: an apple is visible (check: lambda: any(obj.name == \"apple\" for obj in get_visible_objects()))",
+    "progress": "nothing yet",
+    "bindings": "(none)",
+    "observation": "Current room: kitchen; You see: fridge is CLOSED; Relations: none relevant; You hold: nothing",
+    "code": "def recover():\n    find(\"apple\")"
+  }
+]

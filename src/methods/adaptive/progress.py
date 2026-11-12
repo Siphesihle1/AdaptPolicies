@@ -7,6 +7,7 @@ from .checkpoints import describe
 
 MAX_PROGRESS_ENTRIES = 40
 MAX_RECOVERY_ENTRIES = 8
+SCOPES = {"local": "local recovery", "helper": "helper rewrite", "replan": "new policy"}
 
 
 def program_section(sources, failure):
@@ -65,7 +66,7 @@ def progress_section(trace, recoveries):
     if recoveries:
         recent = recoveries[-MAX_RECOVERY_ENTRIES:]
         text += "\nEarlier recoveries in this episode:\n" + "\n".join(
-            f"- {r['scope']} for '{r['failure']}': {'succeeded' if r['succeeded'] else 'failed'}"
+            f"- {SCOPES[r['scope']]} for {r['failure']}: {'succeeded' if r['succeeded'] else 'failed'}"
             + (f" ({r['error']})" if r.get("error") else "") for r in recent)
     return text
 

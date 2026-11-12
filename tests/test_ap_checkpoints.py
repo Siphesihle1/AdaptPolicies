@@ -96,7 +96,7 @@ class CheckpointTests(APRuntimeCase):
         self.assertEqual(len(self.kinds("replan")), 1)
         replan_prompt = self.requests("ap_replan")[0]["prompt"]
         self.assertIn("<progress>", replan_prompt)
-        self.assertIn("local for", replan_prompt)
+        self.assertIn("local recovery for checkpoint 'the fridge is open': failed", replan_prompt)
 
     def test_checkpoint_api_is_absent_in_the_implicit_condition(self):
         outcome = self.run_ap({"ap_policy": "def policy():\n    return checkpoint('x', lambda: True)",
@@ -210,6 +210,18 @@ class SessionTests(unittest.TestCase):
 
     def test_ap_result_attributes_are_readable(self):
         self.session().validate("def policy():\n    r = walk('x')\n    return r.message, r.recovered")
+
+
+class MessageTests(unittest.TestCase):
+    def test_unity_rejections_are_reduced_to_their_messages(self):
+        from methods.adaptive.environment import readable
+        raw = ("Unity rejected action: (False, {'0': {'message': 'ScriptExcutor 0: PROCESS WALK: Can not select "
+               "object: clothespile. REASON: No interaction positions\\nEXECUTION_GENERAL: Script is impossible to "
+               "execute\\n\\n'}})")
+        self.assertEqual(readable(raw), "Unity rejected the action: PROCESS WALK: Can not select object: "
+                                        "clothespile. REASON: No interaction positions; Script is impossible to execute")
+        self.assertEqual(readable("<fridge> (305) is not open"), "<fridge> (305) is not open")
+        self.assertEqual(readable("Unity rejected action: not a repr"), "Unity rejected action: not a repr")
 
 
 if __name__ == "__main__":

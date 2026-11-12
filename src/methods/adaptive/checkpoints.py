@@ -92,6 +92,14 @@ class Failure:
             return f"{call} failed: {self.message}"
         return f"{self.exception}"
 
+    def short(self):
+        """What failed, without the message: for the history of earlier recoveries."""
+        if self.trigger == "checkpoint":
+            return f"checkpoint '{self.description}'"
+        if self.trigger == "action":
+            return f"{self.action}({', '.join(describe(a) for a in self.arguments)})"
+        return (self.exception or "").split(":")[0]
+
     def record(self):
         return {"trigger": self.trigger, "summary": self.summary(), "description": self.description,
                 "check_source": self.check_source, "action": self.action,

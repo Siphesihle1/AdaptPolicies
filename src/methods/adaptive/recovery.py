@@ -85,7 +85,7 @@ class RecoveryController:
         self.seen[signature] = progress
 
     def finish(self, scope, failure, succeeded, error):
-        self.history.append({"scope": scope, "failure": failure.summary(), "succeeded": succeeded, "error": error})
+        self.history.append({"scope": scope, "failure": failure.short(), "succeeded": succeeded, "error": error})
         self.session.emit("recovery_result", {"scope": scope, "trigger": failure.trigger, "succeeded": succeeded,
                                               "failure": failure.summary(), "error": error,
                                               "parent_call_id": self.session.current_call})
@@ -186,7 +186,7 @@ class RecoveryController:
         source = self.generate(session.purposes["replan"], task, failure, bindings=False)
         session.emit("replan", {"number": self.replans, "source": source, "failure": failure.record(),
                                 "parent_call_id": session.current_call})
-        self.history.append({"scope": "replan", "failure": failure.summary(), "succeeded": True, "error": None})
+        self.history.append({"scope": "replan", "failure": failure.short(), "succeeded": True, "error": None})
         return source
 
 

@@ -102,6 +102,7 @@ SCENARIOS = [
     grab("clothespile")
     find("closet")
     target = [obj for obj in get_visible_objects() if obj.name == "closet"][0]
+    walk(target)
     open(target)
     putin("clothespile", target)''',
      "recover": ['''def recover():
@@ -158,29 +159,33 @@ SCENARIOS = [
     checkpoint("holding the clothes", lambda: is_holding(clothes))
     close(machine)
     return checkpoint("the washing machine is closed", lambda: "CLOSED" in (get_object_states(machine) or ()))''']},
-    {"id": "H2", "file": "regenerate_helper", "task": "put_my_slippers_near_the_bed", "trigger": "action",
+    {"id": "H2", "file": "regenerate_helper", "task": "put_the_soap_in_the_bathroomcabinet", "trigger": "action",
      "program": '''def policy():
-    walk("bedroom")
-    move_onto("slippers", "bed")''',
-     "helpers": {"move_onto": '''def move_onto(item, surface):
-    """Put the item onto the surface."""
-    walk(item)
-    grab(item)
-    walk(surface)
-    putback(item, surface)'''},
-     "failing_helper": "move_onto",
+    walk("bathroom")
+    find("barsoap")
+    grab("barsoap")
+    store_in("barsoap", "bathroomcabinet")''',
+     "helpers": {"store_in": '''def store_in(item, container):
+    """Put the held item inside the container and close it."""
+    find(container)
+    putin(item, container)
+    close(container)'''},
+     "failing_helper": "store_in",
      "recover": ['''def recover():
-    find(item)''', '''def recover():
-    walk(item)'''],
-     "regenerate": ['''def move_onto(item, surface):
-    """Put the item onto the surface; approach the surface first, since the item may lie on the floor."""
-    find(surface)
-    grab(item)
-    checkpoint("holding the item", lambda: any(obj.name == item and is_holding(obj) for obj in get_visible_objects()))
-    putback(item, surface)
-    return checkpoint("the item is on the surface",
-                      lambda: any(obj.name == item for place in get_visible_objects() if place.name == surface
-                                  for obj in (get_objects_on(place) or [])))''']},
+    find(container)''', '''def recover():
+    walk(container)'''],
+     "regenerate": ['''def store_in(item, container):
+    """Put the held item inside the container and close it; open the container first."""
+    find(container)
+    open(container)
+    checkpoint("the container is open",
+               lambda: any(obj.name == container and "OPEN" in (get_object_states(obj) or ())
+                           for obj in get_visible_objects()))
+    putin(item, container)
+    checkpoint("the item is inside the container",
+               lambda: any(obj.name == item for place in get_visible_objects() if place.name == container
+                           for obj in (get_objects_in(place) or [])))
+    close(container)''']},
     {"id": "P1", "file": "replan", "task": "put_apple_in_fridge", "trigger": "exception",
      "program": '''def policy():
     apple = [obj for obj in get_visible_objects() if obj.name == "apple"][0]
@@ -245,6 +250,13 @@ class ExampleGenerator:
         self.scenario = scenario or {}
         self.helpers.update(self.scenario.get("helpers", {}))
         self.queues = {kind: list(self.scenario.get(kind, [])) for kind in ("recover", "regenerate", "replan")}
+        if not PLACEMENTS_EXPLICIT[placement]:
+            self.scenario = {**self.scenario}
+            if "program" in self.scenario:
+                self.scenario["program"] = strip_checkpoints(self.scenario["program"])
+            self.helpers = {name: strip_checkpoints(code) for name, code in self.helpers.items()}
+            self.queues = {kind: [strip_checkpoints(code) for code in codes]
+                           for kind, codes in self.queues.items()}
 
     def next(self, kind):
         queue = self.queues[kind]
@@ -280,8 +292,13 @@ def run_agent(identities, generator, placement, output, task_seconds=600):
 
     class ValidationAgent(AdaptiveAgent):
         def load_tasks(self, env_id, test_set):
-            tasks = super().load_tasks(env_id, test_set)
-            return [task for task in tasks if "_".join(task.split()) in identities]
+            self.all_tasks = super().load_tasks(env_id, test_set)
+            return [task for task in self.all_tasks if "_".join(task.split()) in identities]
+
+        def load_ground_truth_graphs(self, test_set, tasks):
+            # The loader checks the mapping against the whole dataset.
+            graphs = super().load_ground_truth_graphs(test_set, self.all_tasks)
+            return {name: graph for name, graph in graphs.items() if name in identities}
 
     os.environ["JOB_OUTPUT_DIR"] = str(output)
     os.environ.setdefault("EXPERIMENT_NAME", "ap-example-validation")
@@ -307,9 +324,14 @@ def task_report(agent, output, identity):
             "events": events}
 
 
-def validate_policies(placement, output):
+def validate_policies(placement, output, selected=None):
     """V2-V4: literal replays of every policy example; all checkpoints pass first time."""
     identities = list(load_rows("policy" if PLACEMENTS_EXPLICIT[placement] else "policy_implicit"))
+    if selected is not None:
+        unknown = set(selected) - set(identities)
+        if unknown:
+            raise ValueError(f"Unknown policy examples: {sorted(unknown)}")
+        identities = [identity for identity in identities if identity in selected]
     agent = run_agent(set(identities), ExampleGenerator(placement), placement, output)
     source = load_rows("policy" if PLACEMENTS_EXPLICIT[placement] else "policy_implicit")
     rows = []
@@ -330,13 +352,73 @@ def validate_policies(placement, output):
                      "cap_PSR": cap_psr, "cap_SR": cap_sr, "checkpoints_placed": placed,
                      "checkpoints_passed": report["checkpoints_passed"], "passed": not problems,
                      "problems": problems})
+    called = {e["name"] for identity in identities for e in task_report(agent, output, identity)["events"]
+              if e["kind"] == "helper_call"}
+    expected_helpers = set(ExampleGenerator(placement).helpers)
+    missing = sorted(expected_helpers - called)
+    if missing and selected is None:
+        rows.append({"identity": "helper_coverage", "placement": placement, "PSR": None, "SR": None,
+                     "cap_PSR": None, "cap_SR": None, "checkpoints_placed": 0, "checkpoints_passed": 0,
+                     "passed": False, "problems": ["helpers not executed: " + ", ".join(missing)]})
     return rows
 
 
-def validate_scenario(scenario, output):
+class QueryExampleGenerator:
+    """Replay all specialized examples literally in one query-only policy."""
+
+    def __call__(self, prompt, purpose):
+        if purpose == "ap_policy":
+            calls = [f'{"parse_objects" if name == "parse_objects" else "parse_question"}({row["request"]!r})'
+                     for name in ("parse_objects", "parse_question") for row in load_rows(name)]
+            return "def policy():\n    return [" + ", ".join(calls) + "]"
+        name = {"ap_objects": "parse_objects", "ap_question": "parse_question"}[purpose]
+        request = section_text(prompt, "request")
+        return next(row["code"] for row in load_rows(name) if row["request"] == request)
+
+
+def validate_queries(output):
+    """V4: compare specialized example results with trusted live observation queries."""
+    from .agent import AdaptivePolicyRuntime
+    from .environment import AdaptiveEnvironment
+    from .settings import AdaptiveLimits
+    from methods.shared.lmp_agent import write_json
+    from methods.shared.lmp_runtime import serialize
+    from virtual_home.environment import VHEnvironment
+    from virtual_home.task import VHTask
+
+    output.mkdir(parents=True, exist_ok=True)
+    task = VHTask("query_examples", "ap-query-validation", ["query examples"], 100)
+    with (output / "queries.log").open("w", encoding="utf-8") as log:
+        env = VHEnvironment(0, "kitchen", task, log)
+        adapter = AdaptiveEnvironment(env, task)
+        visible = adapter.get_visible_objects()
+        cabinets = [obj for obj in visible if obj.name == "cabinet"]
+        states = adapter.get_object_states(cabinets[0]) if cabinets else None
+        boxes = [obj for obj in visible if obj.name == "box"]
+        contents = adapter.get_objects_in(boxes[0]) if boxes else None
+        expected = serialize([
+            [obj for obj in visible if obj.name == "mug"],
+            len([obj for obj in visible if obj.name == "plate"]),
+            any(adapter.is_holding(obj) for obj in visible if obj.name == "book"),
+            None if states is None else "OPEN" in states,
+            None if contents is None else len(contents) == 0])
+        runtime = AdaptivePolicyRuntime(adapter, AdaptiveLimits(task_seconds=120), QueryExampleGenerator())
+        execution = runtime.run("validate query examples")
+        write_json(output / "execution.json", execution)
+    actual = execution.get("result")
+    problems = []
+    if execution["status"] != "executed":
+        problems.append(execution.get("error") or "query replay failed")
+    if actual != expected:
+        problems.append(f"query results {actual!r} differ from trusted queries {expected!r}")
+    return {"identity": "specialized_queries", "passed": not problems, "problems": problems,
+            "examples": 5, "expected": expected, "actual": actual}
+
+
+def validate_scenario(scenario, output, placement="both"):
     """V5: replay the failing program, capture the failure context and check the recovery."""
-    generator = ExampleGenerator("both", scenario)
-    agent = run_agent({scenario["task"]}, generator, "both", output)
+    generator = ExampleGenerator(placement, scenario)
+    agent = run_agent({scenario["task"]}, generator, placement, output)
     report = task_report(agent, output, scenario["task"])
     events = report["events"]
     purpose = {"recover": "ap_recover", "regenerate_helper": "ap_function", "replan": "ap_replan"}[scenario["file"]]
@@ -348,7 +430,8 @@ def validate_scenario(scenario, output):
         problems.append(f"no {purpose} request: the failure did not reach the expected scope")
         captured = None
     else:
-        prompt = requests[-1]["prompt"]
+        # The scenario's intended failure is the first one that reached this scope.
+        prompt = requests[0]["prompt"]
         captured = {name: section_text(prompt, name) for name in ("failure", "progress", "bindings", "observation")}
     results = [e for e in events if e["kind"] == "recovery_result"]
     failures = [e for e in events if e["kind"] == "checkpoint_failed"]
@@ -362,19 +445,23 @@ def validate_scenario(scenario, output):
         problems.append("no replan happened")
     if report["status"] != "evaluated" or report["termination"] != "returned":
         problems.append(f"episode ended {report['status']}/{report['termination']}: {report['error']}")
+    cap_psr, cap_sr = CAP_SCORES[scenario["task"]]
+    if report["PSR"] is None or report["PSR"] + 1e-4 < cap_psr or (report["SR"] or 0) < cap_sr:
+        problems.append(f"score {report['PSR']}/{report['SR']} below CaP {cap_psr}/{cap_sr}")
     example = None
     if captured:
         example = {"id": scenario["id"], "task": scenario["task"], "trigger": scenario["trigger"],
                    "failure": failures[0]["summary"] if failures else captured["failure"],
                    "progress": compact(captured["progress"]), "bindings": compact(captured["bindings"])
                    if scenario["file"] == "recover" else None,
-                   "observation": compact(captured["observation"]),
+                   "observation": brief_observation(captured["observation"], captured["failure"],
+                                                    captured["bindings"], scenario["task"]),
                    "code": {"recover": scenario.get("recover", [""])[-1],
                             "regenerate_helper": scenario.get("regenerate", [""])[-1],
                             "replan": scenario.get("replan", [""])[-1]}[scenario["file"]]}
         if scenario["file"] == "regenerate_helper":
             example["helper"] = scenario["helpers"][scenario["failing_helper"]]
-    return {"id": scenario["id"], "file": scenario["file"], "task": scenario["task"], "PSR": report["PSR"],
+    return {"id": scenario["id"], "placement": placement, "file": scenario["file"], "task": scenario["task"], "PSR": report["PSR"],
             "SR": report["SR"], "passed": not problems, "problems": problems,
             "rejected_actions": report["rejected_actions"], "example": example}
 
@@ -386,8 +473,23 @@ def compact(text):
     return "; ".join(line for line in lines if line not in {"Completed so far:"})
 
 
-def observation_section(prompt):
-    return section_text(prompt, "observation")
+def brief_observation(text, *sources):
+    """The room, held objects and the observed facts about objects the failure involves."""
+    import re
+    words = {word for source in sources if source for word in re.findall(r"[a-z]+", source.lower())}
+    words -= {"the", "a", "of", "is", "in", "on", "to", "not", "and", "failed", "kind", "action", "message",
+              "location", "line", "policy", "helper", "checkpoint", "exception", "character", "executing",
+              "when", "close", "inside", "put", "my", "some", "visible"}
+    lines = dict(line.split(": ", 1) for line in text.splitlines() if ": " in line)
+    def relevant(entry):
+        return any(word in words for word in re.findall(r"[a-z]+", entry.split(" is ")[0].lower()))
+    seen = [entry for entry in lines.get("You see", "").split(", ") if relevant(entry)]
+    relations = [entry for entry in lines.get("Relations", "").split(", ")
+                 if entry and all(relevant(part) for part in (entry.split(" ")[0], entry.split(" ")[-1]))]
+    return "; ".join([f"Current room: {lines.get('Current room')}",
+                      "You see: " + (", ".join(seen) or "nothing relevant"),
+                      "Relations: " + (", ".join(relations) or "none relevant"),
+                      f"You hold: {lines.get('You hold')}"])
 
 
 PLACEMENTS_EXPLICIT = {"both": True, "explicit": True, "implicit": False}
@@ -400,24 +502,35 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True)
     parser.add_argument("--policies", choices=["explicit", "implicit", "none"], nargs="*", default=["explicit", "implicit"])
+    parser.add_argument("--policy-tasks", nargs="+", help="replay only these training policy identities")
     parser.add_argument("--scenarios", nargs="*", default=[s["id"] for s in SCENARIOS])
+    parser.add_argument("--scenario-placements", choices=["both", "implicit"], nargs="+",
+                        default=["both", "implicit"],
+                        help="replay recovery examples with and without explicit checkpoints (R3 needs checkpoints)")
     parser.add_argument("--write-examples", action="store_true",
                         help="write captured recovery examples for scenarios that pass")
+    parser.add_argument("--queries", action="store_true", help="also replay all specialized query examples (V4)")
     args = parser.parse_args(argv)
     output = Path(args.output)
+    output.mkdir(parents=True, exist_ok=True)
     report = {"started": datetime.now(timezone.utc).isoformat(), "policies": [], "scenarios": []}
+    report["queries"] = [validate_queries(output / "queries")] if args.queries else []
     placements = {"explicit": "both", "implicit": "implicit"}
     for kind in args.policies:
         if kind == "none":
             continue
-        report["policies"] += validate_policies(placements[kind], output / f"policies-{kind}")
+        report["policies"] += validate_policies(placements[kind], output / f"policies-{kind}", args.policy_tasks)
     for scenario in SCENARIOS:
         if scenario["id"] in args.scenarios:
-            report["scenarios"].append(validate_scenario(scenario, output / f"scenario-{scenario['id']}"))
+            for placement in args.scenario_placements:
+                if placement == "implicit" and scenario["trigger"] == "checkpoint":
+                    continue
+                report["scenarios"].append(validate_scenario(
+                    scenario, output / f"scenario-{scenario['id']}-{placement}", placement))
     if args.write_examples:
         examples = {}
         for row in report["scenarios"]:
-            if row["passed"] and row["example"]:
+            if row["passed"] and row["example"] and row["placement"] == "both":
                 examples.setdefault(row["file"], []).append(row["example"])
         for name, rows in examples.items():
             existing = {row["id"]: row for row in load_rows(name)}
@@ -427,13 +540,15 @@ def main(argv=None):
     report["finished"] = datetime.now(timezone.utc).isoformat()
     report["commit"] = os.getenv("GIT_COMMIT")
     (output / "validation-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    failed = [r for r in report["policies"] + report["scenarios"] if not r["passed"]]
+    failed = [r for r in report["policies"] + report["scenarios"] + report["queries"] if not r["passed"]]
+    for row in report["queries"]:
+        print(f"{'PASS' if row['passed'] else 'FAIL'} specialized queries: {row['examples']} examples {'; '.join(row['problems'])}")
     for row in report["policies"]:
         print(f"{'PASS' if row['passed'] else 'FAIL'} {row['placement']:8} {row['identity']}: "
               f"PSR {row['PSR']} SR {row['SR']} (CaP {row['cap_PSR']}/{row['cap_SR']}) "
               f"checkpoints {row['checkpoints_passed']}/{row['checkpoints_placed']} {'; '.join(row['problems'])}")
     for row in report["scenarios"]:
-        print(f"{'PASS' if row['passed'] else 'FAIL'} {row['id']} {row['task']}: PSR {row['PSR']} SR {row['SR']} "
+        print(f"{'PASS' if row['passed'] else 'FAIL'} {row['placement']:8} {row['id']} {row['task']}: PSR {row['PSR']} SR {row['SR']} "
               f"{'; '.join(row['problems'])}")
     return 1 if failed else 0
 

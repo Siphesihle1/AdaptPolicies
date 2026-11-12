@@ -208,6 +208,7 @@ class PolicyRuntime:
                 kind = message[0]
                 if kind == "event":
                     self.events.append({"kind": message[1], **message[2]})
+                    self.on_event(self.events[-1])
                     if message[1] == "generation_request":
                         budget.consume("model_requests")
                         record_request(message[2]["prompt"], message[2]["purpose"])
@@ -278,3 +279,6 @@ class PolicyRuntime:
         outcome.update(counts=budget.counts, events=self.events, limits=asdict(self.limits),
                        final_state_available=not (self.native_pending or self.adapter.env.native_state_uncertain))
         return outcome
+
+    def on_event(self, event):
+        """Observe worker events in the parent without changing model feedback."""

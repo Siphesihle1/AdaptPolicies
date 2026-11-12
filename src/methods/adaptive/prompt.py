@@ -135,8 +135,11 @@ def example_file(name, placement):
 def load_examples(name, placement="both", exclude_tasks=()):
     rows = read_examples(example_file(name, placement), exclude_tasks)
     if isinstance(rows, list) and not PLACEMENTS[placement]["explicit"]:
-        # Without explicit checkpoints the model never sees a checkpoint failure.
-        rows = [row for row in rows if row.get("trigger") != "checkpoint"]
+        from .validate_examples import strip_checkpoints
+        # Without explicit checkpoints the model never sees a checkpoint failure,
+        # and recovery examples show their code without checkpoint calls.
+        rows = [{**row, "code": strip_checkpoints(row["code"])} if "trigger" in row else row
+                for row in rows if row.get("trigger") != "checkpoint"]
     return rows
 
 

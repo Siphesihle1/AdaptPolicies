@@ -145,6 +145,7 @@ class AdaptiveSession(Session):
         if not isinstance(description, str) or not callable(check):
             raise TypeError("checkpoint(description, check) needs a description and a zero-argument callable")
         self.budget.check()
+        self.emit("checkpoint_reached", {"description": description, "parent_call_id": self.current_call})
         value = check()
         if value:
             self.trace.append({"kind": "checkpoint", "description": description})
@@ -165,11 +166,17 @@ class AdaptiveSession(Session):
         lines = source.splitlines()
         if 0 < code.co_firstlineno <= len(lines):
             line = lines[code.co_firstlineno - 1].strip()
-            return line[line.find("lambda"):] if "lambda" in line else line
+            text = line[line.find("lambda"):] if "lambda" in line else line
+            # Drop the closing parentheses of the enclosing checkpoint(...) call.
+            while text.endswith(")") and text.count(")") > text.count("("):
+                text = text[:-1]
+            return text
         return code.co_name
 
     def helper_binding(self, name):
         def helper(*args, **kwargs):
+            self.emit("helper_call", {"name": name, "version": self.helper_versions[name],
+                                      "parent_call_id": self.current_call})
             while True:
                 try:
                     return self.helper_impls[name](*args, **kwargs)
@@ -215,6 +222,5 @@ class AdaptiveSession(Session):
                 frames, innermost = traceback_frames(error.__traceback__)
                 failure = Failure("exception", frames, bindings_of(innermost), exception=exception_text(error))
                 self.recovery.note(failure)
-                self.recovery.finish("local", failure, False, "exception in policy()")
             source = self.recovery.replan(failure, task)
             self.install_policy(source, "replan")

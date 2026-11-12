@@ -111,8 +111,15 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(record["failures_by_trigger"], {"checkpoint": 1})
         self.assertEqual(record["recoveries_by_scope"]["local"], {"attempted": 2, "succeeded": 0})
         self.assertEqual(record["checkpoints_passed"], 1)
+        self.assertEqual(record["checkpoints_placed"], 2)
+        self.assertEqual(record["checkpoints_reached"], 2)
+        self.assertEqual(record["model_calls_by_purpose"], {"ap_policy": 1, "ap_recover": 2, "ap_replan": 1})
         self.assertEqual(record["placement"], "both")
         self.assertEqual(agent.results["open_fridge"]["SR"], 1)
+        self.assertEqual(record["without_recovery"], {"PSR": 0, "SR": 0})
+        self.assertEqual(record["without_exception_recovery"], {"PSR": 1, "SR": 1})
+        self.assertTrue((directory / "first_failure_state.json").is_file())
+        self.assertFalse((directory / "first_exception_state.json").exists())
         self.assertTrue((directory / "policy.replan-1.py").is_file())
         self.assertIn("return 'old'", (directory / "policy.py").read_text())
         recoveries = json.loads((directory / "recoveries.json").read_text())
@@ -145,7 +152,51 @@ class AgentTests(unittest.TestCase):
         self.assertEqual(execution["result"], "succeeded", execution)
         self.assertEqual(agent.results["open_fridge"]["SR"], 1)
         failure = json.loads((output / "tasks" / "open_fridge" / "recoveries.json").read_text())[0]
-        self.assertIn("Unity rejected action", failure["message"])
+        self.assertIn("Unity rejected the action", failure["message"])
+
+    def test_exception_counterfactual_scores_the_state_before_replanning(self):
+        agent, output = self.run_agent({
+            "ap_policy": "def policy():\n    return [][0]",
+            "ap_replan": "def policy():\n    open('fridge')"})
+        record = agent.task_record("open_fridge")
+        self.assertEqual(agent.results["open_fridge"]["SR"], 1)
+        self.assertEqual(record["without_recovery"], {"PSR": 0, "SR": 0})
+        self.assertEqual(record["without_exception_recovery"], {"PSR": 0, "SR": 0})
+        self.assertTrue((output / "tasks" / "open_fridge" / "first_exception_state.json").is_file())
+
+
+class FailureStateTests(unittest.TestCase):
+    def test_reused_output_drops_previous_episode_failure_snapshots(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from types import SimpleNamespace
+        from methods.adaptive.agent import AdaptiveAgent
+        with TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            for name in ("first_failure", "first_exception"):
+                (directory / f"{name}_state.json").write_text('{}')
+            agent = AdaptiveAgent.__new__(AdaptiveAgent)
+            agent.num_tasks_parsed = 0
+            agent.save_execution(directory, SimpleNamespace(events=[], failure_states={}),
+                                 {"status": "executed"}, {})
+            self.assertFalse((directory / "first_failure_state.json").exists())
+            self.assertFalse((directory / "first_exception_state.json").exists())
+
+    def test_snapshots_are_independent_and_include_only_derived_physical_effects(self):
+        from types import SimpleNamespace
+        from methods.adaptive.agent import AdaptivePolicyRuntime
+        env = SimpleNamespace(native_state_uncertain=False,
+                              graph={"nodes": [{"id": 2, "states": []}], "edges": []},
+                              nodes_with_additonal_states={2: {"states": ["WASHED", "CLOSED"]}})
+        runtime = AdaptivePolicyRuntime.__new__(AdaptivePolicyRuntime)
+        runtime.adapter = SimpleNamespace(env=env)
+        runtime.failure_states = {}
+        runtime.on_event({"kind": "checkpoint_failed", "trigger": "action"})
+        self.assertEqual(env.graph["nodes"][0]["states"], [])
+        env.graph["nodes"][0]["states"].append("OPEN")
+        runtime.on_event({"kind": "checkpoint_failed", "trigger": "exception"})
+        self.assertEqual(runtime.failure_states["first_failure"]["nodes"][0]["states"], ["WASHED"])
+        self.assertEqual(runtime.failure_states["first_exception"]["nodes"][0]["states"], ["OPEN", "WASHED"])
 
 
 if __name__ == "__main__":
