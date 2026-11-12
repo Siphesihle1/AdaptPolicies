@@ -49,6 +49,9 @@ class Normalizer:
         if isinstance(value, list):
             return [self(v) for v in value]
         if isinstance(value, str):
+            if key is not None and key.endswith(("_file", "_path", "_dir")):
+                # Recorded file locations use the platform's separator.
+                value = value.replace("\\", "/")
             return self.text(value)
         return value
 

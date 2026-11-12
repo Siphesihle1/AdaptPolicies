@@ -98,7 +98,7 @@
     },
     "tasks": {
      "store_mug": {
-      "chat_file": "task_chats\\store_mug.json",
+      "chat_file": "task_chats/store_mug.json",
       "code_valid": true,
       "dependency_resolution_succeeded": true,
       "episode_id": "<uuid-1>",
@@ -123,7 +123,7 @@
    },
    "task-accounting.json": {
     "store_mug": {
-     "chat_file": "task_chats\\store_mug.json",
+     "chat_file": "task_chats/store_mug.json",
      "code_valid": true,
      "dependency_resolution_succeeded": true,
      "episode_id": "<uuid-1>",
@@ -1843,7 +1843,7 @@
     },
     "tasks": {
      "open_fridge": {
-      "chat_file": "task_chats\\open_fridge.json",
+      "chat_file": "task_chats/open_fridge.json",
       "code_valid": true,
       "dependency_resolution_succeeded": false,
       "episode_id": "<uuid-1>",
@@ -1868,7 +1868,7 @@
    },
    "task-accounting.json": {
     "open_fridge": {
-     "chat_file": "task_chats\\open_fridge.json",
+     "chat_file": "task_chats/open_fridge.json",
      "code_valid": true,
      "dependency_resolution_succeeded": false,
      "episode_id": "<uuid-1>",
@@ -2432,7 +2432,7 @@
     },
     "tasks": {
      "open_fridge": {
-      "chat_file": "task_chats\\open_fridge.json",
+      "chat_file": "task_chats/open_fridge.json",
       "code_valid": true,
       "dependency_resolution_succeeded": true,
       "episode_id": "<uuid-1>",
@@ -2457,7 +2457,7 @@
    },
    "task-accounting.json": {
     "open_fridge": {
-     "chat_file": "task_chats\\open_fridge.json",
+     "chat_file": "task_chats/open_fridge.json",
      "code_valid": true,
      "dependency_resolution_succeeded": true,
      "episode_id": "<uuid-1>",
@@ -2898,7 +2898,7 @@
     },
     "tasks": {
      "bad_program": {
-      "chat_file": "task_chats\\bad_program.json",
+      "chat_file": "task_chats/bad_program.json",
       "code_valid": true,
       "dependency_resolution_succeeded": true,
       "episode_id": "<uuid-3>",
@@ -2920,7 +2920,7 @@
       "thread_id": "offline-cap:bad_program:<uuid-2>"
      },
      "open_fridge": {
-      "chat_file": "task_chats\\open_fridge.json",
+      "chat_file": "task_chats/open_fridge.json",
       "code_valid": true,
       "dependency_resolution_succeeded": true,
       "episode_id": "<uuid-1>",
@@ -2945,7 +2945,7 @@
    },
    "task-accounting.json": {
     "bad_program": {
-     "chat_file": "task_chats\\bad_program.json",
+     "chat_file": "task_chats/bad_program.json",
      "code_valid": true,
      "dependency_resolution_succeeded": true,
      "episode_id": "<uuid-3>",
@@ -2961,7 +2961,7 @@
      "thread_id": "offline-cap:bad_program:<uuid-2>"
     },
     "open_fridge": {
-     "chat_file": "task_chats\\open_fridge.json",
+     "chat_file": "task_chats/open_fridge.json",
      "code_valid": true,
      "dependency_resolution_succeeded": true,
      "episode_id": "<uuid-1>",
@@ -3726,7 +3726,7 @@
     },
     "tasks": {
      "bad_program": {
-      "chat_file": "task_chats\\bad_program.json",
+      "chat_file": "task_chats/bad_program.json",
       "code_valid": false,
       "dependency_resolution_succeeded": false,
       "episode_id": "<uuid-3>",
@@ -3748,7 +3748,7 @@
       "thread_id": "offline-cap:bad_program:<uuid-2>"
      },
      "open_fridge": {
-      "chat_file": "task_chats\\open_fridge.json",
+      "chat_file": "task_chats/open_fridge.json",
       "code_valid": true,
       "dependency_resolution_succeeded": true,
       "episode_id": "<uuid-1>",
@@ -3773,7 +3773,7 @@
    },
    "task-accounting.json": {
     "bad_program": {
-     "chat_file": "task_chats\\bad_program.json",
+     "chat_file": "task_chats/bad_program.json",
      "code_valid": false,
      "dependency_resolution_succeeded": false,
      "episode_id": "<uuid-3>",
@@ -3789,7 +3789,7 @@
      "thread_id": "offline-cap:bad_program:<uuid-2>"
     },
     "open_fridge": {
-     "chat_file": "task_chats\\open_fridge.json",
+     "chat_file": "task_chats/open_fridge.json",
      "code_valid": true,
      "dependency_resolution_succeeded": true,
      "episode_id": "<uuid-1>",
@@ -4494,7 +4494,7 @@
     },
     "tasks": {
      "bad_program": {
-      "chat_file": "task_chats\\bad_program.json",
+      "chat_file": "task_chats/bad_program.json",
       "error": "Run stopped after uncertain native state; simulator requires restart",
       "method": "cap",
       "metrics": {
@@ -4508,7 +4508,7 @@
       "thread_id": "offline-cap:bad_program:<uuid-2>"
      },
      "open_fridge": {
-      "chat_file": "task_chats\\open_fridge.json",
+      "chat_file": "task_chats/open_fridge.json",
       "code_valid": true,
       "dependency_resolution_succeeded": true,
       "episode_id": "<uuid-1>",
@@ -4533,7 +4533,7 @@
    },
    "task-accounting.json": {
     "bad_program": {
-     "chat_file": "task_chats\\bad_program.json",
+     "chat_file": "task_chats/bad_program.json",
      "error": "Run stopped after uncertain native state; simulator requires restart",
      "method": "cap",
      "plan": null,
@@ -4541,7 +4541,7 @@
      "thread_id": "offline-cap:bad_program:<uuid-2>"
     },
     "open_fridge": {
-     "chat_file": "task_chats\\open_fridge.json",
+     "chat_file": "task_chats/open_fridge.json",
      "code_valid": true,
      "dependency_resolution_succeeded": true,
      "episode_id": "<uuid-1>",
