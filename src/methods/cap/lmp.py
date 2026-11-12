@@ -3,6 +3,7 @@
 import ast
 import time
 from uuid import uuid4
+from methods.shared.code_fence import strip_code_fence
 from virtual_home.virtualhome_types import ObjectRef
 from .function_gen import FunctionGenerator
 from .runtime import Budget, BUILTINS, validate, serialize
@@ -54,9 +55,16 @@ class Session:
                 raise ValueError("source_size_limit")
             if self.generator is not None:
                 record_response(source, purpose)
-            self.emit("generation", {"call_id": call_id, "parent_call_id": parent,
-                      "purpose": purpose, "source": source,
-                      "elapsed_seconds": time.monotonic() - started})
+            # As for ProgPrompt: the prompt asks for no Markdown fences, and a
+            # response that is exactly one fenced block is unwrapped and recorded.
+            raw_source = str(source)
+            source, fence_stripped = strip_code_fence(raw_source)
+            event = {"call_id": call_id, "parent_call_id": parent, "purpose": purpose,
+                     "source": source, "fence_stripped": fence_stripped,
+                     "elapsed_seconds": time.monotonic() - started}
+            if fence_stripped:
+                event["raw_source"] = raw_source
+            self.emit("generation", event)
             return source
         except BaseException as error:
             self.emit("generation_error", {"call_id": call_id, "parent_call_id": parent,

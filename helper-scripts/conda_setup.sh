@@ -55,6 +55,7 @@ conda list --prefix "$ENV_PREFIX" --explicit > "$RESULTS_DIR/conda-explicit.txt"
 # A separate conda-forge prefix keeps research_proj unchanged (environment-display.yml).
 DISPLAY_PREFIX="$HOME/.conda/envs/vh_display"
 if [[ -f $DISPLAY_PREFIX/conda-meta/history ]]; then
+  chmod u+w "$DISPLAY_PREFIX/share/X11/xkb/compiled"   # made read-only below
   conda env update --prefix "$DISPLAY_PREFIX" --file environment-display.yml --prune
 else
   conda env create --prefix "$DISPLAY_PREFIX" --file environment-display.yml --yes
@@ -62,6 +63,10 @@ fi
 [[ -x $DISPLAY_PREFIX/bin/Xvfb && -e $DISPLAY_PREFIX/lib/dri/swrast_dri.so ]] || {
   echo "vh_display lacks Xvfb or Mesa's swrast DRI driver." >&2; exit 1;
 }
+# Xvfb writes its compiled keymap here as server-<display>.xkm. On shared home
+# storage, jobs starting together on different nodes collide on the same file
+# (Xvfb then exits). Read-only makes each Xvfb fall back to the node's /tmp.
+chmod a-w "$DISPLAY_PREFIX/share/X11/xkb/compiled"
 conda list --prefix "$DISPLAY_PREFIX" --explicit > "$RESULTS_DIR/vh-display-explicit.txt"
 echo "PASS: headless display environment at $DISPLAY_PREFIX"
 conda run --no-capture-output --prefix "$ENV_PREFIX" python -m pip freeze > "$RESULTS_DIR/pip-freeze.txt"

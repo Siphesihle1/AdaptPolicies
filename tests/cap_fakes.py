@@ -7,6 +7,10 @@ from xml.etree import ElementTree as ET
 from virtual_home.environment import VHEnvironment
 
 
+class BoxedStr(str):
+    """Stands in for weave's BoxedStr: traced calls return str subclasses."""
+
+
 @dataclass
 class FakeProvider:
     responses: dict
@@ -32,7 +36,7 @@ class FakeEnvironment:
         self.observation_revision = 0
         self.task, self.log_file = task, log or StringIO()
         self.images, self.actions_to_omit = [], []
-        self.execution_failed = False
+        self.execution_failed = self.native_state_uncertain = False
         self.nodes_with_additonal_states, self.object_bindings = {}, {}
         self.object_distances, self.found_id = {}, None
         self.graph = {"nodes": [

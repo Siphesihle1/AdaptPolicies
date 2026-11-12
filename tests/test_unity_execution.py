@@ -11,7 +11,7 @@ from virtual_home.environment import VHEnvironment, unity_execution_succeeded
 class UnityExecutionTests(unittest.TestCase):
     def environment(self, response=(True, {"0": {"message": "Success"}})):
         env = VHEnvironment.__new__(VHEnvironment)
-        env.execution_failed = False
+        env.execution_failed = env.native_state_uncertain = False
         env.log_file = io.StringIO()
         env.task = SimpleNamespace(step=0, executable_steps=0, thread_id="test")
         env.comm = SimpleNamespace(render_script=Mock(return_value=response))
@@ -48,6 +48,8 @@ class UnityExecutionTests(unittest.TestCase):
         env = self.environment((False, {"0": {"message": "Rejected"}}))
         self.assertFalse(env.execute("<char0> [grab] <mug> (3)"))
         self.assertTrue(env.execution_failed)
+        self.assertFalse(env.native_state_uncertain)
+        self.assertFalse(env.native_in_flight)
         self.assertEqual(env.task.executable_steps, 0)
         env.update_executor.assert_not_called()
         env.get_observation.assert_not_called()
@@ -70,6 +72,7 @@ class UnityExecutionTests(unittest.TestCase):
         with self.assertRaises(ConnectionError):
             env.execute("<char0> [grab] <mug> (3)")
         self.assertTrue(env.execution_failed)
+        self.assertTrue(env.native_state_uncertain)
         env.update_executor.assert_not_called()
 
     def test_joint_success_commits_candidate_once(self):

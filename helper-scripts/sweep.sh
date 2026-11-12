@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Run the ProgPrompt sweep for ONE dataset inside a Slurm job:
-# temperatures 0, 0.6, 1.0 x plan reasoning off/on, one attempt per task.
+# Run a ProgPrompt or Code as Policies (CaP) sweep for ONE dataset inside a
+# Slurm job: temperatures 0, 0.6, 1.0 x reasoning off/on, one attempt per task.
 #
-# Started by src/slurm-scripts/progprompt_<model>.sh, which sets:
+# Started by src/slurm-scripts/<method>_<model>.sh, which sets:
+#   SWEEP_METHOD       progprompt (default) or cap
 #   SWEEP_MODEL_TAG    e.g. qwen35-9b
 #   SWEEP_MODEL_ID     LM Studio model name used in the configs, e.g. qwen/qwen3.5-9b
 #   SWEEP_PLAN_TOKENS  plan max_tokens in the config names, e.g. 8192
@@ -11,13 +12,20 @@
 #   SWEEP_CAMPAIGN     results folder under ~/outputs/experiments
 # Optional for quick tests: SWEEP_NUM_TASKS (default all).
 #
-# Each condition uses config/dev-<tag>-<temp>-m<tokens>-<reasoning>.yaml and writes
+# Each condition uses config/dev-<tag>-<temp>-m<tokens>-<reasoning>.yaml (ProgPrompt)
+# or config/cap-<tag>-<temp>-m<tokens>-<reasoning>.yaml (CaP) and writes
 # ~/outputs/experiments/<campaign>/<dataset>/<run id>/. A run with exit-code.txt = 0
 # is complete and is never rerun, so resubmitting a dataset only runs what is
 # missing. Older failed or interrupted attempts are kept with a suffix.
 set -euo pipefail
 
-dataset=${1:?Usage: progprompt_sweep.sh DATASET}
+dataset=${1:?Usage: sweep.sh DATASET}
+method=${SWEEP_METHOD:-progprompt}
+case $method in
+  progprompt) label=ProgPrompt run_prefix="" ;;
+  cap) label=CaP run_prefix="cap-" ;;
+  *) echo "Unknown SWEEP_METHOD: $method" >&2; exit 2 ;;
+esac
 case $dataset in
   test_seen|test_unseen|test_unseen_ambiguous_goals) env_id=0 ;;
   env1) env_id=1 ;;
@@ -60,9 +68,9 @@ cleanup() {
   local result=COMPLETED
   (( status == 0 )) || result=FAILED
   local summary="$completed completed, $skipped already done, $failed failed"
-  echo "ProgPrompt $SWEEP_MODEL_TAG $dataset: $result ($summary), exit $status"
+  echo "$label $SWEEP_MODEL_TAG $dataset: $result ($summary), exit $status"
   echo "$result: $summary, exit $status" > "$RECORD/finished.txt"
-  notify "Slurm ProgPrompt $SWEEP_MODEL_TAG $dataset $result" \
+  notify "Slurm $label $SWEEP_MODEL_TAG $dataset $result" \
     "Job $SLURM_JOB_ID on $(hostname -s): $summary. Exit code: $status."
   exit "$status"
 }
@@ -112,7 +120,7 @@ load_model() {
 record_provenance() {
   {
     echo "job=$SLURM_JOB_ID node=$(hostname -s) partition=$SLURM_JOB_PARTITION"
-    echo "dataset=$dataset env_id=$env_id model=$SWEEP_MODEL_ID gguf=$SWEEP_GGUF"
+    echo "method=$method dataset=$dataset env_id=$env_id model=$SWEEP_MODEL_ID gguf=$SWEEP_GGUF"
     echo "plan_tokens=$plan_tokens context=$LMSTUDIO_CONTEXT_LENGTH engine=$LMSTUDIO_ENGINE"
     echo "started=$(date -u +%FT%TZ)"
   } > "$RECORD/job.txt"
@@ -124,7 +132,7 @@ record_provenance() {
 }
 
 run_condition() {  # run_condition TEMP REASONING, e.g. t06 ron
-  local experiment="$SWEEP_MODEL_TAG-$1-m$plan_tokens-$2"
+  local experiment="$run_prefix$SWEEP_MODEL_TAG-$1-m$plan_tokens-$2"
   local run_id="$experiment-$dataset-r1"
   local final="$RESULTS/$run_id"
   local run_dir="$WORK/runs/$run_id"
@@ -137,16 +145,25 @@ run_condition() {  # run_condition TEMP REASONING, e.g. t06 ron
   [[ -e $final ]] && mv "$final" "$final.previous-$(date +%Y%m%d%H%M%S)"
 
   mkdir -p "$run_dir/dataset"
-  cp "$PROJECT_ROOT/config/dev-$experiment.yaml" "$run_dir/config.yaml"
+  local config="$PROJECT_ROOT/config/dev-$experiment.yaml"
+  [[ $method == cap ]] && config="$PROJECT_ROOT/config/$experiment.yaml"
+  cp "$config" "$run_dir/config.yaml"
   export ADAPT_CONFIG="$run_dir/config.yaml" EXPERIMENT_REPEAT=1 EXPERIMENT_RUN_ID="$run_id"
   export JOB_OUTPUT_DIR="$run_dir" PROGPROMPT_DATASET_DIR="$run_dir/dataset"
   export LLM_METRICS_FILE="$run_dir/llm_calls.jsonl"
+  # ProgPrompt copies the dataset into the run folder itself; CaP reads it from
+  # there too, so both record the exact data each run used.
+  local runner=("$PROGPROMPT_PREFIX/progprompt_exec.sh")
+  if [[ $method == cap ]]; then
+    cp -r "$PROGPROMPT_PREFIX"/data/. "$run_dir/dataset/"
+    runner=("$PROJECT_ROOT/helper-scripts/run_with_sim_and_ollama.sh" "$PROJECT_ROOT/helper-scripts/run-cap.sh")
+  fi
 
   echo "$(date +%T) Starting $run_id"
   current_run=$run_id
   # Own process group so a time-limit signal reaches the whole evaluation.
   # Without SLURM_JOB_ID, progprompt_exec.sh sends no per-run notification.
-  setsid env -u SLURM_JOB_ID bash "$PROGPROMPT_PREFIX/progprompt_exec.sh" \
+  setsid env -u SLURM_JOB_ID bash "${runner[@]}" \
     --expt-name "$experiment" --env-id "$env_id" --test-set "$dataset" \
     --examples-type random --examples-num 3 --num-tasks "${SWEEP_NUM_TASKS:-all}" \
     < /dev/null > "$run_dir/experiment.log" 2>&1 &
@@ -194,11 +211,11 @@ copy_home() {  # copy_home SRC DEST: copy a node-local folder into home storage
 make_home_dir "$RECORD"
 trap cleanup EXIT
 trap stop_child TERM INT
-echo "Job $SLURM_JOB_ID on $(hostname -s): $SWEEP_MODEL_TAG, $dataset"
+echo "Job $SLURM_JOB_ID on $(hostname -s): $label $SWEEP_MODEL_TAG, $dataset"
 
 setup_environment
 source "$REPO/helper-scripts/stage_simulator.sh"   # simulator -> /var/tmp
-WORK="$ADAPT_NODE_TMP/progprompt-job-$SLURM_JOB_ID"
+WORK="$ADAPT_NODE_TMP/$method-job-$SLURM_JOB_ID"
 snapshot_code
 load_model                                          # model -> /var/tmp, served on :1234
 record_provenance

@@ -111,7 +111,7 @@ class ExecutionTests(unittest.TestCase):
     def test_uncertain_native_state_has_no_fabricated_final_and_stops_run(self):
         class UncertainEnvironment(FakeEnvironment):
             def execute(self, script):
-                self.execution_failed = True
+                self.execution_failed = self.native_state_uncertain = True
                 return False
         agent, output = self.agent({"cap_policy": "def policy():\n    open('fridge')"}, factory=UncertainEnvironment)
         self.assertFalse((output / "tasks" / "open_fridge" / "final_state.json").exists())
@@ -119,6 +119,33 @@ class ExecutionTests(unittest.TestCase):
         results = json.loads((output / "results.json").read_text())
         self.assertEqual(results["summary"]["num_tasks"], 2)
         self.assertEqual(results["summary"]["SR"], 0)
+
+    def test_single_fenced_response_is_unwrapped_and_recorded(self):
+        fenced = "```python\ndef policy():\n    return open('fridge').status\n```"
+        agent, output = self.agent({"cap_policy": fenced})
+        record = agent.task_record("open_fridge")
+        self.assertEqual(record["status"], "evaluated")
+        self.assertTrue(record["fence_stripped"])
+        self.assertFalse(record["raw_format_compliant"])
+        self.assertEqual(record["fenced_generations"], 1)
+        self.assertNotIn("```", (output / "tasks" / "open_fridge" / "policy.py").read_text())
+        generations = json.loads((output / "tasks" / "open_fridge" / "generation.json").read_text())
+        completed = [g for g in generations if g["kind"] == "generation"]
+        self.assertEqual(completed[0]["raw_source"], fenced)
+
+    def test_clean_native_rejection_fails_the_action_but_not_the_run(self):
+        class RejectingEnvironment(FakeEnvironment):
+            def execute(self, script):
+                # Unity refused the script: nothing ran, so state is still known.
+                self.execution_failed = True
+                return False
+        agent, output = self.agent({"cap_policy": "def policy():\n    return open('fridge').status"},
+                                   factory=RejectingEnvironment)
+        self.assertTrue((output / "tasks" / "open_fridge" / "final_state.json").exists())
+        self.assertEqual(agent.task_record("open_fridge")["status"], "evaluated")
+        self.assertNotEqual(agent.task_record("bad_program")["status"], "not_executed")
+        execution = json.loads((output / "tasks" / "open_fridge" / "execution.json").read_text())
+        self.assertEqual(execution["result"], "failed")
 
     def test_specialized_context_is_fresh_and_query_results_are_not_implicit_input(self):
         agent, output = self.agent({

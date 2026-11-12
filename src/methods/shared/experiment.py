@@ -26,6 +26,7 @@ class TaskRecord(TaskRecordFields, total=False):
     raw_plan: str
     raw_format_compliant: bool
     fence_stripped: bool
+    fenced_generations: int
 
 
 class ExperimentMixin:
