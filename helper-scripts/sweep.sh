@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Run a ProgPrompt or Code as Policies (CaP) sweep for ONE dataset inside a
-# Slurm job: temperatures 0, 0.6, 1.0 x reasoning off/on, one attempt per task.
+# Run a ProgPrompt, Code as Policies (CaP) or Adaptive Policies (AP) sweep for ONE
+# dataset inside a Slurm job: temperatures 0, 0.6, 1.0 x reasoning off/on, one
+# attempt per task.
 #
 # Started by src/slurm-scripts/<method>_<model>.sh, which sets:
-#   SWEEP_METHOD       progprompt (default) or cap
+#   SWEEP_METHOD       progprompt (default), cap or adaptive
+#   SWEEP_PLACEMENT    adaptive only: both (default), explicit or implicit
 #   SWEEP_MODEL_TAG    e.g. qwen35-9b
 #   SWEEP_MODEL_ID     LM Studio model name used in the configs, e.g. qwen/qwen3.5-9b
 #   SWEEP_PLAN_TOKENS  plan max_tokens in the config names, e.g. 8192
@@ -13,7 +15,8 @@
 # Optional for quick tests: SWEEP_NUM_TASKS (default all).
 #
 # Each condition uses config/dev-<tag>-<temp>-m<tokens>-<reasoning>.yaml (ProgPrompt)
-# or config/cap-<tag>-<temp>-m<tokens>-<reasoning>.yaml (CaP) and writes
+# or config/cap-<tag>-<temp>-m<tokens>-<reasoning>.yaml (CaP)
+# or config/ap-<placement>-<tag>-<temp>-m<tokens>-<reasoning>.yaml (AP) and writes
 # ~/outputs/experiments/<campaign>/<dataset>/<run id>/. A run with exit-code.txt = 0
 # is complete and is never rerun, so resubmitting a dataset only runs what is
 # missing. Older failed or interrupted attempts are kept with a suffix.
@@ -24,6 +27,10 @@ method=${SWEEP_METHOD:-progprompt}
 case $method in
   progprompt) label=ProgPrompt run_prefix="" ;;
   cap) label=CaP run_prefix="cap-" ;;
+  adaptive)
+    placement=${SWEEP_PLACEMENT:-both}
+    case $placement in both|explicit|implicit) ;; *) echo "Unknown SWEEP_PLACEMENT: $placement" >&2; exit 2 ;; esac
+    label="AP $placement" run_prefix="ap-$placement-" ;;
   *) echo "Unknown SWEEP_METHOD: $method" >&2; exit 2 ;;
 esac
 case $dataset in
@@ -146,17 +153,19 @@ run_condition() {  # run_condition TEMP REASONING, e.g. t06 ron
 
   mkdir -p "$run_dir/dataset"
   local config="$PROJECT_ROOT/config/dev-$experiment.yaml"
-  [[ $method == cap ]] && config="$PROJECT_ROOT/config/$experiment.yaml"
+  [[ $method == cap || $method == adaptive ]] && config="$PROJECT_ROOT/config/$experiment.yaml"
   cp "$config" "$run_dir/config.yaml"
   export ADAPT_CONFIG="$run_dir/config.yaml" EXPERIMENT_REPEAT=1 EXPERIMENT_RUN_ID="$run_id"
   export JOB_OUTPUT_DIR="$run_dir" PROGPROMPT_DATASET_DIR="$run_dir/dataset"
   export LLM_METRICS_FILE="$run_dir/llm_calls.jsonl"
-  # ProgPrompt copies the dataset into the run folder itself; CaP reads it from
-  # there too, so both record the exact data each run used.
+  # ProgPrompt copies the dataset into the run folder itself; CaP and AP read it
+  # from there too, so every method records the exact data each run used.
   local runner=("$PROGPROMPT_PREFIX/progprompt_exec.sh")
-  if [[ $method == cap ]]; then
+  if [[ $method == cap || $method == adaptive ]]; then
     cp -r "$PROGPROMPT_PREFIX"/data/. "$run_dir/dataset/"
-    runner=("$PROJECT_ROOT/helper-scripts/run_with_sim_and_ollama.sh" "$PROJECT_ROOT/helper-scripts/run-cap.sh")
+    local script=run-cap.sh
+    [[ $method == adaptive ]] && script=run-adaptive.sh
+    runner=("$PROJECT_ROOT/helper-scripts/run_with_sim_and_ollama.sh" "$PROJECT_ROOT/helper-scripts/$script")
   fi
 
   echo "$(date +%T) Starting $run_id"

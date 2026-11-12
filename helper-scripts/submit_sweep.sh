@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Submit one Slurm job per dataset for a ProgPrompt or CaP sweep job script,
+# Submit one Slurm job per dataset for a ProgPrompt, CaP or AP sweep job script,
 # placing jobs by current node availability. Runs on the login node
 # (sbatch/squeue/sinfo only); the deploy workflow calls it through the job script:
 #   bash src/slurm-scripts/<method>_<model>.sh [DATASET ...]
@@ -55,6 +55,7 @@ for dataset in "${datasets[@]}"; do
   done_runs=0
   run_prefix=""
   [[ ${SWEEP_METHOD:-progprompt} == cap ]] && run_prefix="cap-"
+  [[ ${SWEEP_METHOD:-progprompt} == adaptive ]] && run_prefix="ap-${SWEEP_PLACEMENT:-both}-"
   for code in "$HOME/outputs/experiments/$SWEEP_CAMPAIGN/$dataset/$run_prefix$SWEEP_MODEL_TAG"-*-m"$plan_tokens"-*-"$dataset"-r1/exit-code.txt; do
     [[ -f $code && $(<"$code") == 0 ]] && done_runs=$(( done_runs + 1 ))
   done
