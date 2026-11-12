@@ -30,8 +30,9 @@ export SWEEP_CAMPAIGN="${SWEEP_CAMPAIGN:-cluster_cap_qwen35_9b_001}"
 export SWEEP_PARTITIONS="batch bigbatch"
 export SWEEP_TIME=24:00:00
 # Known-faulty nodes, skipped at submission. mscluster76: GPU not found by
-# nvidia-smi (2026-11-11), so LM Studio fell back to the CPU.
-export SWEEP_EXCLUDE_NODES=mscluster76
+# nvidia-smi (2026-11-11), so LM Studio fell back to the CPU. mscluster68: same
+# fault, caught by the GPU check (2026-11-12).
+export SWEEP_EXCLUDE_NODES=mscluster68,mscluster76
 PROJECT_ROOT="${PROJECT_ROOT:-$HOME/AdaptPolicies}"
 
 if [[ -z ${SLURM_JOB_ID:-} ]]; then
