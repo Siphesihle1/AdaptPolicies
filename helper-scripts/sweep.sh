@@ -151,35 +151,53 @@ run_condition() {  # run_condition TEMP REASONING, e.g. t06 ron
   fi
   [[ -e $final ]] && mv "$final" "$final.previous-$(date +%Y%m%d%H%M%S)"
 
-  mkdir -p "$run_dir/dataset"
   local config="$PROJECT_ROOT/config/dev-$experiment.yaml"
   [[ $method == cap || $method == adaptive ]] && config="$PROJECT_ROOT/config/$experiment.yaml"
-  cp "$config" "$run_dir/config.yaml"
   export ADAPT_CONFIG="$run_dir/config.yaml" EXPERIMENT_REPEAT=1 EXPERIMENT_RUN_ID="$run_id"
   export JOB_OUTPUT_DIR="$run_dir" PROGPROMPT_DATASET_DIR="$run_dir/dataset"
   export LLM_METRICS_FILE="$run_dir/llm_calls.jsonl"
-  # ProgPrompt copies the dataset into the run folder itself; CaP and AP read it
-  # from there too, so every method records the exact data each run used.
   local runner=("$PROGPROMPT_PREFIX/progprompt_exec.sh")
   if [[ $method == cap || $method == adaptive ]]; then
-    cp -r "$PROGPROMPT_PREFIX"/data/. "$run_dir/dataset/"
     local script=run-cap.sh
     [[ $method == adaptive ]] && script=run-adaptive.sh
     runner=("$PROJECT_ROOT/helper-scripts/run_with_sim_and_ollama.sh" "$PROJECT_ROOT/helper-scripts/$script")
   fi
 
-  echo "$(date +%T) Starting $run_id"
-  current_run=$run_id
-  # Own process group so a time-limit signal reaches the whole evaluation.
-  # Without SLURM_JOB_ID, progprompt_exec.sh sends no per-run notification.
-  setsid env -u SLURM_JOB_ID bash "${runner[@]}" \
-    --expt-name "$experiment" --env-id "$env_id" --test-set "$dataset" \
-    --examples-type random --examples-num 3 --num-tasks "${SWEEP_NUM_TASKS:-all}" \
-    < /dev/null > "$run_dir/experiment.log" 2>&1 &
-  child=$!
-  local status=0
-  wait "$child" || status=$?
-  child=""
+  local status attempt
+  for attempt in 1 2; do
+    mkdir -p "$run_dir/dataset"
+    cp "$config" "$run_dir/config.yaml"
+    # ProgPrompt copies the dataset into the run folder itself; CaP and AP read it
+    # from there too, so every method records the exact data each run used.
+    [[ $method == cap || $method == adaptive ]] && cp -r "$PROGPROMPT_PREFIX"/data/. "$run_dir/dataset/"
+
+    echo "$(date +%T) Starting $run_id"
+    current_run=$run_id
+    # Own process group so a time-limit signal reaches the whole evaluation.
+    # Without SLURM_JOB_ID, progprompt_exec.sh sends no per-run notification.
+    setsid env -u SLURM_JOB_ID bash "${runner[@]}" \
+      --expt-name "$experiment" --env-id "$env_id" --test-set "$dataset" \
+      --examples-type random --examples-num 3 --num-tasks "${SWEEP_NUM_TASKS:-all}" \
+      < /dev/null > "$run_dir/experiment.log" 2>&1 &
+    child=$!
+    status=0
+    wait "$child" || status=$?
+    child=""
+
+    # CaP and AP stop a run after a simulator failure (e.g. Unity not answering the
+    # first camera_image within 30 s, 2026-11-13) and skip its remaining tasks, yet
+    # exit 0. Retry once with a fresh simulator; a second abort gets exit 3 so the
+    # run is not counted as complete.
+    if (( status == 0 )) && [[ -f $run_dir/results.json ]] && ! python3 -c '
+import json, sys
+sys.exit(json.load(open(sys.argv[1])).get("run_status") == "aborted")' "$run_dir/results.json"; then
+      status=3
+    fi
+    (( status == 3 && attempt == 1 )) || break
+    echo "$(date +%T) $run_id aborted after a simulator failure; retrying with a fresh simulator"
+    copy_home "$run_dir" "$final.aborted-$SLURM_JOB_ID"
+    rm -rf -- "$run_dir"
+  done
 
   # Copy results home; exit-code.txt is written last and marks the run complete.
   copy_home "$run_dir" "$final"
