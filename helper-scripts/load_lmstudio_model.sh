@@ -136,7 +136,15 @@ exec env -u LMS_API_SERVER_INFO_PATH -u LMSTUDIO_HOME -u LMS_LMSTUDIO_HOME \
 SH
   chmod 700 "$LMSTUDIO_LMS_BIN" || return
   echo "Private LM Studio state: $LMSTUDIO_PROCESS_HOME/.lmstudio"
-  timeout 60 "$LMSTUDIO_LMS_BIN" daemon status --json > "$scratch_dir/daemon-before.json" || return
+  # The first lms call reads the CLI from shared home storage, which can take over a
+  # minute under load (2026-11-13, job 85940 exit 124). Retry before giving up.
+  local status_attempt
+  for status_attempt in 1 2 3; do
+    timeout 180 "$LMSTUDIO_LMS_BIN" daemon status --json > "$scratch_dir/daemon-before.json" && break
+    (( status_attempt < 3 )) || return 1
+    echo "LM Studio daemon status check failed (attempt $status_attempt of 3); retrying in 30 s." >&2
+    sleep 30
+  done
   python3 - "$scratch_dir/daemon-before.json" <<'PY' || return
 import json, sys
 with open(sys.argv[1]) as f:
@@ -159,7 +167,17 @@ PY
   namespace="slurm-$SLURM_JOB_ID/staged"
   # Set ownership before startup so an interrupted startup is also cleaned up.
   LMSTUDIO_DAEMON_OWNED=1
-  timeout 120 "$LMSTUDIO_LMS_BIN" daemon up || return
+  # The daemon binary lives on shared home storage. When many jobs start together,
+  # each also copying a model, that storage slows enough for "daemon up" to report
+  # "no valid installation" (2026-11-12, 7 of 15 jobs). Retry before giving up.
+  local daemon_attempt
+  for daemon_attempt in 1 2 3; do
+    timeout 120 "$LMSTUDIO_LMS_BIN" daemon up && break
+    (( daemon_attempt < 3 )) || return 1
+    echo "LM Studio daemon did not start (attempt $daemon_attempt of 3); retrying in 30 s." >&2
+    timeout 60 "$LMSTUDIO_LMS_BIN" daemon down > /dev/null 2>&1 || true
+    sleep 30
+  done
   # A bare "llama.cpp" query resolves to the CPU (avx2) engine first, which ran a
   # 9B model at ~5 tok/s instead of ~53 tok/s on an RTX 3060. Request the CUDA
   # engine on GPU nodes. The fresh private home has no other engine installed, so
