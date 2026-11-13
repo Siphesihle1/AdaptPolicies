@@ -136,7 +136,15 @@ exec env -u LMS_API_SERVER_INFO_PATH -u LMSTUDIO_HOME -u LMS_LMSTUDIO_HOME \
 SH
   chmod 700 "$LMSTUDIO_LMS_BIN" || return
   echo "Private LM Studio state: $LMSTUDIO_PROCESS_HOME/.lmstudio"
-  timeout 60 "$LMSTUDIO_LMS_BIN" daemon status --json > "$scratch_dir/daemon-before.json" || return
+  # The first lms call reads the CLI from shared home storage, which can take over a
+  # minute under load (2026-11-13, job 85940 exit 124). Retry before giving up.
+  local status_attempt
+  for status_attempt in 1 2 3; do
+    timeout 180 "$LMSTUDIO_LMS_BIN" daemon status --json > "$scratch_dir/daemon-before.json" && break
+    (( status_attempt < 3 )) || return 1
+    echo "LM Studio daemon status check failed (attempt $status_attempt of 3); retrying in 30 s." >&2
+    sleep 30
+  done
   python3 - "$scratch_dir/daemon-before.json" <<'PY' || return
 import json, sys
 with open(sys.argv[1]) as f:
